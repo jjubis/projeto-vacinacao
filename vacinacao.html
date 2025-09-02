@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Sistema de Vacinação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f9f9f9;
+            display: flex;
+            gap: 20px;
+            height: 90vh;
+        }
+        #menu {
+            background: #333;
+            color: white;
+            padding: 15px;
+            width: 300px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        #menu h2 {
+            margin-top: 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        #menu ul {
+            list-style: none;
+            padding: 0;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #menu li {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #555;
+            user-select: none;
+        }
+        #menu li:hover {
+            background: #444;
+        }
+        #menu li.ativo {
+            background-color: #555;
+        }
+        main {
+            flex-grow: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        section {
+            display: none;
+        }
+        section.active {
+            display: block;
+        }
+        label, input, textarea, button, select {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            font-size: 14px;
+        }
+        input, textarea, select {
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .lista p {
+            color: gray;
+        }
+        .resultado-lista {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+        }
+        .resultado-lista:hover {
+            background-color: #f0f0f0;
+        }
+        .selecionado {
+            background-color: #d0f0d0 !important;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #388e3c;
+            background-color: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav id="menu">
+        <h2>--- MENU ---</h2>
+        <ul>
+            <li data-opcao="1">1 - Cadastrar cidadão</li>
+            <li data-opcao="2">2 - Listar cidadãos</li>
+            <li data-opcao="3">3 - Atualizar cidadão</li>
+            <li data-opcao="4">4 - Excluir cidadão</li>
+            <li data-opcao="5">5 - Cadastrar vacina</li>
+            <li data-opcao="6">6 - Listar vacinas</li>
+            <li data-opcao="7">7 - Atualizar vacina</li>
+            <li data-opcao="8">8 - Excluir vacina</li>
+            <li data-opcao="9">9 - Cadastrar posto de saúde</li>
+            <li data-opcao="10">10 - Listar postos de saúde</li>
+            <li data-opcao="11">11 - Atualizar posto de saúde</li>
+            <li data-opcao="12">12 - Excluir posto de saúde</li>
+            <li data-opcao="13">13 - Listar status de agendamento</li>
+            <li data-opcao="14">14 - Cadastrar status de agendamento</li>
+            <li data-opcao="15">15 - Cadastrar agendamento</li>
+            <li data-opcao="16">16 - Listar agendamentos detalhados</li>
+            <li data-opcao="17">17 - Atualizar agendamento</li>
+            <li data-opcao="18">18 - Excluir agendamento</li>
+            <li data-opcao="19">19 - Excluir status de agendamento</li>
+            <li data-opcao="0">0 - Sair</li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Seção 1: Cadastrar cidadão -->
+        <section id="secao1">
+            <h3>Cadastrar cidadão</h3>
+            <form id="cadastroForm">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" required />
+                
+                <label for="cpf">CPF (11 dígitos):</label>
+                <input type="text" id="cpf" required />
+                
+                <label for="telefone">Telefone:</label>
+                <input type="text" id="telefone" required />
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" required />
+                
+                <label for="endereco">Endereço:</label>
+                <textarea id="endereco" required></textarea>
+                
+                <button type="submit">Cadastrar</button>
+            </form>
+            <div id="mensagem"></div>
+        </section>
+
+        <!-- Seção 2: Listar cidadãos -->
+        <section id="secao2">
+            <h3>Lista de Cidadãos</h3>
+            <button onclick="listarCidadaos()">Atualizar Lista</button>
+            <div id="listaCidadaos" class="lista">
+                <p>Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Seção 3: Atualizar cidadão -->
+        <section id="secao3">
+            <h3>Atualizar cidadão</h3>
+            <label>Buscar por CPF ou nome:</label>
+            <input type="text" id="buscarCpfAtualizar" placeholder="Buscar..." />
+            <button type="button" onclick="buscarCidadaoParaAtualizar()">Buscar</button>
+            <div id="resultadoBuscaAtualizar"></div>
+            <form id="atualizarForm" style="display:none;">
+                <input type="hidden" id="idAtualizar" />
+                <label>Novo nome:</label>
+                <input type="text" id="novoNome" placeholder="Deixe em branco para manter" />
+                <label>Novo CPF:</label>
+                <input type="text" id="novoCpf" placeholder="Deixe em branco para manter" />
+                <label>Novo telefone:</label>
+                <input type="text" id="novoTelefone" placeholder="Deixe em branco para manter" />
+                <label>Novo email:</label>
+                <input type="email" id="novoEmail" placeholder="Deixe em branco para manter" />
+                <label>Novo endereço:</label>
+                <textarea id="novoEndereco" placeholder="Deixe em branco para manter"></textarea>
+                <button type="submit">Atualizar</button>
+            </form>
+            <div id="mensagemAtualizar"></div>
+        </section>
+
+        <!-- Seção 4: Excluir cidadão -->
+        <section id="secao4">
+            <h3>Excluir cidadão</h3>
+            <label>Buscar por CPF ou nome:</label>
+            <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
+            <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
+            <div id="resultadoBuscaExcluir"></div>
+            <form id="excluirForm" style="display:none;">
+                <input type="hidden" id="idExcluir" />
+                <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
+                <button type="submit">Excluir</button>
+            </form>
+            <div id="mensagemExcluir"></div>
+        </section>
+
+        <!-- Seção 5: Cadastrar vacina -->
+        <section id="secao5">
+            <h3>Cadastrar vacina</h3>
+            <form id="cadastroVacinaForm">
+                <label>Nome da vacina:</label>
+                <input type="text" id="nomeVacina" required />
+                <label>Fabricante:</label>
+                <input type="text" id="fabricanteVacina" required />
+                <label>Validade:</label>
+                <input type="date" id="validadeVacina" required />
+                <button type="submit">Cadastrar vacina</button>
+            </form>
+            <div id="mensagemVacina"></div>
+        </section>
+
+        <!-- Seção 6: Listar vacinas -->
+        <section id="secao6">
+            <h3>Lista de Vacinas</h3>
+            <button onclick="listarVacinas()">Atualizar Lista</button>
+            <div id="listaVacinas" class="lista">
+                <p>Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Seção 7: Atualizar vacina -->
+        <section id="secao7">
+            <h3>Atualizar vacina</h3>
+            <label>Buscar por nome ou fabricante:</label>
+            <input type="text" id="buscarVacinaAtualizar" placeholder="Buscar..." />
+            <button type="button" onclick="buscarVacinaParaAtualizar()">Buscar</button>
+            <div id="resultadoBuscaVacinaAtualizar"></div>
+            <form id="atualizarVacinaForm" style="display:none;">
+                <input type="hidden" id="idVacinaAtualizar" />
+                <label>Novo nome:</label>
+                <input type="text" id="novoNomeVacina" placeholder="Deixe em branco para manter" />
+                <label>Novo fabricante:</label>
+                <input type="text" id="novoFabricanteVacina" placeholder="Deixe em branco para manter" />
+                <label>Nova validade:</label>
+                <input type="date" id="novaValidadeVacina" />
+                <button type="submit">Atualizar vacina</button>
+            </form>
+            <div id="mensagemVacinaAtualizar"></div>
+        </section>
+
+        <!-- Seção 8: Excluir vacina -->
+        <section id="secao8">
+            <h3>Excluir vacina</h3>
+            <label>Buscar por nome ou fabricante:</label>
+            <input type="text" id="buscarVacinaExcluir" placeholder="Buscar..." />
+            <button type="button" onclick="buscarVacinaParaExcluir()">Buscar</button>
+            <div id="resultadoBuscaVacinaExcluir"></div>
+            <form id="excluirVacinaForm" style="display:none;">
+                <input type="hidden" id="idVacinaExcluir" />
+                <p>Selecionado: <span id="nomeSelecionadoVacinaExcluir" style="font-weight:bold;"></span></p>
+                <button type="submit">Excluir vacina</button>
+            </form>
+            <div id="mensagemVacinaExcluir"></div>
+        </section>
+
+        <!-- Seção 9: Cadastrar posto de saúde -->
+        <section id="secao9">
+            <h3>Cadastrar posto de saúde</h3>
+            <form id="cadastroPostoForm">
+                <label>Nome do posto:</label>
+                <input type="text" id="nomePosto" required />
+                <label>Endereço do posto:</label>
+                <textarea id="enderecoPosto" required></textarea>
+                <button type="submit">Cadastrar posto</button>
+            </form>
+            <div id="mensagemPosto"></div>
+        </section>
+
+        <!-- Seção 10: Listar postos de saúde -->
+        <section id="secao10">
+            <h3>Lista de Postos de Saúde</h3>
+            <button onclick="listarPostos()">Atualizar Lista</button>
+            <div id="listaPostos" class="lista">
+                <p>Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Seção 11: Atualizar posto de saúde -->
+        <section id="secao11">
+            <h3>Atualizar posto de saúde</h3>
+            <label>Buscar por nome:</label>
+            <input type="text" id="buscarPostoAtualizar" placeholder="Buscar..." />
+            <button type="button" onclick="buscarPostoParaAtualizar()">Buscar</button>
+            <div id="resultadoBuscaPostoAtualizar"></div>
+            <form id="atualizarPostoForm" style="display:none;">
+                <input type="hidden" id="idPostoAtualizar"/>
+                <label>Novo nome:</label>
+                <input type="text" id="novoNomePosto" placeholder="Deixe em branco para manter" />
+                <label>Novo endereço:</label>
+                <textarea id="novoEnderecoPosto" placeholder="Deixe em branco para manter"></textarea>
+                <button type="submit">Atualizar posto</button>
+            </form>
+            <div id="mensagemPostoAtualizar"></div>
+        </section>
+
+        <!-- Seção 12: Excluir posto de saúde -->
+        <section id="secao12">
+            <h3>Excluir posto de saúde</h3>
+            <label>Buscar por nome:</label>
+            <input type="text" id="buscarPostoExcluir" placeholder="Buscar..." />
+            <button type="button" onclick="buscarPostoParaExcluir()">Buscar</button>
+            <div id="resultadoBuscaPostoExcluir"></div>
+            <form id="excluirPostoForm" style="display:none;">
+                <input type="hidden" id="idPostoExcluir"/>
+                <p>Selecionado: <span id="nomeSelecionadoPostoExcluir" style="font-weight:bold;"></span></p>
+                <button type="submit">Excluir posto</button>
+            </form>
+            <div id="mensagemPostoExcluir"></div>
+        </section>
+
+        <!-- Seção 13: Listar status de agendamento -->
+        <section id="secao13">
+            <h3>Lista de Status de Agendamento</h3>
+            <button onclick="listarStatus()">Atualizar Lista</button>
+            <div id="listaStatus" class="lista">
+                <p>Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Seção 14: Cadastrar status de agendamento -->
+        <section id="secao14">
+            <h3>Cadastrar status de agendamento</h3>
+            <form id="cadastroStatusForm">
+                <label>Descrição do status:</label>
+                <input type="text" id="descStatus" required />
+                <button type="submit">Cadastrar status</button>
+            </form>
+            <div id="mensagemStatus"></div>
+        </section>
+
+        <!-- Seção 15: Cadastrar agendamento -->
+        <section id="secao15">
+            <h3>Cadastrar agendamento</h3>
+            <form id="cadastroAgendamentoForm">
+                <label>Cidadão:</label>
+                <select id="cidadaoSelect" required>
+                    <option value="">Selecione um cidadão</option>
+                </select>
+                
+                <label>Vacina:</label>
+                <select id="vacinaSelect" required>
+                    <option value="">Selecione uma vacina</option>
+                </select>
+                
+                <label>Posto de Saúde:</label>
+                <select id="postoSelect" required>
+                    <option value="">Selecione um posto</option>
+                </select>
+                
+                <label>Status:</label>
+                <select id="statusSelect" required>
+                    <option value="">Selecione um status</option>
+                </select>
+                
+                <label>Data e Hora:</label>
+                <input type="datetime-local" id="dataHoraAgendamento" required />
+                
+                <button type="submit">Cadastrar agendamento</button>
+            </form>
+            <div id="mensagemAgendamento"></div>
+        </section>
+
+        <!-- Seção 16: Listar agendamentos detalhados -->
+        <section id="secao16">
+            <h3>Lista de Agendamentos Detalhados</h3>
+            <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
+            <div id="listaAgendamentos" class="lista">
+                <p>Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Seção 17: Atualizar agendamento -->
+        <section id="secao17">
+            <h3>Atualizar agendamento</h3>
+            <label>Buscar agendamento por ID:</label>
+            <input type="text" id="buscarAgendamentoAtualizar" placeholder="Digite o ID do agendamento..." />
+            <button type="button" onclick="buscarAgendamentoParaAtualizar()">Buscar</button>
+            <div id="resultadoBuscaAgendamentoAtualizar"></div>
+            <form id="atualizarAgendamentoForm" style="display:none;">
+                <input type="hidden" id="idAgendamentoAtualizar" />
+                <label>Novo status:</label>
+                <select id="novoStatusAgendamento" required>
+                    <option value="">Selecione um status</option>
+                </select>
+                <button type="submit">Atualizar agendamento</button>
+            </form>
+            <div id="mensagemAgendamentoAtualizar"></div>
+        </section>
+
+        <!-- Seção 18: Excluir agendamento -->
+        <section id="secao18">
+            <h3>Excluir agendamento</h3>
+            <label>Buscar agendamento por ID:</label>
+            <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />
+            <button type="button" onclick="buscarAgendamentoParaExcluir()">Buscar</button>
+            <div id="resultadoBuscaAgendamentoExcluir"></div>
+            <form id="excluirAgendamentoForm" style="display:none;">
+                <input type="hidden" id="idAgendamentoExcluir" />
+                <p>Selecionado: <span id="agendamentoSelecionadoExcluir" style="font-weight:bold;"></span></p>
+                <button type="submit">Excluir agendamento</button>
+            </form>
+            <div id="mensagemAgendamentoExcluir"></div>
+        </section>
+
+        <!-- Seção 19: Excluir status de agendamento -->
+        <section id="secao19">
+            <h3>Excluir status de agendamento</h3>
+            <label>Buscar status por descrição:</label>
+            <input type="text" id="buscarStatusExcluir" placeholder="Buscar..." />
+            <button type="button" onclick="buscarStatusParaExcluir()">Buscar</button>
+            <div id="resultadoBuscaStatusExcluir"></div>
+            <form id="excluirStatusForm" style="display:none;">
+                <input type="hidden" id="idStatusExcluir" />
+                <p>Selecionado: <span id="statusSelecionadoExcluir" style="font-weight:bold;"></span></p>
+                <button type="submit">Excluir status</button>
+            </form>
+            <div id="mensagemStatusExcluir"></div>
+        </section>
+
+        <!-- Seção 0: Sair -->
+        <section id="secao0">
+            <h3>Sistema de Vacinação</h3>
+            <p>Obrigado por usar o Sistema de Vacinação!</p>
+            <p>Desenvolvido para gerenciar agendamentos de vacinação de forma eficiente.</p>
+        </section>
+    </main>
+
+    <script>
+        // Configuração da API
+        const API_BASE_URL = '';
+
+        // Função para mostrar mensagens
+        function mostrarMensagem(elementoId, mensagem, tipo = 'info') {
+            const elemento = document.getElementById(elementoId);
+            elemento.innerHTML = `<div class="${tipo}">${mensagem}</div>`;
+            setTimeout(() => {
+                elemento.innerHTML = '';
+            }, 5000);
+        }
+
+        // Função para fazer requisições à API
+        async function fazerRequisicao(url, opcoes = {}) {
+            try {
+                const resposta = await fetch(API_BASE_URL + url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...opcoes.headers
+                    },
+                    ...opcoes
+                });
+
+                if (!resposta.ok) {
+                    const erro = await resposta.json();
+                    throw new Error(erro.error || `Erro HTTP: ${resposta.status}`);
+                }
+
+                return await resposta.json();
+            } catch (erro) {
+                console.error('Erro na requisição:', erro);
+                throw erro;
+            }
+        }
+
+        // Sistema de navegação
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('#menu li');
+            const sections = document.querySelectorAll('main section');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const opcao = this.getAttribute('data-opcao');
+                    
+                    // Remove classe ativo de todos os itens
+                    menuItems.forEach(i => i.classList.remove('ativo'));
+                    
+                    // Adiciona classe ativo ao item clicado
+                    this.classList.add('ativo');
+                    
+                    // Esconde todas as seções
+                    sections.forEach(section => section.classList.remove('active'));
+                    
+                    // Mostra a seção correspondente
+                    const secaoAtiva = document.getElementById(`secao${opcao}`);
+                    if (secaoAtiva) {
+                        secaoAtiva.classList.add('active');
+                        
+                        // Carrega dados automaticamente para seções de listagem
+                        switch(opcao) {
+                            case '2':
+                                listarCidadaos();
+                                break;
+                            case '6':
+                                listarVacinas();
+                                break;
+                            case '10':
+                                listarPostos();
+                                break;
+                            case '13':
+                                listarStatus();
+                                break;
+                            case '15':
+                                carregarDadosParaAgendamento();
+                                break;
+                            case '16':
+                                listarAgendamentosDetalhados();
+                                break;
+                            case '17':
+                                carregarStatusParaAtualizacao();
+                                break;
+                        }
+                    }
+                });
+            });
+
+            // Ativa a primeira seção por padrão
+            document.querySelector('#menu li[data-opcao="1"]').click();
+
+            // Event listeners para formulários
+            configurarEventListeners();
+        });
+
+        function configurarEventListeners() {
+            // Cadastro de cidadão
+            document.getElementById('cadastroForm').addEventListener('submit', cadastrarCidadao);
+            
+            // Atualização de cidadão
+            document.getElementById('atualizarForm').addEventListener('submit', atualizarCidadao);
+            
+            // Exclusão de cidadão
+            document.getElementById('excluirForm').addEventListener('submit', excluirCidadao);
+            
+            // Cadastro de vacina
+            document.getElementById('cadastroVacinaForm').addEventListener('submit', cadastrarVacina);
+            
+            // Atualização de vacina
+            document.getElementById('atualizarVacinaForm').addEventListener('submit', atualizarVacina);
+            
+            // Exclusão de vacina
+            document.getElementById('excluirVacinaForm').addEventListener('submit', excluirVacina);
+            
+            // Cadastro de posto
+            document.getElementById('cadastroPostoForm').addEventListener('submit', cadastrarPosto);
+            
+            // Atualização de posto
+            document.getElementById('atualizarPostoForm').addEventListener('submit', atualizarPosto);
+            
+            // Exclusão de posto
+            document.getElementById('excluirPostoForm').addEventListener('submit', excluirPosto);
+            
+            // Cadastro de status
+            document.getElementById('cadastroStatusForm').addEventListener('submit', cadastrarStatus);
+            
+            // Cadastro de agendamento
+            document.getElementById('cadastroAgendamentoForm').addEventListener('submit', cadastrarAgendamento);
+            
+            // Atualização de agendamento
+            document.getElementById('atualizarAgendamentoForm').addEventListener('submit', atualizarAgendamento);
+            
+            // Exclusão de agendamento
+            document.getElementById('excluirAgendamentoForm').addEventListener('submit', excluirAgendamento);
+            
+            // Exclusão de status
+            document.getElementById('excluirStatusForm').addEventListener('submit', excluirStatus);
+        }
+
+        // ===== FUNÇÕES PARA CIDADÃOS =====
+        
+        async function cadastrarCidadao(e) {
+            e.preventDefault();
+            
+            const dados = {
+                nome: document.getElementById('nome').value,
+                cpf: document.getElementById('cpf').value,
+                telefone: document.getElementById('telefone').value,
+                email: document.getElementById('email').value,
+                endereco: document.getElementById('endereco').value
+            };
+
+            try {
+                await fazerRequisicao('/cidadao', {
+                    method: 'POST',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagem', 'Cidadão cadastrado com sucesso!', 'success');
+                document.getElementById('cadastroForm').reset();
+            } catch (erro) {
+                mostrarMensagem('mensagem', `Erro ao cadastrar cidadão: ${erro.message}`, 'error');
+            }
+        }
+
+        async function listarCidadaos() {
+            try {
+                const cidadaos = await fazerRequisicao('/cidadaos');
+                const lista = document.getElementById('listaCidadaos');
+                
+                if (cidadaos.length === 0) {
+                    lista.innerHTML = '<p>Nenhum cidadão cadastrado.</p>';
+                    return;
+                }
+                
+                lista.innerHTML = cidadaos.map(cidadao => `
+                    <div class="resultado-lista">
+                        <strong>ID:</strong> ${cidadao.id}<br>
+                        <strong>Nome:</strong> ${cidadao.nome}<br>
+                        <strong>CPF:</strong> ${cidadao.cpf}<br>
+                        <strong>Telefone:</strong> ${cidadao.telefone}<br>
+                        <strong>Email:</strong> ${cidadao.email}<br>
+                        <strong>Endereço:</strong> ${cidadao.endereco}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                document.getElementById('listaCidadaos').innerHTML = `<p class="error">Erro ao carregar cidadãos: ${erro.message}</p>`;
+            }
+        }
+
+        async function buscarCidadaoParaAtualizar() {
+            const termo = document.getElementById('buscarCpfAtualizar').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemAtualizar', 'Digite um CPF ou nome para buscar', 'error');
+                return;
+            }
+
+            try {
+                const cidadaos = await fazerRequisicao('/cidadaos');
+                const resultados = cidadaos.filter(c => 
+                    c.cpf.includes(termo) || 
+                    c.nome.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaAtualizar');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(cidadao => `
+                    <div class="resultado-lista" onclick="selecionarCidadaoParaAtualizar(${cidadao.id}, '${cidadao.nome}', '${cidadao.cpf}', '${cidadao.telefone}', '${cidadao.email}', '${cidadao.endereco}')">
+                        <strong>Nome:</strong> ${cidadao.nome}<br>
+                        <strong>CPF:</strong> ${cidadao.cpf}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemAtualizar', `Erro ao buscar cidadão: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarCidadaoParaAtualizar(id, nome, cpf, telefone, email, endereco) {
+            document.getElementById('idAtualizar').value = id;
+            document.getElementById('novoNome').value = nome;
+            document.getElementById('novoCpf').value = cpf;
+            document.getElementById('novoTelefone').value = telefone;
+            document.getElementById('novoEmail').value = email;
+            document.getElementById('novoEndereco').value = endereco;
+            document.getElementById('atualizarForm').style.display = 'block';
+        }
+
+        async function atualizarCidadao(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idAtualizar').value;
+            const dados = {};
+            
+            const novoNome = document.getElementById('novoNome').value.trim();
+            const novoCpf = document.getElementById('novoCpf').value.trim();
+            const novoTelefone = document.getElementById('novoTelefone').value.trim();
+            const novoEmail = document.getElementById('novoEmail').value.trim();
+            const novoEndereco = document.getElementById('novoEndereco').value.trim();
+            
+            if (novoNome) dados.nome = novoNome;
+            if (novoCpf) dados.cpf = novoCpf;
+            if (novoTelefone) dados.telefone = novoTelefone;
+            if (novoEmail) dados.email = novoEmail;
+            if (novoEndereco) dados.endereco = novoEndereco;
+
+            try {
+                await fazerRequisicao(`/cidadao/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemAtualizar', 'Cidadão atualizado com sucesso!', 'success');
+                document.getElementById('atualizarForm').style.display = 'none';
+                document.getElementById('resultadoBuscaAtualizar').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemAtualizar', `Erro ao atualizar cidadão: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarCidadaoParaExcluir() {
+            const termo = document.getElementById('buscarCpfExcluir').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemExcluir', 'Digite um CPF ou nome para buscar', 'error');
+                return;
+            }
+
+            try {
+                const cidadaos = await fazerRequisicao('/cidadaos');
+                const resultados = cidadaos.filter(c => 
+                    c.cpf.includes(termo) || 
+                    c.nome.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaExcluir');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(cidadao => `
+                    <div class="resultado-lista" onclick="selecionarCidadaoParaExcluir(${cidadao.id}, '${cidadao.nome}')">
+                        <strong>Nome:</strong> ${cidadao.nome}<br>
+                        <strong>CPF:</strong> ${cidadao.cpf}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemExcluir', `Erro ao buscar cidadão: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarCidadaoParaExcluir(id, nome) {
+            document.getElementById('idExcluir').value = id;
+            document.getElementById('nomeSelecionadoExcluir').textContent = nome;
+            document.getElementById('excluirForm').style.display = 'block';
+        }
+
+        async function excluirCidadao(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idExcluir').value;
+
+            try {
+                await fazerRequisicao(`/cidadao/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
+                document.getElementById('excluirForm').style.display = 'none';
+                document.getElementById('resultadoBuscaExcluir').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemExcluir', `Erro ao excluir cidadão: ${erro.message}`, 'error');
+            }
+        }
+
+        // ===== FUNÇÕES PARA VACINAS =====
+        
+        async function cadastrarVacina(e) {
+            e.preventDefault();
+            
+            const dados = {
+                nome: document.getElementById('nomeVacina').value,
+                fabricante: document.getElementById('fabricanteVacina').value,
+                validade: document.getElementById('validadeVacina').value
+            };
+
+            try {
+                await fazerRequisicao('/vacina', {
+                    method: 'POST',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemVacina', 'Vacina cadastrada com sucesso!', 'success');
+                document.getElementById('cadastroVacinaForm').reset();
+            } catch (erro) {
+                mostrarMensagem('mensagemVacina', `Erro ao cadastrar vacina: ${erro.message}`, 'error');
+            }
+        }
+
+        async function listarVacinas() {
+            try {
+                const vacinas = await fazerRequisicao('/vacinas');
+                const lista = document.getElementById('listaVacinas');
+                
+                if (vacinas.length === 0) {
+                    lista.innerHTML = '<p>Nenhuma vacina cadastrada.</p>';
+                    return;
+                }
+                
+                lista.innerHTML = vacinas.map(vacina => `
+                    <div class="resultado-lista">
+                        <strong>ID:</strong> ${vacina.id}<br>
+                        <strong>Nome:</strong> ${vacina.nome}<br>
+                        <strong>Fabricante:</strong> ${vacina.fabricante}<br>
+                        <strong>Validade:</strong> ${vacina.validade}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                document.getElementById('listaVacinas').innerHTML = `<p class="error">Erro ao carregar vacinas: ${erro.message}</p>`;
+            }
+        }
+
+        async function buscarVacinaParaAtualizar() {
+            const termo = document.getElementById('buscarVacinaAtualizar').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemVacinaAtualizar', 'Digite um nome ou fabricante para buscar', 'error');
+                return;
+            }
+
+            try {
+                const vacinas = await fazerRequisicao('/vacinas');
+                const resultados = vacinas.filter(v => 
+                    v.nome.toLowerCase().includes(termo.toLowerCase()) || 
+                    v.fabricante.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaVacinaAtualizar');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhuma vacina encontrada.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(vacina => `
+                    <div class="resultado-lista" onclick="selecionarVacinaParaAtualizar(${vacina.id}, '${vacina.nome}', '${vacina.fabricante}', '${vacina.validade}')">
+                        <strong>Nome:</strong> ${vacina.nome}<br>
+                        <strong>Fabricante:</strong> ${vacina.fabricante}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemVacinaAtualizar', `Erro ao buscar vacina: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarVacinaParaAtualizar(id, nome, fabricante, validade) {
+            document.getElementById('idVacinaAtualizar').value = id;
+            document.getElementById('novoNomeVacina').value = nome;
+            document.getElementById('novoFabricanteVacina').value = fabricante;
+            document.getElementById('novaValidadeVacina').value = validade;
+            document.getElementById('atualizarVacinaForm').style.display = 'block';
+        }
+
+        async function atualizarVacina(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idVacinaAtualizar').value;
+            const dados = {};
+            
+            const novoNome = document.getElementById('novoNomeVacina').value.trim();
+            const novoFabricante = document.getElementById('novoFabricanteVacina').value.trim();
+            const novaValidade = document.getElementById('novaValidadeVacina').value.trim();
+            
+            if (novoNome) dados.nome = novoNome;
+            if (novoFabricante) dados.fabricante = novoFabricante;
+            if (novaValidade) dados.validade = novaValidade;
+
+            try {
+                await fazerRequisicao(`/vacina/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemVacinaAtualizar', 'Vacina atualizada com sucesso!', 'success');
+                document.getElementById('atualizarVacinaForm').style.display = 'none';
+                document.getElementById('resultadoBuscaVacinaAtualizar').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemVacinaAtualizar', `Erro ao atualizar vacina: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarVacinaParaExcluir() {
+            const termo = document.getElementById('buscarVacinaExcluir').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemVacinaExcluir', 'Digite um nome ou fabricante para buscar', 'error');
+                return;
+            }
+
+            try {
+                const vacinas = await fazerRequisicao('/vacinas');
+                const resultados = vacinas.filter(v => 
+                    v.nome.toLowerCase().includes(termo.toLowerCase()) || 
+                    v.fabricante.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaVacinaExcluir');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhuma vacina encontrada.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(vacina => `
+                    <div class="resultado-lista" onclick="selecionarVacinaParaExcluir(${vacina.id}, '${vacina.nome}')">
+                        <strong>Nome:</strong> ${vacina.nome}<br>
+                        <strong>Fabricante:</strong> ${vacina.fabricante}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemVacinaExcluir', `Erro ao buscar vacina: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarVacinaParaExcluir(id, nome) {
+            document.getElementById('idVacinaExcluir').value = id;
+            document.getElementById('nomeSelecionadoVacinaExcluir').textContent = nome;
+            document.getElementById('excluirVacinaForm').style.display = 'block';
+        }
+
+        async function excluirVacina(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idVacinaExcluir').value;
+
+            try {
+                await fazerRequisicao(`/vacina/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                mostrarMensagem('mensagemVacinaExcluir', 'Vacina excluída com sucesso!', 'success');
+                document.getElementById('excluirVacinaForm').style.display = 'none';
+                document.getElementById('resultadoBuscaVacinaExcluir').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemVacinaExcluir', `Erro ao excluir vacina: ${erro.message}`, 'error');
+            }
+        }
+
+        // ===== FUNÇÕES PARA POSTOS DE SAÚDE =====
+        
+        async function cadastrarPosto(e) {
+            e.preventDefault();
+            
+            const dados = {
+                nome: document.getElementById('nomePosto').value,
+                endereco: document.getElementById('enderecoPosto').value
+            };
+
+            try {
+                await fazerRequisicao('/posto', {
+                    method: 'POST',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemPosto', 'Posto cadastrado com sucesso!', 'success');
+                document.getElementById('cadastroPostoForm').reset();
+            } catch (erro) {
+                mostrarMensagem('mensagemPosto', `Erro ao cadastrar posto: ${erro.message}`, 'error');
+            }
+        }
+
+        async function listarPostos() {
+            try {
+                const postos = await fazerRequisicao('/postos');
+                const lista = document.getElementById('listaPostos');
+                
+                if (postos.length === 0) {
+                    lista.innerHTML = '<p>Nenhum posto cadastrado.</p>';
+                    return;
+                }
+                
+                lista.innerHTML = postos.map(posto => `
+                    <div class="resultado-lista">
+                        <strong>ID:</strong> ${posto.id}<br>
+                        <strong>Nome:</strong> ${posto.nome}<br>
+                        <strong>Endereço:</strong> ${posto.endereco}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                document.getElementById('listaPostos').innerHTML = `<p class="error">Erro ao carregar postos: ${erro.message}</p>`;
+            }
+        }
+
+        async function buscarPostoParaAtualizar() {
+            const termo = document.getElementById('buscarPostoAtualizar').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemPostoAtualizar', 'Digite um nome para buscar', 'error');
+                return;
+            }
+
+            try {
+                const postos = await fazerRequisicao('/postos');
+                const resultados = postos.filter(p => 
+                    p.nome.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaPostoAtualizar');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhum posto encontrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(posto => `
+                    <div class="resultado-lista" onclick="selecionarPostoParaAtualizar(${posto.id}, '${posto.nome}', '${posto.endereco}')">
+                        <strong>Nome:</strong> ${posto.nome}<br>
+                        <strong>Endereço:</strong> ${posto.endereco}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemPostoAtualizar', `Erro ao buscar posto: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarPostoParaAtualizar(id, nome, endereco) {
+            document.getElementById('idPostoAtualizar').value = id;
+            document.getElementById('novoNomePosto').value = nome;
+            document.getElementById('novoEnderecoPosto').value = endereco;
+            document.getElementById('atualizarPostoForm').style.display = 'block';
+        }
+
+        async function atualizarPosto(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idPostoAtualizar').value;
+            const dados = {};
+            
+            const novoNome = document.getElementById('novoNomePosto').value.trim();
+            const novoEndereco = document.getElementById('novoEnderecoPosto').value.trim();
+            
+            if (novoNome) dados.nome = novoNome;
+            if (novoEndereco) dados.endereco = novoEndereco;
+
+            try {
+                await fazerRequisicao(`/posto/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemPostoAtualizar', 'Posto atualizado com sucesso!', 'success');
+                document.getElementById('atualizarPostoForm').style.display = 'none';
+                document.getElementById('resultadoBuscaPostoAtualizar').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemPostoAtualizar', `Erro ao atualizar posto: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarPostoParaExcluir() {
+            const termo = document.getElementById('buscarPostoExcluir').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemPostoExcluir', 'Digite um nome para buscar', 'error');
+                return;
+            }
+
+            try {
+                const postos = await fazerRequisicao('/postos');
+                const resultados = postos.filter(p => 
+                    p.nome.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaPostoExcluir');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhum posto encontrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(posto => `
+                    <div class="resultado-lista" onclick="selecionarPostoParaExcluir(${posto.id}, '${posto.nome}')">
+                        <strong>Nome:</strong> ${posto.nome}<br>
+                        <strong>Endereço:</strong> ${posto.endereco}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemPostoExcluir', `Erro ao buscar posto: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarPostoParaExcluir(id, nome) {
+            document.getElementById('idPostoExcluir').value = id;
+            document.getElementById('nomeSelecionadoPostoExcluir').textContent = nome;
+            document.getElementById('excluirPostoForm').style.display = 'block';
+        }
+
+        async function excluirPosto(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idPostoExcluir').value;
+
+            try {
+                await fazerRequisicao(`/posto/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                mostrarMensagem('mensagemPostoExcluir', 'Posto excluído com sucesso!', 'success');
+                document.getElementById('excluirPostoForm').style.display = 'none';
+                document.getElementById('resultadoBuscaPostoExcluir').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemPostoExcluir', `Erro ao excluir posto: ${erro.message}`, 'error');
+            }
+        }
+
+        // ===== FUNÇÕES PARA STATUS =====
+        
+        async function listarStatus() {
+            try {
+                const statuses = await fazerRequisicao('/statuses');
+                const lista = document.getElementById('listaStatus');
+                
+                if (statuses.length === 0) {
+                    lista.innerHTML = '<p>Nenhum status cadastrado.</p>';
+                    return;
+                }
+                
+                lista.innerHTML = statuses.map(status => `
+                    <div class="resultado-lista">
+                        <strong>ID:</strong> ${status.id}<br>
+                        <strong>Descrição:</strong> ${status.descricao}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                document.getElementById('listaStatus').innerHTML = `<p class="error">Erro ao carregar status: ${erro.message}</p>`;
+            }
+        }
+
+        async function cadastrarStatus(e) {
+            e.preventDefault();
+            
+            const dados = {
+                descricao: document.getElementById('descStatus').value
+            };
+
+            try {
+                await fazerRequisicao('/status', {
+                    method: 'POST',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemStatus', 'Status cadastrado com sucesso!', 'success');
+                document.getElementById('cadastroStatusForm').reset();
+            } catch (erro) {
+                mostrarMensagem('mensagemStatus', `Erro ao cadastrar status: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarStatusParaExcluir() {
+            const termo = document.getElementById('buscarStatusExcluir').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemStatusExcluir', 'Digite uma descrição para buscar', 'error');
+                return;
+            }
+
+            try {
+                const statuses = await fazerRequisicao('/statuses');
+                const resultados = statuses.filter(s => 
+                    s.descricao.toLowerCase().includes(termo.toLowerCase())
+                );
+                
+                const container = document.getElementById('resultadoBuscaStatusExcluir');
+                
+                if (resultados.length === 0) {
+                    container.innerHTML = '<p>Nenhum status encontrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = resultados.map(status => `
+                    <div class="resultado-lista" onclick="selecionarStatusParaExcluir(${status.id}, '${status.descricao}')">
+                        <strong>Descrição:</strong> ${status.descricao}
+                    </div>
+                `).join('');
+            } catch (erro) {
+                mostrarMensagem('mensagemStatusExcluir', `Erro ao buscar status: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarStatusParaExcluir(id, descricao) {
+            document.getElementById('idStatusExcluir').value = id;
+            document.getElementById('statusSelecionadoExcluir').textContent = descricao;
+            document.getElementById('excluirStatusForm').style.display = 'block';
+        }
+
+        async function excluirStatus(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idStatusExcluir').value;
+
+            try {
+                await fazerRequisicao(`/status/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                mostrarMensagem('mensagemStatusExcluir', 'Status excluído com sucesso!', 'success');
+                document.getElementById('excluirStatusForm').style.display = 'none';
+                document.getElementById('resultadoBuscaStatusExcluir').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemStatusExcluir', `Erro ao excluir status: ${erro.message}`, 'error');
+            }
+        }
+
+        // ===== FUNÇÕES PARA AGENDAMENTOS =====
+        
+        async function carregarDadosParaAgendamento() {
+            try {
+                const [cidadaos, vacinas, postos, statuses] = await Promise.all([
+                    fazerRequisicao('/cidadaos'),
+                    fazerRequisicao('/vacinas'),
+                    fazerRequisicao('/postos'),
+                    fazerRequisicao('/statuses')
+                ]);
+
+                // Carregar cidadãos
+                const cidadaoSelect = document.getElementById('cidadaoSelect');
+                cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
+                cidadaos.forEach(cidadao => {
+                    cidadaoSelect.innerHTML += `<option value="${cidadao.id}">${cidadao.nome} - ${cidadao.cpf}</option>`;
+                });
+
+                // Carregar vacinas
+                const vacinaSelect = document.getElementById('vacinaSelect');
+                vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
+                vacinas.forEach(vacina => {
+                    vacinaSelect.innerHTML += `<option value="${vacina.id}">${vacina.nome} - ${vacina.fabricante}</option>`;
+                });
+
+                // Carregar postos
+                const postoSelect = document.getElementById('postoSelect');
+                postoSelect.innerHTML = '<option value="">Selecione um posto</option>';
+                postos.forEach(posto => {
+                    postoSelect.innerHTML += `<option value="${posto.id}">${posto.nome}</option>`;
+                });
+
+                // Carregar status
+                const statusSelect = document.getElementById('statusSelect');
+                statusSelect.innerHTML = '<option value="">Selecione um status</option>';
+                statuses.forEach(status => {
+                    statusSelect.innerHTML += `<option value="${status.id}">${status.descricao}</option>`;
+                });
+
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamento', `Erro ao carregar dados: ${erro.message}`, 'error');
+            }
+        }
+
+        async function cadastrarAgendamento(e) {
+            e.preventDefault();
+            
+            const dados = {
+                cidadaoId: parseInt(document.getElementById('cidadaoSelect').value),
+                vacinaId: parseInt(document.getElementById('vacinaSelect').value),
+                postoId: parseInt(document.getElementById('postoSelect').value),
+                statusId: parseInt(document.getElementById('statusSelect').value),
+                dataHora: document.getElementById('dataHoraAgendamento').value
+            };
+
+            try {
+                await fazerRequisicao('/agendamento', {
+                    method: 'POST',
+                    body: JSON.stringify(dados)
+                });
+                
+                mostrarMensagem('mensagemAgendamento', 'Agendamento cadastrado com sucesso!', 'success');
+                document.getElementById('cadastroAgendamentoForm').reset();
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamento', `Erro ao cadastrar agendamento: ${erro.message}`, 'error');
+            }
+        }
+
+        async function listarAgendamentosDetalhados() {
+            try {
+                const [agendamentos, cidadaos, vacinas, postos, statuses] = await Promise.all([
+                    fazerRequisicao('/agendamentos'),
+                    fazerRequisicao('/cidadaos'),
+                    fazerRequisicao('/vacinas'),
+                    fazerRequisicao('/postos'),
+                    fazerRequisicao('/statuses')
+                ]);
+
+                const lista = document.getElementById('listaAgendamentos');
+                
+                if (agendamentos.length === 0) {
+                    lista.innerHTML = '<p>Nenhum agendamento cadastrado.</p>';
+                    return;
+                }
+                
+                lista.innerHTML = agendamentos.map(agendamento => {
+                    const cidadao = cidadaos.find(c => c.id === agendamento.cidadaoId);
+                    const vacina = vacinas.find(v => v.id === agendamento.vacinaId);
+                    const posto = postos.find(p => p.id === agendamento.postoId);
+                    const status = statuses.find(s => s.id === agendamento.statusId);
+
+                    return `
+                        <div class="resultado-lista">
+                            <strong>ID:</strong> ${agendamento.id}<br>
+                            <strong>Cidadão:</strong> ${cidadao ? cidadao.nome : 'N/A'}<br>
+                            <strong>Vacina:</strong> ${vacina ? vacina.nome : 'N/A'}<br>
+                            <strong>Posto:</strong> ${posto ? posto.nome : 'N/A'}<br>
+                            <strong>Status:</strong> ${status ? status.descricao : 'N/A'}<br>
+                            <strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}
+                        </div>
+                    `;
+                }).join('');
+            } catch (erro) {
+                document.getElementById('listaAgendamentos').innerHTML = `<p class="error">Erro ao carregar agendamentos: ${erro.message}</p>`;
+            }
+        }
+
+        async function carregarStatusParaAtualizacao() {
+            try {
+                const statuses = await fazerRequisicao('/statuses');
+                
+                const statusSelect = document.getElementById('novoStatusAgendamento');
+                statusSelect.innerHTML = '<option value="">Selecione um status</option>';
+                statuses.forEach(status => {
+                    statusSelect.innerHTML += `<option value="${status.id}">${status.descricao}</option>`;
+                });
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao carregar status: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarAgendamentoParaAtualizar() {
+            const termo = document.getElementById('buscarAgendamentoAtualizar').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemAgendamentoAtualizar', 'Digite um ID para buscar', 'error');
+                return;
+            }
+
+            try {
+                const [agendamentos, cidadaos, vacinas, postos, statuses] = await Promise.all([
+                    fazerRequisicao('/agendamentos'),
+                    fazerRequisicao('/cidadaos'),
+                    fazerRequisicao('/vacinas'),
+                    fazerRequisicao('/postos'),
+                    fazerRequisicao('/statuses')
+                ]);
+
+                const agendamento = agendamentos.find(a => a.id == termo);
+                
+                const container = document.getElementById('resultadoBuscaAgendamentoAtualizar');
+                
+                if (!agendamento) {
+                    container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+
+                const cidadao = cidadaos.find(c => c.id === agendamento.cidadaoId);
+                const vacina = vacinas.find(v => v.id === agendamento.vacinaId);
+                const posto = postos.find(p => p.id === agendamento.postoId);
+                const status = statuses.find(s => s.id === agendamento.statusId);
+                
+                container.innerHTML = `
+                    <div class="resultado-lista" onclick="selecionarAgendamentoParaAtualizar(${agendamento.id})">
+                        <strong>Cidadão:</strong> ${cidadao ? cidadao.nome : 'N/A'}<br>
+                        <strong>Vacina:</strong> ${vacina ? vacina.nome : 'N/A'}<br>
+                        <strong>Posto:</strong> ${posto ? posto.nome : 'N/A'}<br>
+                        <strong>Status Atual:</strong> ${status ? status.descricao : 'N/A'}<br>
+                        <strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}
+                    </div>
+                `;
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao buscar agendamento: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarAgendamentoParaAtualizar(id) {
+            document.getElementById('idAgendamentoAtualizar').value = id;
+            document.getElementById('atualizarAgendamentoForm').style.display = 'block';
+        }
+
+        async function atualizarAgendamento(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idAgendamentoAtualizar').value;
+            const statusId = parseInt(document.getElementById('novoStatusAgendamento').value);
+
+            try {
+                await fazerRequisicao(`/agendamento/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ statusId })
+                });
+                
+                mostrarMensagem('mensagemAgendamentoAtualizar', 'Agendamento atualizado com sucesso!', 'success');
+                document.getElementById('atualizarAgendamentoForm').style.display = 'none';
+                document.getElementById('resultadoBuscaAgendamentoAtualizar').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao atualizar agendamento: ${erro.message}`, 'error');
+            }
+        }
+
+        async function buscarAgendamentoParaExcluir() {
+            const termo = document.getElementById('buscarAgendamentoExcluir').value.trim();
+            if (!termo) {
+                mostrarMensagem('mensagemAgendamentoExcluir', 'Digite um ID para buscar', 'error');
+                return;
+            }
+
+            try {
+                const [agendamentos, cidadaos, vacinas, postos, statuses] = await Promise.all([
+                    fazerRequisicao('/agendamentos'),
+                    fazerRequisicao('/cidadaos'),
+                    fazerRequisicao('/vacinas'),
+                    fazerRequisicao('/postos'),
+                    fazerRequisicao('/statuses')
+                ]);
+
+                const agendamento = agendamentos.find(a => a.id == termo);
+                
+                const container = document.getElementById('resultadoBuscaAgendamentoExcluir');
+                
+                if (!agendamento) {
+                    container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+
+                const cidadao = cidadaos.find(c => c.id === agendamento.cidadaoId);
+                const vacina = vacinas.find(v => v.id === agendamento.vacinaId);
+                
+                container.innerHTML = `
+                    <div class="resultado-lista" onclick="selecionarAgendamentoParaExcluir(${agendamento.id}, '${cidadao ? cidadao.nome : 'N/A'} - ${vacina ? vacina.nome : 'N/A'}')">
+                        <strong>Cidadão:</strong> ${cidadao ? cidadao.nome : 'N/A'}<br>
+                        <strong>Vacina:</strong> ${vacina ? vacina.nome : 'N/A'}<br>
+                        <strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}
+                    </div>
+                `;
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamentoExcluir', `Erro ao buscar agendamento: ${erro.message}`, 'error');
+            }
+        }
+
+        function selecionarAgendamentoParaExcluir(id, descricao) {
+            document.getElementById('idAgendamentoExcluir').value = id;
+            document.getElementById('agendamentoSelecionadoExcluir').textContent = descricao;
+            document.getElementById('excluirAgendamentoForm').style.display = 'block';
+        }
+
+        async function excluirAgendamento(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('idAgendamentoExcluir').value;
+
+            try {
+                await fazerRequisicao(`/agendamento/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                mostrarMensagem('mensagemAgendamentoExcluir', 'Agendamento excluído com sucesso!', 'success');
+                document.getElementById('excluirAgendamentoForm').style.display = 'none';
+                document.getElementById('resultadoBuscaAgendamentoExcluir').innerHTML = '';
+            } catch (erro) {
+                mostrarMensagem('mensagemAgendamentoExcluir', `Erro ao excluir agendamento: ${erro.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
