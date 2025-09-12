@@ -2,6 +2,20 @@ import express from 'express';
 
 const router = express.Router();
 
+// Funções utilitárias para validar CPF e telefone (exatamente 11 dígitos numéricos)
+function cpfEhValido(cpf) {
+    return /^\d{11}$/.test(cpf);
+}
+
+function telefoneEhValido(telefone) {
+    return /^\d{11}$/.test(telefone);
+}
+
+// Função para limpar CPF (remove tudo que não é número)
+function limparCpf(cpf) {
+    return cpf.replace(/\D/g, '');
+}
+
 export default (db) => {
     // Rota GET para listar todos os cidadãos
     router.get('/', (req, res) => {
@@ -24,27 +38,89 @@ export default (db) => {
         }
     });
 
-    // Rota POST para adicionar um novo cidadão
+    // Rota POST para adicionar um novo cidadão com tratamento de transação
     router.post('/', (req, res) => {
-        try {
-            const { nome, cpf, telefone, email, endereco } = req.body;
-            if (!nome || !cpf) {
-                return res.status(400).json({ error: 'Nome e CPF são campos obrigatórios.' });
+    try {
+        let { nome, cpf, telefone, email, endereco } = req.body;
+
+        cpf = limparCpf(cpf);
+        telefone = telefone.replace(/\D/g, '');
+
+        const addCidadao = db.transaction(() => {
+            const cpfExistente = db.prepare(`
+                SELECT id FROM cidadaos 
+                WHERE REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = ?
+            `).get(cpf);
+
+            console.log('Resultado da verificação de CPF duplicado:', cpfExistente);
+
+            if (cpfExistente) {
+                throw new Error('CPF já cadastrado.');
             }
-            const info = db.prepare('INSERT INTO cidadaos (nome, cpf, telefone, email, endereco) VALUES (?, ?, ?, ?, ?)').run(nome, cpf, telefone, email, endereco);
-            res.status(201).json({ message: 'Cidadão adicionado com sucesso', id: info.lastInsertRowid });
-        } catch (error) {
-            res.status(400).json({ error: 'Erro ao adicionar cidadão', details: error.message });
+
+            const stmt = db.prepare(`
+                INSERT INTO cidadaos (nome, cpf, telefone, email, endereco)
+                VALUES (?, ?, ?, ?, ?)
+            `);
+            const info = stmt.run(nome, cpf, telefone, email, endereco);
+
+            return info.lastInsertRowid;
+        });
+
+        const id = addCidadao();
+
+        console.log(`Cidadão ${nome} cadastrado com sucesso com ID ${id}`);
+        res.status(201).json({ message: 'Cidadão adicionado com sucesso', id });
+
+    } catch (error) {
+
+        console.error('Erro ao adicionar cidadão:', error);
+        if (error.message === 'CPF já cadastrado.') {
+            return res.status(409).json({ error: error.message });
         }
-    });
+        return res.status(500).json({ error: 'Erro ao adicionar cidadão', details: error.message });
+    }
+});
 
     // Rota PUT para atualizar um cidadão por ID
     router.put('/:id', (req, res) => {
         try {
             const { id } = req.params;
-            const { nome, cpf, telefone, email, endereco } = req.body;
-            const query = 'UPDATE cidadaos SET nome = COALESCE(?, nome), cpf = COALESCE(?, cpf), telefone = COALESCE(?, telefone), email = COALESCE(?, email), endereco = COALESCE(?, endereco) WHERE id = ?';
-            const info = db.prepare(query).run(nome || null, cpf || null, telefone || null, email || null, endereco || null, id);
+            let { nome, cpf, telefone, email, endereco } = req.body;
+
+            if (cpf) {
+                cpf = limparCpf(cpf);
+                if (!cpfEhValido(cpf)) {
+                    return res.status(400).json({ error: 'CPF inválido. Deve conter exatamente 11 dígitos numéricos.' });
+                }
+            }
+
+            if (telefone) {
+                telefone = telefone.replace(/\D/g, '');
+                if (!telefoneEhValido(telefone)) {
+                    return res.status(400).json({ error: 'Telefone inválido. Deve conter exatamente 11 dígitos numéricos.' });
+                }
+            }
+
+            const query = `
+                UPDATE cidadaos
+                SET nome = COALESCE(?, nome),
+                    cpf = COALESCE(?, cpf),
+                    telefone = COALESCE(?, telefone),
+                    email = COALESCE(?, email),
+                    endereco = COALESCE(?, endereco)
+                WHERE id = ?
+            `;
+
+            const info = db.prepare(query).run(
+                nome || null,
+                cpf || null,
+                telefone || null,
+                email || null,
+                endereco || null,
+                id
+            );
+
             if (info.changes > 0) {
                 res.json({ message: 'Cidadão atualizado com sucesso' });
             } else {
