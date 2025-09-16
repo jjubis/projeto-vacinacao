@@ -236,14 +236,13 @@
     <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
     <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
     <div id="resultadoBuscaExcluir"></div>
-    <form id="excluirForm" style="display:none;" onsubmit="return confirmarExclusaoCidadao();">
+    <form id="excluirForm" style="display:none;">
         <input type="hidden" id="idExcluir" />
         <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
         <button type="submit">Excluir</button>
     </form>
     <div id="mensagemExcluir"></div>
 </section>
-
         <!-- Seção 5: Cadastrar vacina -->
         <section id="secao5">
             <h3>Cadastrar vacina</h3>
@@ -289,13 +288,13 @@
         </section>
 
         <!-- Seção 8: Excluir vacina -->
-        <section id="secao8">
+       <section id="secao8">
     <h3>Excluir vacina</h3>
     <label>Buscar por nome ou fabricante:</label>
     <input type="text" id="buscarVacinaExcluir" placeholder="Buscar..." />
     <button type="button" onclick="buscarVacinaParaExcluir()">Buscar</button>
     <div id="resultadoBuscaVacinaExcluir"></div>
-    <form id="excluirVacinaForm" style="display:none;" onsubmit="return confirmarExclusaoVacina();">
+    <form id="excluirVacinaForm" style="display:none;">
         <input type="hidden" id="idVacinaExcluir" />
         <p>Selecionado: <span id="nomeSelecionadoVacinaExcluir" style="font-weight:bold;"></span></p>
         <button type="submit">Excluir vacina</button>
@@ -878,29 +877,38 @@
             document.getElementById('excluirForm').style.display = 'block';
         }
 
-        async function excluirCidadao(e) {
+       async function excluirCidadao(e) {
+    // Impede o envio padrão do formulário, que recarregaria a página.
     e.preventDefault();
 
-    // Adiciona a verificação de confirmação antes de continuar a exclusão
+    // Exibe um pop-up de confirmação para o usuário.
     const confirmacao = confirm('Tem certeza que deseja excluir este cidadão?');
-    
-    // Se o usuário clicar em "Cancelar", a função termina aqui.
+
+    // Se o usuário clicar em "Cancelar", a função é interrompida.
     if (!confirmacao) {
-        return; 
+        return;
     }
 
-    // Se o usuário clicar em "OK", a lógica abaixo é executada.
+    // Se o usuário confirmar a exclusão, a lógica continua.
     const id = document.getElementById('idExcluir').value;
 
     try {
+        // Envia uma requisição DELETE para a API usando o ID do cidadão.
         await fazerRequisicao(`/cidadaos/${id}`, {
             method: 'DELETE'
         });
 
+        // Exibe uma mensagem de sucesso na interface do usuário.
         mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
+        
+        // Esconde o formulário de exclusão.
         document.getElementById('excluirForm').style.display = 'none';
+
+        // Limpa a área de busca para evitar informações incorretas.
         document.getElementById('resultadoBuscaExcluir').innerHTML = '';
+
     } catch (erro) {
+        // Em caso de erro, exibe uma mensagem com a descrição do problema.
         mostrarMensagem('mensagemExcluir', `Erro ao excluir cidadão: ${erro.message}`, 'error');
     }
 }
@@ -1059,9 +1067,10 @@
         }
 
         async function excluirVacina(e) {
+    // Impede o envio padrão do formulário, que recarregaria a página.
     e.preventDefault();
 
-    // Adiciona a verificação de confirmação antes de continuar a exclusão
+    // Adiciona a verificação de confirmação antes de continuar a exclusão.
     const confirmacao = confirm('Tem certeza que deseja excluir esta vacina?');
 
     // Se o usuário clicar em "Cancelar", a função termina aqui.
@@ -1073,14 +1082,22 @@
     const id = document.getElementById('idVacinaExcluir').value;
 
     try {
+        // Envia uma requisição DELETE para a API usando o ID da vacina.
         await fazerRequisicao(`/vacinas/${id}`, {
             method: 'DELETE'
         });
 
+        // Exibe uma mensagem de sucesso na interface do usuário.
         mostrarMensagem('mensagemVacinaExcluir', 'Vacina excluída com sucesso!', 'success');
+        
+        // Esconde o formulário de exclusão.
         document.getElementById('excluirVacinaForm').style.display = 'none';
+
+        // Limpa a área de busca para evitar informações incorretas.
         document.getElementById('resultadoBuscaVacinaExcluir').innerHTML = '';
+
     } catch (erro) {
+        // Em caso de erro, exibe uma mensagem com a descrição do problema.
         mostrarMensagem('mensagemVacinaExcluir', `Erro ao excluir vacina: ${erro.message}`, 'error');
     }
 }
