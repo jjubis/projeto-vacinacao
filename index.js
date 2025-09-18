@@ -5,7 +5,6 @@ import Database from 'better-sqlite3';
 import cidadaoRoutes from './routes/cidadaoRoutes.js';
 import vacinaRoutes from './routes/vacinaRoutes.js';
 import postoRoutes from './routes/postoRoutes.js';
-import statusRoutes from './routes/statusRoutes.js';
 import agendamentoRoutes from './routes/agendamentoRoutes.js';
 
 const app = express();
@@ -16,6 +15,12 @@ const db = new Database('vacinacao.db');
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Rota para a página inicial
+// Serve o arquivo vacinacao.html quando a URL raiz (/) é acessada
+app.get('/', (req, res) => {
+    res.sendFile('vacinacao.html', { root: 'public' });
+});
 
 // Inicialização do banco de dados com logs
 (function initializeDatabase() {
@@ -133,11 +138,6 @@ app.use('/postos', (req, res, next) => {
     console.log(`Request para /postos: ${req.method} ${req.url}`);
     next();
 }, postoRoutes(db));
-
-app.use('/statuses', (req, res, next) => {
-    console.log(`Request para /statuses: ${req.method} ${req.url}`);
-    next();
-}, statusRoutes(db));
 
 app.use('/agendamentos', (req, res, next) => {
     console.log(`Request para /agendamentos: ${req.method} ${req.url}`);

@@ -159,12 +159,10 @@
             <li data-opcao="11">11 - Atualizar posto de saúde</li>
             <li data-opcao="12">12 - Excluir posto de saúde</li>
             <li data-opcao="13">13 - Listar status de agendamento</li>
-            <li data-opcao="14">14 - Cadastrar status de agendamento</li>
-            <li data-opcao="15">15 - Cadastrar agendamento</li>
-            <li data-opcao="16">16 - Listar agendamentos detalhados</li>
-            <li data-opcao="17">17 - Atualizar agendamento</li>
-            <li data-opcao="18">18 - Excluir agendamento</li>
-            <li data-opcao="19">19 - Excluir status de agendamento</li>
+            <li data-opcao="14">14 - Cadastrar agendamento</li>
+            <li data-opcao="15">15 - Listar agendamentos detalhados</li>
+            <li data-opcao="16">16 - Atualizar agendamento</li>
+            <li data-opcao="17">17 - Excluir agendamento</li>
             <li data-opcao="0">0 - Sair</li>
         </ul>
     </nav>
@@ -366,19 +364,9 @@
             </div>
         </section>
 
-        <!-- Seção 14: Cadastrar status de agendamento -->
-        <section id="secao14">
-            <h3>Cadastrar status de agendamento</h3>
-            <form id="cadastroStatusForm">
-                <label>Descrição do status:</label>
-                <input type="text" id="descStatus" required />
-                <button type="submit">Cadastrar status</button>
-            </form>
-            <div id="mensagemStatus"></div>
-        </section>
 
-        <!-- Seção 15: Cadastrar agendamento -->
-        <section id="secao15">
+        <!-- Seção 14: Cadastrar agendamento -->
+        <section id="secao14">
             <h3>Cadastrar agendamento</h3>
             <form id="cadastroAgendamentoForm">
                 <label>Cidadão:</label>
@@ -409,8 +397,8 @@
             <div id="mensagemAgendamento"></div>
         </section>
 
-        <!-- Seção 16: Listar agendamentos detalhados -->
-        <section id="secao16">
+        <!-- Seção 15: Listar agendamentos detalhados -->
+        <section id="secao15">
             <h3>Lista de Agendamentos Detalhados</h3>
             <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
             <div id="listaAgendamentos" class="lista">
@@ -418,8 +406,8 @@
             </div>
         </section>
 
-        <!-- Seção 17: Atualizar agendamento -->
-        <section id="secao17">
+        <!-- Seção 16: Atualizar agendamento -->
+        <section id="secao16">
             <h3>Atualizar agendamento</h3>
 
             <label for="buscarAgendamentoAtualizar">Buscar agendamento por ID:</label>
@@ -445,8 +433,8 @@
         </section>
 
 
-        <!-- Seção 18: Excluir agendamento -->
-        <section id="secao18">
+        <!-- Seção 17: Excluir agendamento -->
+        <section id="secao17">
             <h3>Excluir agendamento</h3>
             <label>Buscar agendamento por ID:</label>
             <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />
@@ -458,21 +446,6 @@
                 <button type="submit">Excluir agendamento</button>
             </form>
             <div id="mensagemAgendamentoExcluir"></div>
-        </section>
-
-        <!-- Seção 19: Excluir status de agendamento -->
-        <section id="secao19">
-            <h3>Excluir status de agendamento</h3>
-            <label>Buscar status por descrição:</label>
-            <input type="text" id="buscarStatusExcluir" placeholder="Buscar..." />
-            <button type="button" onclick="buscarStatusParaExcluir()">Buscar</button>
-            <div id="resultadoBuscaStatusExcluir"></div>
-            <form id="excluirStatusForm" style="display:none;">
-                <input type="hidden" id="idStatusExcluir" />
-                <p>Selecionado: <span id="statusSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                <button type="submit">Excluir status</button>
-            </form>
-            <div id="mensagemStatusExcluir"></div>
         </section>
 
         <!-- Seção 0: Sair -->
@@ -576,15 +549,16 @@
                             case '13':
                                 listarStatus();
                                 break;
-                            case '15':
+                            case '14':
                                 carregarDadosParaAgendamento();
                                 break;
+                            case '15':
+                                 listarAgendamentosDetalhados();
+                                break;
                             case '16':
-                                listarAgendamentosDetalhados();
-                                break;
-                            case '17':
                                 carregarStatusParaAtualizacao();
-                                break;
+                                 break;
+// ...
                         }
                     }
                 });
@@ -597,57 +571,49 @@
             configurarEventListeners();
         });
 
-        function configurarEventListeners() {
+       // ... (código anterior)
 
-            try {
-                document.getElementById('cadastroForm').addEventListener('submit', cadastrarCidadao);
+// Event listeners para formulários
+function configurarEventListeners() {
+    try {
+        document.getElementById('cadastroForm').addEventListener('submit', cadastrarCidadao);
+    } catch (error) {
+        console.log(error);
+    }
 
-            } catch (error) {
-                console.log(error)
+    // Atualização de cidadão
+    document.getElementById('atualizarForm').addEventListener('submit', atualizarCidadao);
 
-            }
-            // Cadastro de cidadão
-            //document.getElementById('cadastroForm').addEventListener('submit', cadastrarCidadao);
+    // Exclusão de cidadão
+    document.getElementById('excluirForm').addEventListener('submit', excluirCidadao);
 
-            // Atualização de cidadão
-            document.getElementById('atualizarForm').addEventListener('submit', atualizarCidadao);
+    // Cadastro de vacina
+    document.getElementById('cadastroVacinaForm').addEventListener('submit', cadastrarVacina);
 
-            // Exclusão de cidadão
-            document.getElementById('excluirForm').addEventListener('submit', excluirCidadao);
+    // Atualização de vacina
+    document.getElementById('atualizarVacinaForm').addEventListener('submit', atualizarVacina);
 
-            // Cadastro de vacina
-            document.getElementById('cadastroVacinaForm').addEventListener('submit', cadastrarVacina);
+    // Exclusão de vacina
+    document.getElementById('excluirVacinaForm').addEventListener('submit', excluirVacina);
 
-            // Atualização de vacina
-            document.getElementById('atualizarVacinaForm').addEventListener('submit', atualizarVacina);
+    // Cadastro de posto
+    document.getElementById('cadastroPostoForm').addEventListener('submit', cadastrarPosto);
 
-            // Exclusão de vacina
-            document.getElementById('excluirVacinaForm').addEventListener('submit', excluirVacina);
+    // Atualização de posto
+    document.getElementById('atualizarPostoForm').addEventListener('submit', atualizarPosto);
 
-            // Cadastro de posto
-            document.getElementById('cadastroPostoForm').addEventListener('submit', cadastrarPosto);
+    // Exclusão de posto
+    document.getElementById('excluirPostoForm').addEventListener('submit', excluirPosto);
 
-            // Atualização de posto
-            document.getElementById('atualizarPostoForm').addEventListener('submit', atualizarPosto);
+    // Cadastro de agendamento
+    document.getElementById('cadastroAgendamentoForm').addEventListener('submit', cadastrarAgendamento);
 
-            // Exclusão de posto
-            document.getElementById('excluirPostoForm').addEventListener('submit', excluirPosto);
+    // Atualização de agendamento
+    document.getElementById('atualizarAgendamentoForm').addEventListener('submit', atualizarAgendamento);
 
-            // Cadastro de status
-            document.getElementById('cadastroStatusForm').addEventListener('submit', cadastrarStatus);
-
-            // Cadastro de agendamento
-            document.getElementById('cadastroAgendamentoForm').addEventListener('submit', cadastrarAgendamento);
-
-            // Atualização de agendamento
-            document.getElementById('atualizarAgendamentoForm').addEventListener('submit', atualizarAgendamento);
-
-            // Exclusão de agendamento
-            document.getElementById('excluirAgendamentoForm').addEventListener('submit', excluirAgendamento);
-
-            // Exclusão de status
-            document.getElementById('excluirStatusForm').addEventListener('submit', excluirStatus);
-        }
+    // Exclusão de agendamento
+    document.getElementById('excluirAgendamentoForm').addEventListener('submit', excluirAgendamento);
+}
 
         // ===== FUNÇÕES PARA CIDADÃOS =====
 
@@ -1283,146 +1249,111 @@
     }
 }
 
-        // ===== FUNÇÕES PARA STATUS =====
+        // ===== FUNÇÕES PARA STATUS FIXOS =====
 
-        async function listarStatus() {
-            try {
-                const statuses = await fazerRequisicao('/statuses');
-                const lista = document.getElementById('listaStatus');
+// Lista fixa de status de agendamento
+const STATUSES_FIXOS = [
+    { id: 1, descricao: 'Agendado' },
+    { id: 2, descricao: 'Realizado' },
+    { id: 3, descricao: 'Cancelado' }
+];
 
-                if (statuses.length === 0) {
-                    lista.innerHTML = '<p>Nenhum status cadastrado.</p>';
-                    return;
-                }
+/**
+ * Preenche o elemento select com os status fixos.
+ * @param {string} selectId - O ID do elemento <select> a ser preenchido.
+ */
+function preencherSelectStatus(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return; // Garante que o elemento existe
 
-                lista.innerHTML = statuses.map(status => `
-                    <div class="resultado-lista">
-                        <strong>ID:</strong> ${status.id}<br>
-                        <strong>Descrição:</strong> ${status.descricao}
-                    </div>
-                `).join('');
-            } catch (erro) {
-                document.getElementById('listaStatus').innerHTML = `<p class="error">Erro ao carregar status: ${erro.message}</p>`;
-            }
-        }
+    // Limpa as opções existentes (mantém a primeira, se houver)
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
 
-        async function cadastrarStatus(e) {
-            e.preventDefault();
+    // Adiciona os novos status
+    STATUSES_FIXOS.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status.id;
+        option.textContent = status.descricao;
+        select.appendChild(option);
+    });
+}
 
-            const dados = {
-                descricao: document.getElementById('descStatus').value
-            };
+/**
+ * Lista os status de agendamento fixos.
+ * Chamada pela opção '13 - Listar status de agendamento'.
+ */
+function listarStatus() {
+    const lista = document.getElementById('listaStatus');
+    if (!lista) return;
 
-            try {
-                await fazerRequisicao('/statuses', {
-                    method: 'POST',
-                    body: JSON.stringify(dados)
-                });
+    lista.innerHTML = STATUSES_FIXOS.map(status => `
+        <div class="resultado-lista">
+            <strong>ID:</strong> ${status.id}<br>
+            <strong>Descrição:</strong> ${status.descricao}
+        </div>
+    `).join('');
+}
 
-                mostrarMensagem('mensagemStatus', 'Status cadastrado com sucesso!', 'success');
-                document.getElementById('cadastroStatusForm').reset();
-            } catch (erro) {
-                mostrarMensagem('mensagemStatus', `Erro ao cadastrar status: ${erro.message}`, 'error');
-            }
-        }
+// ===== FUNÇÕES PARA AGENDAMENTO (que usam os status fixos) =====
 
-        async function buscarStatusParaExcluir() {
-            const termo = document.getElementById('buscarStatusExcluir').value.trim();
-            if (!termo) {
-                mostrarMensagem('mensagemStatusExcluir', 'Digite uma descrição para buscar', 'error');
-                return;
-            }
+// Função para carregar dados para a seção de cadastro de agendamento
+async function carregarDadosParaAgendamento() {
+    try {
+        // Carrega cidadãos, vacinas e postos (assumindo que essas funções existam)
+        await listarCidadaosParaSelect('cidadaoSelect');
+        await listarVacinasParaSelect('vacinaSelect');
+        await listarPostosParaSelect('postoSelect');
 
-            try {
-                const statuses = await fazerRequisicao('/statuses');
-                const resultados = statuses.filter(s =>
-                    s.descricao.toLowerCase().includes(termo.toLowerCase())
-                );
+        // Preenche o select de status com a lista fixa
+        preencherSelectStatus('statusSelect');
 
-                const container = document.getElementById('resultadoBuscaStatusExcluir');
+    } catch (erro) {
+        mostrarMensagem('mensagemAgendamento', `Erro ao carregar dados: ${erro.message}`, 'error');
+    }
+}
 
-                if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhum status encontrado.</p>';
-                    return;
-                }
-
-                container.innerHTML = resultados.map(status => `
-                    <div class="resultado-lista" onclick="selecionarStatusParaExcluir(${status.id}, '${status.descricao}')">
-                        <strong>Descrição:</strong> ${status.descricao}
-                    </div>
-                `).join('');
-            } catch (erro) {
-                mostrarMensagem('mensagemStatusExcluir', `Erro ao buscar status: ${erro.message}`, 'error');
-            }
-        }
-
-        function selecionarStatusParaExcluir(id, descricao) {
-            document.getElementById('idStatusExcluir').value = id;
-            document.getElementById('statusSelecionadoExcluir').textContent = descricao;
-            document.getElementById('excluirStatusForm').style.display = 'block';
-        }
-
-        async function excluirStatus(e) {
-            e.preventDefault();
-
-            const id = document.getElementById('idStatusExcluir').value;
-
-            try {
-                await fazerRequisicao(`/statuses/${id}`, {
-                    method: 'DELETE'
-                });
-
-                mostrarMensagem('mensagemStatusExcluir', 'Status excluído com sucesso!', 'success');
-                document.getElementById('excluirStatusForm').style.display = 'none';
-                document.getElementById('resultadoBuscaStatusExcluir').innerHTML = '';
-            } catch (erro) {
-                mostrarMensagem('mensagemStatusExcluir', `Erro ao excluir status: ${erro.message}`, 'error');
-            }
-        }
-
+// Função para carregar status para a seção de atualização de agendamento
+function carregarStatusParaAtualizacao() {
+    // Preenche o select de status com a lista fixa
+    preencherSelectStatus('novoStatusAgendamento');
+}
         // ===== FUNÇÕES PARA AGENDAMENTOS =====
 
-        async function carregarDadosParaAgendamento() {
-            try {
-                const [cidadaos, vacinas, postos, statuses] = await Promise.all([
-                    fazerRequisicao('/cidadaos'),
-                    fazerRequisicao('/vacinas'),
-                    fazerRequisicao('/postos'),
-                    fazerRequisicao('/statuses')
-                ]);
+       async function carregarDadosParaAgendamento() {
+    try {
+        const [cidadaos, vacinas, postos] = await Promise.all([
+            fazerRequisicao('/cidadaos'),
+            fazerRequisicao('/vacinas'),
+            fazerRequisicao('/postos')
+        ]);
 
-                // Carregar cidadãos
-                const cidadaoSelect = document.getElementById('cidadaoSelect');
-                cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
-                cidadaos.forEach(cidadao => {
-                    cidadaoSelect.innerHTML += `<option value="${cidadao.id}">${cidadao.nome} - ${cidadao.cpf}</option>`;
-                });
+        const cidadaoSelect = document.getElementById('cidadaoSelect');
+        cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
+        cidadaos.forEach(cidadao => {
+            cidadaoSelect.innerHTML += `<option value="${cidadao.id}">${cidadao.nome} - ${cidadao.cpf}</option>`;
+        });
 
-                // Carregar vacinas
-                const vacinaSelect = document.getElementById('vacinaSelect');
-                vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
-                vacinas.forEach(vacina => {
-                    vacinaSelect.innerHTML += `<option value="${vacina.id}">${vacina.nome} - ${vacina.fabricante}</option>`;
-                });
+        const vacinaSelect = document.getElementById('vacinaSelect');
+        vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
+        vacinas.forEach(vacina => {
+            vacinaSelect.innerHTML += `<option value="${vacina.id}">${vacina.nome} - ${vacina.fabricante}</option>`;
+        });
 
-                // Carregar postos
-                const postoSelect = document.getElementById('postoSelect');
-                postoSelect.innerHTML = '<option value="">Selecione um posto</option>';
-                postos.forEach(posto => {
-                    postoSelect.innerHTML += `<option value="${posto.id}">${posto.nome}</option>`;
-                });
+        const postoSelect = document.getElementById('postoSelect');
+        postoSelect.innerHTML = '<option value="">Selecione um posto</option>';
+        postos.forEach(posto => {
+            postoSelect.innerHTML += `<option value="${posto.id}">${posto.nome}</option>`;
+        });
 
-                // Carregar status
-                const statusSelect = document.getElementById('statusSelect');
-                statusSelect.innerHTML = '<option value="">Selecione um status</option>';
-                statuses.forEach(status => {
-                    statusSelect.innerHTML += `<option value="${status.id}">${status.descricao}</option>`;
-                });
+        // Agora, use a nova função para preencher os status fixos
+        preencherSelectStatus('statusSelect');
 
-            } catch (erro) {
-                mostrarMensagem('mensagemAgendamento', `Erro ao carregar dados: ${erro.message}`, 'error');
-            }
-        }
+    } catch (erro) {
+        mostrarMensagem('mensagemAgendamento', `Erro ao carregar dados: ${erro.message}`, 'error');
+    }
+}
 
         async function cadastrarAgendamento(e) {
             e.preventDefault();
@@ -1477,74 +1408,75 @@
             }
         }
 
-        async function carregarStatusParaAtualizacao() {
-            try {
-                const statuses = await fazerRequisicao('/statuses');
-
-                const statusSelect = document.getElementById('novoStatusAgendamento');
-                statusSelect.innerHTML = '<option value="">Selecione um status</option>';
-                statuses.forEach(status => {
-                    statusSelect.innerHTML += `<option value="${status.id}">${status.descricao}</option>`;
-                });
-            } catch (erro) {
-                mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao carregar status: ${erro.message}`, 'error');
-            }
-        }
+       function carregarStatusParaAtualizacao() {
+    // Preenche o select de status com a lista fixa
+    preencherSelectStatus('novoStatusAgendamento');
+}
 
         async function buscarAgendamentoParaAtualizar() {
-            const termo = document.getElementById('buscarAgendamentoAtualizar').value.trim();
-            if (!termo) {
-                mostrarMensagem('mensagemAgendamentoAtualizar', 'Digite um ID para buscar', 'error');
-                return;
-            }
+    const termo = document.getElementById('buscarAgendamentoAtualizar').value.trim();
+    if (!termo) {
+        mostrarMensagem('mensagemAgendamentoAtualizar', 'Digite um ID para buscar', 'error');
+        return;
+    }
 
-            try {
-                const agendamentos = await fazerRequisicao('/agendamentos');
-                const agendamento = agendamentos.find(a => a.id == termo);
-                const container = document.getElementById('resultadoBuscaAgendamentoAtualizar');
-
-                if (!agendamento) {
-                    container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
-                    document.getElementById('atualizarAgendamentoForm').style.display = 'none';
-                    return;
-                }
-
-                // Preenche o campo ID e exibe o formulário
-                document.getElementById('idAgendamentoAtualizar').value = agendamento.id;
-                document.getElementById('atualizarAgendamentoForm').style.display = 'block';
-                document.getElementById('agendamentoSelecionadoAtualizar').innerText =
-                    `${agendamento.cidadaoNome || 'N/A'} - ${agendamento.vacinaNome || 'N/A'}`;
-
-                // Exibe os detalhes completos usando os campos que já vêm via JOIN
-                container.innerHTML = `
-      <div class="resultado-lista">
-        <strong>Cidadão:</strong> ${agendamento.cidadaoNome || 'N/A'}<br>
-        <strong>Vacina:</strong> ${agendamento.vacinaNome || 'N/A'}<br>
-        <strong>Posto:</strong> ${agendamento.postoNome || 'N/A'}<br>
-        <strong>Status Atual:</strong> ${agendamento.statusDescricao || 'N/A'}<br>
-        <strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}
-      </div>
-    `;
-
-                // Popula o select com os status e já seleciona o atual
-                const statuses = await fazerRequisicao('/statuses');
-                const select = document.getElementById('novoStatusAgendamento');
-                select.innerHTML = '<option value="">Selecione um status</option>';
-                statuses.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = s.descricao;
-                    if (s.id === agendamento.statusId) {
-                        opt.selected = true;
-                    }
-                    select.appendChild(opt);
-                });
-
-            } catch (erro) {
-                mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao buscar agendamento: ${erro.message}`, 'error');
-                document.getElementById('atualizarAgendamentoForm').style.display = 'none';
-            }
+    try {
+        const agendamentos = await fazerRequisicao('/agendamentos');
+        // Verifica se a requisição retornou um array
+        if (!Array.isArray(agendamentos)) {
+            throw new Error('Formato de dados inesperado recebido do servidor.');
         }
+
+        const agendamento = agendamentos.find(a => a.id == termo);
+        const container = document.getElementById('resultadoBuscaAgendamentoAtualizar');
+
+        if (!agendamento) {
+            container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+            document.getElementById('atualizarAgendamentoForm').style.display = 'none';
+            return;
+        }
+
+        // Preenche os campos do formulário e exibe o formulário
+        document.getElementById('idAgendamentoAtualizar').value = agendamento.id;
+        document.getElementById('atualizarAgendamentoForm').style.display = 'block';
+        document.getElementById('agendamentoSelecionadoAtualizar').innerText =
+            `${agendamento.cidadaoNome || 'N/A'} - ${agendamento.vacinaNome || 'N/A'}`;
+
+        container.innerHTML = `
+            <div class="resultado-lista">
+              <strong>Cidadão:</strong> ${agendamento.cidadaoNome || 'N/A'}<br>
+              <strong>Vacina:</strong> ${agendamento.vacinaNome || 'N/A'}<br>
+              <strong>Posto:</strong> ${agendamento.postoNome || 'N/A'}<br>
+              <strong>Status Atual:</strong> ${agendamento.statusDescricao || 'N/A'}<br>
+              <strong>Data/Hora:</strong> ${new Date(agendamento.dataHora).toLocaleString('pt-BR')}
+            </div>
+        `;
+
+        // Popula o select com os status fixos e já seleciona o atual
+        const select = document.getElementById('novoStatusAgendamento');
+        select.innerHTML = '<option value="">Selecione um status</option>';
+
+        const fixedStatuses = [
+            { id: 1, descricao: 'Agendado' },
+            { id: 2, descricao: 'Realizado' },
+            { id: 3, descricao: 'Cancelado' }
+        ];
+
+        fixedStatuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.descricao;
+            if (s.id === agendamento.statusId) {
+                opt.selected = true;
+            }
+            select.appendChild(opt);
+        });
+
+    } catch (erro) {
+        mostrarMensagem('mensagemAgendamentoAtualizar', `Erro ao buscar agendamento: ${erro.message}`, 'error');
+        document.getElementById('atualizarAgendamentoForm').style.display = 'none';
+    }
+}
         async function atualizarAgendamento(e) {
             e.preventDefault();
 
