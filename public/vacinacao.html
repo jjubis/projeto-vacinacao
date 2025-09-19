@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Sistema de Vacinação</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-masker/1.2.0/vanilla-masker.min.js"></script>
     <style>
         body {
     font-family: Arial, sans-serif;
@@ -140,6 +141,7 @@ button:hover {
     margin: 10px 0;
 }
     </style>
+
 </head>
 
 <body>
@@ -168,31 +170,28 @@ button:hover {
     </nav>
 
     <main>
-        <!-- Seção 1: Cadastrar cidadão -->
         <section id="secao1">
-            <h3>Cadastrar cidadão</h3>
-            <form id="cadastroForm">
-                <label for="nome">Nome:</label>
-                <input type="text" id="nome" required />
+    <h3>Cadastrar cidadão</h3>
+    <form id="cadastroForm" novalidate>
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" required />
 
-                <label for="cpf">CPF (11 dígitos):</label>
-                <input type="text" id="cpf" required pattern="^\d{11}$" maxlength="11"
-                    title="Digite exatamente 11 dígitos numéricos" />
+        <label for="cpf">CPF (11 dígitos):</label>
+        <input type="text" id="cpf" required />
 
-                <label for="telefone">Telefone (11 dígitos):</label>
-                <input type="text" id="telefone" required pattern="^\d{11}$" maxlength="11"
-                    title="Digite exatamente 11 dígitos numéricos" />
+        <label for="telefone">Telefone (11 dígitos):</label>
+        <input type="text" id="telefone" required />
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" required />
+        <label for="email">Email:</label>
+        <input type="email" id="email" required />
 
-                <label for="endereco">Endereço:</label>
-                <textarea id="endereco" required></textarea>
+        <label for="endereco">Endereço:</label>
+        <textarea id="endereco" required></textarea>
 
-                <button type="submit" id="cadastroCidadaoSbmt">Cadastrar</button>
-            </form>
-            <div id="mensagem"></div>
-        </section>
+        <button type="submit" id="cadastroCidadaoSbmt">Cadastrar</button>
+    </form>
+    <div id="mensagem"></div>
+</section>
 
         <!-- Seção 2: Listar cidadãos -->
         <section id="secao2">
@@ -203,29 +202,29 @@ button:hover {
             </div>
         </section>
 
-        <!-- Seção 3: Atualizar cidadão -->
         <section id="secao3">
-            <h3>Atualizar cidadão</h3>
-            <label>Buscar por CPF ou nome:</label>
-            <input type="text" id="buscarCpfAtualizar" placeholder="Buscar..." />
-            <button type="button" onclick="buscarCidadaoParaAtualizar()">Buscar</button>
-            <div id="resultadoBuscaAtualizar"></div>
-            <form id="atualizarForm" style="display:none;">
-                <input type="hidden" id="idAtualizar" />
-                <label>Novo nome:</label>
-                <input type="text" id="novoNome" placeholder="Deixe em branco para manter" />
-                <label>Novo CPF:</label>
-                <input type="text" id="novoCpf" placeholder="Deixe em branco para manter" />
-                <label>Novo telefone:</label>
-                <input type="text" id="novoTelefone" placeholder="Deixe em branco para manter" />
-                <label>Novo email:</label>
-                <input type="email" id="novoEmail" placeholder="Deixe em branco para manter" />
-                <label>Novo endereço:</label>
-                <textarea id="novoEndereco" placeholder="Deixe em branco para manter"></textarea>
-                <button type="submit">Atualizar</button>
-            </form>
-            <div id="mensagemAtualizar"></div>
-        </section>
+    <h3>Atualizar cidadão</h3>
+    <label>Buscar por CPF ou nome:</label>
+    <input type="text" id="buscarCpfAtualizar" placeholder="Buscar..." />
+    <button type="button" onclick="buscarCidadaoParaAtualizar()">Buscar</button>
+    <div id="resultadoBuscaAtualizar"></div>
+    
+    <form id="atualizarForm" style="display:none;" novalidate>
+        <input type="hidden" id="idAtualizar" />
+        <label>Novo nome:</label>
+        <input type="text" id="novoNome" placeholder="Deixe em branco para manter" />
+        <label>Novo CPF:</label>
+        <input type="text" id="novoCpf" placeholder="Deixe em branco para manter" />
+        <label>Novo telefone:</label>
+        <input type="text" id="novoTelefone" placeholder="Deixe em branco para manter" />
+        <label>Novo email:</label>
+        <input type="email" id="novoEmail" placeholder="Deixe em branco para manter" />
+        <label>Novo endereço:</label>
+        <textarea id="novoEndereco" placeholder="Deixe em branco para manter"></textarea>
+        <button type="submit">Atualizar</button>
+    </form>
+    <div id="mensagemAtualizar"></div>
+</section>
 
         <!-- Seção 4: Excluir cidadão -->
         <section id="secao4">
@@ -241,6 +240,7 @@ button:hover {
     </form>
     <div id="mensagemExcluir"></div>
 </section>
+
         <!-- Seção 5: Cadastrar vacina -->
         <section id="secao5">
             <h3>Cadastrar vacina</h3>
@@ -513,65 +513,89 @@ button:hover {
             }
         }
         // Sistema de navegação
-        document.addEventListener('DOMContentLoaded', function () {
-            const menuItems = document.querySelectorAll('#menu li');
-            const sections = document.querySelectorAll('main section');
+document.addEventListener('DOMContentLoaded', function () {
+    const menuItems = document.querySelectorAll('#menu li');
+    const sections = document.querySelectorAll('main section');
 
-            menuItems.forEach(item => {
-                item.addEventListener('click', function () {
-                    const opcao = this.getAttribute('data-opcao');
+    // Função para aplicar as máscaras nos campos de entrada
+    function aplicarMascaras() {
+        // Máscaras para CPF
+        const cpfCadastro = document.getElementById('cpf');
+        if (cpfCadastro) {
+            VMasker(cpfCadastro).maskPattern('999.999.999-99');
+        }
+        const cpfAtualizar = document.getElementById('novoCpf');
+        if (cpfAtualizar) {
+            VMasker(cpfAtualizar).maskPattern('999.999.999-99');
+        }
 
-                    // Remove classe ativo de todos os itens
-                    menuItems.forEach(i => i.classList.remove('ativo'));
+        // Máscaras para Telefone
+        const telefoneCadastro = document.getElementById('telefone');
+        if (telefoneCadastro) {
+            VMasker(telefoneCadastro).maskPattern('(99) 99999-9999');
+        }
+        const telefoneAtualizar = document.getElementById('novoTelefone');
+        if (telefoneAtualizar) {
+            VMasker(telefoneAtualizar).maskPattern('(99) 99999-9999');
+        }
+    }
+    
+    // Chamada para aplicar as máscaras assim que a página carregar
+    aplicarMascaras();
 
-                    // Adiciona classe ativo ao item clicado
-                    this.classList.add('ativo');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function () {
+            const opcao = this.getAttribute('data-opcao');
 
-                    // Esconde todas as seções
-                    sections.forEach(section => section.classList.remove('active'));
+            // Remove classe ativo de todos os itens
+            menuItems.forEach(i => i.classList.remove('ativo'));
 
-                    // Mostra a seção correspondente
-                    const secaoAtiva = document.getElementById(`secao${opcao}`);
-                    if (secaoAtiva) {
-                        secaoAtiva.classList.add('active');
+            // Adiciona classe ativo ao item clicado
+            this.classList.add('ativo');
 
-                        // Carrega dados automaticamente para seções de listagem
-                        switch (opcao) {
-                            case '2':
-                                listarCidadaos();
-                                break;
-                            case '6':
-                                listarVacinas();
-                                break;
-                            case '10':
-                                listarPostos();
-                                break;
-                            case '13':
-                                listarStatus();
-                                break;
-                            case '14':
-                                carregarDadosParaAgendamento();
-                                break;
-                            case '15':
-                                 listarAgendamentosDetalhados();
-                                break;
-                            case '16':
-                                carregarStatusParaAtualizacao();
-                                 break;
-// ...
-                        }
-                    }
-                });
-            });
+            // Esconde todas as seções
+            sections.forEach(section => section.classList.remove('active'));
 
-            // Ativa a primeira seção por padrão
-            document.querySelector('#menu li[data-opcao="1"]').click();
+            // Mostra a seção correspondente
+            const secaoAtiva = document.getElementById(`secao${opcao}`);
+            if (secaoAtiva) {
+                secaoAtiva.classList.add('active');
 
-            // Event listeners para formulários
-            configurarEventListeners();
+                // Carrega dados automaticamente para seções de listagem
+                switch (opcao) {
+                    case '2':
+                        listarCidadaos();
+                        break;
+                    case '6':
+                        listarVacinas();
+                        break;
+                    case '10':
+                        listarPostos();
+                        break;
+                    case '13':
+                        listarStatus();
+                        break;
+                    case '14':
+                        carregarDadosParaAgendamento();
+                        break;
+                    case '15':
+                        listarAgendamentosDetalhados();
+                        break;
+                    case '16':
+                        carregarStatusParaAtualizacao();
+                        break;
+                    // ...
+                }
+            }
         });
+    });
 
-       // ... (código anterior)
+    // Ativa a primeira seção por padrão
+    document.querySelector('#menu li[data-opcao="1"]').click();
+
+    // Event listeners para formulários
+    configurarEventListeners();
+});
 
 // Event listeners para formulários
 function configurarEventListeners() {
@@ -659,46 +683,76 @@ function configurarEventListeners() {
             }
         }
         let isSubmitting = false;
-        async function cadastrarCidadao(e) {
-            e.preventDefault();
 
-            const submitButton = document.getElementById('cadastroCidadaoSbmt');
-            const cpf = document.getElementById('cpf').value.trim();
+       async function cadastrarCidadao(e) {
+    // Evita o comportamento padrão de recarregar a página
+    e.preventDefault();
 
-            if (!/^\d{11}$/.test(cpf)) {
-                mostrarMensagem('mensagem', 'CPF deve conter exatamente 11 números (sem letras ou símbolos).', 'error');
-                return;
-            }
+    // Referência para o botão de envio
+    const submitButton = document.getElementById('cadastroCidadaoSbmt');
+    
+    // Obtém os valores dos campos
+    const nome = document.getElementById('nome').value.trim();
+    const cpf = document.getElementById('cpf').value.trim();
+    const telefone = document.getElementById('telefone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const endereco = document.getElementById('endereco').value.trim();
 
-            const dados = {
-                nome: document.getElementById('nome').value.trim(),
-                cpf,
-                telefone: document.getElementById('telefone').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                endereco: document.getElementById('endereco').value.trim()
-            };
+    // Remove os caracteres de máscara antes de validar e enviar
+    const cpfLimpo = cpf.replace(/\D/g, '');
+    const telefoneLimpo = telefone.replace(/\D/g, '');
 
-            submitButton.disabled = true;
-            submitButton.textContent = 'Cadastrando...';
+    // Validações básicas antes de continuar
+    if (!nome || !cpfLimpo || !telefoneLimpo || !email || !endereco) {
+        mostrarMensagem('mensagem', 'Por favor, preencha todos os campos obrigatórios.', 'error');
+        return;
+    }
 
-            try {
-                await fazerRequisicao('/cidadaos', {
-                    method: 'POST',
-                    body: JSON.stringify(dados)
-                });
+    if (cpfLimpo.length !== 11) {
+        mostrarMensagem('mensagem', 'CPF deve conter exatamente 11 números.', 'error');
+        return;
+    }
 
-                mostrarMensagem('mensagem', 'Cidadão cadastrado com sucesso!', 'success');
-                document.getElementById('cadastroForm').reset();
-                listarCidadaos();
+    // Validação de telefone para 10 ou 11 dígitos
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+        mostrarMensagem('mensagem', 'Telefone deve conter entre 10 e 11 números, incluindo o DDD.', 'error');
+        return;
+    }
 
-            } catch (erro) {
-                mostrarMensagem('mensagem', `Erro ao cadastrar cidadão: ${erro.message}`, 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Cadastrar';
-            }
-        }
+    // Objeto de dados para o envio à API, usando os valores limpos
+    const dados = {
+        nome: nome,
+        cpf: cpfLimpo,
+        telefone: telefoneLimpo,
+        email: email,
+        endereco: endereco
+    };
 
+    // Desabilita o botão para evitar múltiplos cliques
+    submitButton.disabled = true;
+    submitButton.textContent = 'Cadastrando...';
+
+    try {
+        // Envia a requisição POST para a API
+        await fazerRequisicao('/cidadaos', {
+            method: 'POST',
+            body: JSON.stringify(dados)
+        });
+
+        // Exibe mensagem de sucesso e limpa o formulário
+        mostrarMensagem('mensagem', 'Cidadão cadastrado com sucesso!', 'success');
+        document.getElementById('cadastroForm').reset();
+        listarCidadaos();
+
+    } catch (erro) {
+        // Em caso de erro, exibe a mensagem de erro da requisição
+        mostrarMensagem('mensagem', `Erro ao cadastrar cidadão: ${erro.message}`, 'error');
+    } finally {
+        // Habilita o botão novamente
+        submitButton.disabled = false;
+        submitButton.textContent = 'Cadastrar';
+    }
+}
         async function listarCidadaos() {
             try {
                 const cidadaos = await fazerRequisicao('/cidadaos');
@@ -766,84 +820,101 @@ function configurarEventListeners() {
             document.getElementById('atualizarForm').style.display = 'block';
         }
 
-        async function atualizarCidadao(e) {
-            e.preventDefault();
+       async function atualizarCidadao(e) {
+    // Impede o envio padrão do formulário
+    e.preventDefault();
 
-            const id = document.getElementById('idAtualizar').value;
-            const novoCpf = document.getElementById('novoCpf').value.trim();
+    const id = document.getElementById('idAtualizar').value;
+    const novoNome = document.getElementById('novoNome').value.trim();
+    const novoCpf = document.getElementById('novoCpf').value.trim();
+    const novoTelefone = document.getElementById('novoTelefone').value.trim();
+    const novoEmail = document.getElementById('novoEmail').value.trim();
+    const novoEndereco = document.getElementById('novoEndereco').value.trim();
 
-            // Se CPF for preenchido, precisa ser apenas números e ter 11 dígitos
-            if (novoCpf && !/^\d{11}$/.test(novoCpf)) {
-                mostrarMensagem('mensagemAtualizar', 'CPF deve conter exatamente 11 números (sem letras ou símbolos).', 'error');
-                return;
-            }
+    // Cria um objeto para enviar apenas os dados que foram preenchidos
+    const dados = {};
 
-            const dados = {};
+    // Limpa o CPF e o telefone, se existirem, antes da validação
+    const cpfLimpo = novoCpf ? novoCpf.replace(/\D/g, '') : '';
+    const telefoneLimpo = novoTelefone ? novoTelefone.replace(/\D/g, '') : '';
 
-            const novoNome = document.getElementById('novoNome').value.trim();
-            const novoTelefone = document.getElementById('novoTelefone').value.trim();
-            const novoEmail = document.getElementById('novoEmail').value.trim();
-            const novoEndereco = document.getElementById('novoEndereco').value.trim();
+    // Valida o CPF apenas se o campo foi preenchido
+    if (novoCpf && cpfLimpo.length !== 11) {
+        mostrarMensagem('mensagemAtualizar', 'CPF deve conter exatamente 11 números.', 'error');
+        return;
+    }
 
-            if (novoNome) dados.nome = novoNome;
-            if (novoCpf) dados.cpf = novoCpf;
-            if (novoTelefone) dados.telefone = novoTelefone;
-            if (novoEmail) dados.email = novoEmail;
-            if (novoEndereco) dados.endereco = novoEndereco;
+    // Valida o telefone apenas se o campo foi preenchido
+    if (novoTelefone && (telefoneLimpo.length < 10 || telefoneLimpo.length > 11)) {
+        mostrarMensagem('mensagemAtualizar', 'Telefone deve conter entre 10 e 11 números, incluindo o DDD.', 'error');
+        return;
+    }
 
-            try {
-                await fazerRequisicao(`/cidadaos/${id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(dados)
-                });
+    // Adiciona ao objeto 'dados' apenas os campos que foram preenchidos
+    if (novoNome) dados.nome = novoNome;
+    if (cpfLimpo) dados.cpf = cpfLimpo; // Usa a versão limpa
+    if (telefoneLimpo) dados.telefone = telefoneLimpo; // Usa a versão limpa
+    if (novoEmail) dados.email = novoEmail;
+    if (novoEndereco) dados.endereco = novoEndereco;
 
-                mostrarMensagem('mensagemAtualizar', 'Cidadão atualizado com sucesso!', 'success');
-                document.getElementById('atualizarForm').style.display = 'none';
-                document.getElementById('resultadoBuscaAtualizar').innerHTML = '';
-            } catch (erro) {
-                mostrarMensagem('mensagemAtualizar', `Erro ao atualizar cidadão: ${erro.message}`, 'error');
-            }
+    try {
+        // Envia a requisição PUT para a API
+        await fazerRequisicao(`/cidadaos/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(dados)
+        });
+
+        mostrarMensagem('mensagemAtualizar', 'Cidadão atualizado com sucesso!', 'success');
+        document.getElementById('atualizarForm').style.display = 'none';
+        document.getElementById('resultadoBuscaAtualizar').innerHTML = '';
+        
+    } catch (erro) {
+        mostrarMensagem('mensagemAtualizar', `Erro ao atualizar cidadão: ${erro.message}`, 'error');
+    }
+}
+      // ===== FUNÇÕES PARA A SEÇÃO DE EXCLUSÃO DE CIDADÃO =====
+
+// Função para buscar um cidadão por CPF ou nome
+async function buscarCidadaoParaExcluir() {
+    const termo = document.getElementById('buscarCpfExcluir').value.trim();
+    if (!termo) {
+        mostrarMensagem('mensagemExcluir', 'Digite um CPF ou nome para buscar', 'error');
+        return;
+    }
+
+    try {
+        const cidadaos = await fazerRequisicao('/cidadaos');
+        const resultados = cidadaos.filter(c =>
+            c.cpf.includes(termo) ||
+            c.nome.toLowerCase().includes(termo.toLowerCase())
+        );
+
+        const container = document.getElementById('resultadoBuscaExcluir');
+        if (resultados.length === 0) {
+            container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
+            return;
         }
 
-        async function buscarCidadaoParaExcluir() {
-            const termo = document.getElementById('buscarCpfExcluir').value.trim();
-            if (!termo) {
-                mostrarMensagem('mensagemExcluir', 'Digite um CPF ou nome para buscar', 'error');
-                return;
-            }
+        container.innerHTML = resultados.map(cidadao => `
+            <div class="resultado-lista" onclick="selecionarCidadaoParaExcluir(${cidadao.id}, '${cidadao.nome}')">
+                <strong>Nome:</strong> ${cidadao.nome}<br>
+                <strong>CPF:</strong> ${cidadao.cpf}
+            </div>
+        `).join('');
+    } catch (erro) {
+        mostrarMensagem('mensagemExcluir', `Erro ao buscar cidadão: ${erro.message}`, 'error');
+    }
+}
 
-            try {
-                const cidadaos = await fazerRequisicao('/cidadaos');
-                const resultados = cidadaos.filter(c =>
-                    c.cpf.includes(termo) ||
-                    c.nome.toLowerCase().includes(termo.toLowerCase())
-                );
+// Função para selecionar o cidadão e exibir o formulário de exclusão
+function selecionarCidadaoParaExcluir(id, nome) {
+    document.getElementById('idExcluir').value = id;
+    document.getElementById('nomeSelecionadoExcluir').textContent = nome;
+    document.getElementById('excluirForm').style.display = 'block';
+}
 
-                const container = document.getElementById('resultadoBuscaExcluir');
-
-                if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
-                    return;
-                }
-
-                container.innerHTML = resultados.map(cidadao => `
-                    <div class="resultado-lista" onclick="selecionarCidadaoParaExcluir(${cidadao.id}, '${cidadao.nome}')">
-                        <strong>Nome:</strong> ${cidadao.nome}<br>
-                        <strong>CPF:</strong> ${cidadao.cpf}
-                    </div>
-                `).join('');
-            } catch (erro) {
-                mostrarMensagem('mensagemExcluir', `Erro ao buscar cidadão: ${erro.message}`, 'error');
-            }
-        }
-
-        function selecionarCidadaoParaExcluir(id, nome) {
-            document.getElementById('idExcluir').value = id;
-            document.getElementById('nomeSelecionadoExcluir').textContent = nome;
-            document.getElementById('excluirForm').style.display = 'block';
-        }
-
-       async function excluirCidadao(e) {
+// Função para excluir o cidadão selecionado
+async function excluirCidadao(e) {
     // Impede o envio padrão do formulário, que recarregaria a página.
     e.preventDefault();
 
@@ -878,7 +949,6 @@ function configurarEventListeners() {
         mostrarMensagem('mensagemExcluir', `Erro ao excluir cidadão: ${erro.message}`, 'error');
     }
 }
-
         // ===== FUNÇÕES PARA VACINAS =====
 
         async function cadastrarVacina(e) {
