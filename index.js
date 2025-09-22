@@ -25,6 +25,8 @@ app.get('/', (req, res) => {
 // Inicialização do banco de dados com logs
 (function initializeDatabase() {
     console.log('Inicializando banco de dados...');
+    
+    // Criação das tabelas
     db.exec(`
         CREATE TABLE IF NOT EXISTS cidadaos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,25 +36,33 @@ app.get('/', (req, res) => {
             email TEXT,
             endereco TEXT
         );
+    `);
 
+    db.exec(`
         CREATE TABLE IF NOT EXISTS vacinas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
             fabricante TEXT NOT NULL,
             validade DATE NOT NULL
         );
+    `);
 
+    db.exec(`
         CREATE TABLE IF NOT EXISTS postos_saude (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
             endereco TEXT NOT NULL
         );
+    `);
 
+    db.exec(`
         CREATE TABLE IF NOT EXISTS statuses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             descricao TEXT UNIQUE NOT NULL
         );
+    `);
 
+    db.exec(`
         CREATE TABLE IF NOT EXISTS agendamentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cidadaoId INTEGER NOT NULL,
@@ -67,26 +77,31 @@ app.get('/', (req, res) => {
         );
     `);
 
+    // Adição do índice único condicional
+    db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS unique_agendamento ON agendamentos (cidadaoId, vacinaId) WHERE statusId IN (1, 2);
+    `);
+    
     // Insere dados iniciais se as tabelas estiverem vazias
     const countCidadaos = db.prepare('SELECT COUNT(*) AS count FROM cidadaos').get().count;
     if (countCidadaos === 0) {
         console.log('Inserindo cidadão inicial...');
         db.prepare('INSERT INTO cidadaos (nome, cpf, telefone, email, endereco) VALUES (?, ?, ?, ?, ?)')
-          .run('João Silva', '12345678901', '99999888888', 'joao@email.com', 'Rua A, 123');
+            .run('João Silva', '12345678901', '99999888888', 'joao@email.com', 'Rua A, 123');
     }
 
     const countVacinas = db.prepare('SELECT COUNT(*) AS count FROM vacinas').get().count;
     if (countVacinas === 0) {
         console.log('Inserindo vacina inicial...');
         db.prepare('INSERT INTO vacinas (nome, fabricante, validade) VALUES (?, ?, ?)')
-          .run('Vacina da Gripe', 'Butantan', '2026-12-31');
+            .run('Vacina da Gripe', 'Butantan', '2026-12-31');
     }
 
     const countPostos = db.prepare('SELECT COUNT(*) AS count FROM postos_saude').get().count;
     if (countPostos === 0) {
         console.log('Inserindo posto inicial...');
         db.prepare('INSERT INTO postos_saude (nome, endereco) VALUES (?, ?)')
-          .run('Posto Central', 'Avenida Principal, 456');
+            .run('Posto Central', 'Avenida Principal, 456');
     }
 
     const countStatuses = db.prepare('SELECT COUNT(*) AS count FROM statuses').get().count;
