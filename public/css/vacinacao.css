@@ -1,0 +1,134 @@
+ body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #e8f5ff; 
+    display: flex;
+    gap: 20px;
+    height: 90vh;
+}
+
+#menu {
+    background: #3c5a81; 
+    color: white;
+    padding: 15px;
+    width: 300px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+#menu h2 {
+    margin-top: 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+#menu ul {
+    list-style: none;
+    padding: 0;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+#menu li {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #3c77c0; 
+    user-select: none;
+}
+
+#menu li:hover {
+    background: #4a6c9a;
+}
+
+#menu li.ativo {
+    background-color: #4575b1; 
+}
+
+main {
+    flex-grow: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 90vh;
+}
+
+section {
+    display: none;
+}
+
+section.active {
+    display: block;
+}
+
+label,
+input,
+textarea,
+button,
+select {
+    display: block;
+    margin-bottom: 10px;
+    width: 100%;
+    font-size: 14px;
+}
+
+input,
+textarea,
+select {
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px;
+    background-color: #437ec6; 
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #3c5a81; 
+}
+
+.lista p {
+    color: #4a6c9a; 
+}
+
+.resultado-lista {
+    margin-bottom: 15px;
+    border: 1px solid #d0e0f0; 
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+}
+
+.resultado-lista:hover {
+    background-color: #f0f8ff; 
+}
+
+.selecionado {
+    background-color: #b3e5fc !important; 
+}
+
+.error {
+    color: #c62828; 
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.success {
+    color: #2e7d32; 
+    background-color: #e8f5e8; 
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
