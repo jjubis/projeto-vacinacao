@@ -27,10 +27,6 @@ function preencherSelectStatus(selectId) {
     });
 }
 
-/**
- * Lista os status de agendamento fixos.
- * Chamada pela opção '13 - Listar status de agendamento'.
- */
 function listarStatus() {
     const lista = document.getElementById('listaStatus');
     if (!lista) return;
@@ -110,8 +106,7 @@ function carregarStatusParaAtualizacao() {
 
         async function listarAgendamentosDetalhados() {
             const lista = document.getElementById('listaAgendamentos');
-            lista.innerHTML = '<p>Carregando...</p>'; // Indicador visual
-
+            lista.innerHTML = '<p>Carregando...</p>'; 
             try {
                 const agendamentos = await fazerRequisicao('/agendamentos');
 
