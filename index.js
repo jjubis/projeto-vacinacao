@@ -21,6 +21,33 @@ app.get('/', (req, res) => {
     res.sendFile('vacinacao.html', { root: 'public' });
 });
 
+// Rota para a página de Gestão 
+
+app.get('/gestao', (req, res) => {
+    res.sendFile('gestao.html', { root: 'public' });
+});
+
+// Rota de API para os dados do gráfico 
+
+app.get('/gestao/dados', (req, res) => {
+    try {
+        const totalCidadaos = db.prepare('SELECT COUNT(*) AS total FROM cidadaos').get().total;
+        
+        const totalVacinasDisponiveis = db.prepare('SELECT COUNT(*) AS total FROM vacinas').get().total;
+
+        const totalAgendamentos = db.prepare('SELECT COUNT(*) AS total FROM agendamentos').get().total;
+
+        res.json({
+            totalCidadaos,
+            totalVacinasDisponiveis,
+            totalAgendamentos
+        });
+    } catch (error) {
+        console.error('Erro ao buscar dados de gestão:', error);
+        res.status(500).json({ error: 'Erro ao buscar dados de gestão', details: error.message });
+    }
+});
+
 (function initializeDatabase() {
     console.log('Inicializando banco de dados...');
     
@@ -79,7 +106,6 @@ app.get('/', (req, res) => {
         CREATE UNIQUE INDEX IF NOT EXISTS unique_agendamento ON agendamentos (cidadaoId, vacinaId) WHERE statusId IN (1, 2);
     `);
     
-    // Insere dados iniciais se as tabelas estiverem vazias
     const countCidadaos = db.prepare('SELECT COUNT(*) AS count FROM cidadaos').get().count;
     if (countCidadaos === 0) {
         console.log('Inserindo cidadão inicial...');
@@ -133,6 +159,7 @@ app.get('/teste', (req, res) => {
     res.json({ message: 'Servidor está rodando e respondendo!' });
 });
 
+// Rotas modulares (CRUD)
 app.use('/cidadaos', (req, res, next) => {
     console.log(`Request para /cidadaos: ${req.method} ${req.url}`);
     next();

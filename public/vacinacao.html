@@ -5,6 +5,8 @@
     <title>Sistema de Vacinação</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-masker/1.2.0/vanilla-masker.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <link rel="stylesheet" href="css/vacinacao.css">
 
@@ -13,6 +15,8 @@
     <nav id="menu">
         <h2>--- MENU ---</h2>
         <ul>
+            <li data-opcao="0">0 - Gestão de Negócio</li>
+            
             <li data-opcao="1">1 - Cadastrar cidadão</li>
             <li data-opcao="2">2 - Listar cidadãos</li>
             <li data-opcao="3">3 - Atualizar cidadão</li>
@@ -30,7 +34,8 @@
             <li data-opcao="15">15 - Listar agendamentos detalhados</li>
             <li data-opcao="16">16 - Atualizar agendamento</li>
             <li data-opcao="17">17 - Excluir agendamento</li>
-            <li data-opcao="0">0 - Sair</li>
+            
+            <li data-opcao="S">S - Sair do Sistema</li> 
         </ul>
     </nav>
 
@@ -299,9 +304,16 @@
         </section>
 
         <section id="secao0">
+            <h3>Gestão de Negócio</h3>
+            <p>Métricas Chave do Sistema de Vacinação</p>
+            <div style="width: 80%; margin: 20px auto;">
+                <canvas id="dashboardChart"></canvas>
+            </div>
+        </section>
+        
+        <section id="secaoS" style="display:none;">
             <h3>Sistema de Vacinação</h3>
             <p>Obrigado por usar o Sistema de Vacinação!</p>
-
         </section>
     </main>
     
@@ -311,6 +323,8 @@
     <script src="js/vacina.js"></script>
     <script src="js/posto.js"></script>
     <script src="js/agendamento.js"></script>
+    
+    <script src="js/gestao.js"></script> 
     
     <script src="js/vacinacao.js"></script> 
 </body>

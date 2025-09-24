@@ -64,12 +64,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
             sections.forEach(section => section.classList.remove('active'));
 
+        
+            if (opcao === 'S') {
+                const secaoSair = document.getElementById('secaoS'); 
+                if (secaoSair) {
+                    secaoSair.classList.add('active');
+                }
+                return; 
+            }
+
             const secaoAtiva = document.getElementById(`secao${opcao}`);
             if (secaoAtiva) {
                 secaoAtiva.classList.add('active');
 
-                // Carrega dados automaticamente para seções de listagem
                 switch (opcao) {
+                    case '0': 
+                        fetchDadosGestao();
+                        break;
                     case '2': 
                         listarCidadaos(); 
                         break;
