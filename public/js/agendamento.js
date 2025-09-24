@@ -13,14 +13,12 @@ const STATUSES_FIXOS = [
  */
 function preencherSelectStatus(selectId) {
     const select = document.getElementById(selectId);
-    if (!select) return; // Garante que o elemento existe
+    if (!select) return; 
 
-    // Limpa as opções existentes (mantém a primeira, se houver)
     while (select.options.length > 1) {
         select.remove(1);
     }
 
-    // Adiciona os novos status
     STATUSES_FIXOS.forEach(status => {
         const option = document.createElement('option');
         option.value = status.id;
@@ -48,7 +46,7 @@ function listarStatus() {
 // ===== FUNÇÕES PARA AGENDAMENTO (que usam os status fixos) =====
 
 function carregarStatusParaAtualizacao() {
-    // Preenche o select de status com a lista fixa
+    
     preencherSelectStatus('novoStatusAgendamento');
 }
         // ===== FUNÇÕES PARA AGENDAMENTOS =====
@@ -79,7 +77,6 @@ function carregarStatusParaAtualizacao() {
             postoSelect.innerHTML += `<option value="${posto.id}">${posto.nome}</option>`;
         });
 
-        // Agora, use a nova função para preencher os status fixos
         preencherSelectStatus('statusSelect');
 
     } catch (erro) {
@@ -141,7 +138,7 @@ function carregarStatusParaAtualizacao() {
         }
 
        function carregarStatusParaAtualizacao() {
-    // Preenche o select de status com a lista fixa
+    
     preencherSelectStatus('novoStatusAgendamento');
 }
 
@@ -154,7 +151,7 @@ function carregarStatusParaAtualizacao() {
 
     try {
         const agendamentos = await fazerRequisicao('/agendamentos');
-        // Verifica se a requisição retornou um array
+        
         if (!Array.isArray(agendamentos)) {
             throw new Error('Formato de dados inesperado recebido do servidor.');
         }
@@ -271,18 +268,15 @@ function carregarStatusParaAtualizacao() {
         }
 
        async function excluirAgendamento(e) {
-    // Evita o comportamento padrão do formulário, que é recarregar a página.
+    
     e.preventDefault();
 
-    // Adiciona uma janela de confirmação para o usuário.
     const confirmacao = confirm('Tem certeza que deseja excluir este agendamento?');
 
-    // Se o usuário clicar em "Cancelar", a função é interrompida.
     if (!confirmacao) {
         return;
     }
 
-    // Se o usuário confirmar a exclusão, a lógica continua.
     const id = document.getElementById('idAgendamentoExcluir').value;
 
     if (!id) {

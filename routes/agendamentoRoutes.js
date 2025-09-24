@@ -55,8 +55,6 @@ export default (db) => {
         }
     });
 
-    // ... (código anterior da rota GET)
-
 // Rota POST para criar agendamento
 router.post('/', (req, res) => {
     try {
@@ -65,8 +63,6 @@ router.post('/', (req, res) => {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
         }
 
-        // A validação de unicidade agora é tratada pelo UNIQUE INDEX do banco de dados.
-        // O código tenta a inserção diretamente.
         const info = db.prepare(`
             INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
             VALUES (?, ?, ?, ?, ?)
@@ -74,12 +70,10 @@ router.post('/', (req, res) => {
 
         res.status(201).json({ message: 'Agendamento criado com sucesso', id: info.lastInsertRowid });
     } catch (error) {
-        // Se o erro for devido à restrição de unicidade, ele terá o código 'SQLITE_CONSTRAINT'
         if (error.code === 'SQLITE_CONSTRAINT') {
             return res.status(409).json({ error: 'Este cidadão já possui um agendamento para esta vacina.' });
         }
 
-        // Para qualquer outro tipo de erro, retorna uma mensagem genérica
         console.error('Erro ao criar agendamento:', error.message);
         res.status(400).json({ error: 'Erro ao criar agendamento', details: error.message });
     }

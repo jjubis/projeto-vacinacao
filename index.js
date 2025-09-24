@@ -17,12 +17,10 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rota para a página inicial
-// Serve o arquivo vacinacao.html quando a URL raiz (/) é acessada
 app.get('/', (req, res) => {
     res.sendFile('vacinacao.html', { root: 'public' });
 });
 
-// Inicialização do banco de dados com logs
 (function initializeDatabase() {
     console.log('Inicializando banco de dados...');
     
@@ -77,7 +75,6 @@ app.get('/', (req, res) => {
         );
     `);
 
-    // Adição do índice único condicional
     db.exec(`
         CREATE UNIQUE INDEX IF NOT EXISTS unique_agendamento ON agendamentos (cidadaoId, vacinaId) WHERE statusId IN (1, 2);
     `);
@@ -112,7 +109,6 @@ app.get('/', (req, res) => {
         db.prepare('INSERT INTO statuses (descricao) VALUES (?)').run('Cancelado');
     }
 
-    // Inserção inicial de agendamento, se necessário
     const cidadao = db.prepare('SELECT id FROM cidadaos LIMIT 1').get();
     const vacina = db.prepare('SELECT id FROM vacinas LIMIT 1').get();
     const posto = db.prepare('SELECT id FROM postos_saude LIMIT 1').get();
@@ -132,13 +128,11 @@ app.get('/', (req, res) => {
     console.log('Banco de dados inicializado.');
 })();
 
-// Rota de teste para checar se o servidor está online
 app.get('/teste', (req, res) => {
     console.log('Rota /teste acessada');
     res.json({ message: 'Servidor está rodando e respondendo!' });
 });
 
-// Rotas da API com logs simples para debug
 app.use('/cidadaos', (req, res, next) => {
     console.log(`Request para /cidadaos: ${req.method} ${req.url}`);
     next();

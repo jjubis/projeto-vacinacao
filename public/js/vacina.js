@@ -152,37 +152,27 @@
         }
 
         async function excluirVacina(e) {
-    // Impede o envio padrão do formulário, que recarregaria a página.
     e.preventDefault();
-
-    // Adiciona a verificação de confirmação antes de continuar a exclusão.
     const confirmacao = confirm('Tem certeza que deseja excluir esta vacina?');
 
-    // Se o usuário clicar em "Cancelar", a função termina aqui.
     if (!confirmacao) {
         return; 
     }
 
-    // Se o usuário clicar em "OK", a lógica abaixo é executada.
     const id = document.getElementById('idVacinaExcluir').value;
 
     try {
-        // Envia uma requisição DELETE para a API usando o ID da vacina.
         await fazerRequisicao(`/vacinas/${id}`, {
             method: 'DELETE'
         });
 
-        // Exibe uma mensagem de sucesso na interface do usuário.
         mostrarMensagem('mensagemVacinaExcluir', 'Vacina excluída com sucesso!', 'success');
         
-        // Esconde o formulário de exclusão.
         document.getElementById('excluirVacinaForm').style.display = 'none';
 
-        // Limpa a área de busca para evitar informações incorretas.
         document.getElementById('resultadoBuscaVacinaExcluir').innerHTML = '';
 
     } catch (erro) {
-        // Em caso de erro, exibe uma mensagem com a descrição do problema.
         mostrarMensagem('mensagemVacinaExcluir', `Erro ao excluir vacina: ${erro.message}`, 'error');
     }
 }

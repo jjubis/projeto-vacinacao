@@ -145,18 +145,15 @@
         }
 
        async function excluirPosto(e) {
-    // Evita o comportamento padrão do formulário, que é recarregar a página.
+
     e.preventDefault();
 
-    // Adiciona uma janela de confirmação para o usuário.
     const confirmacao = confirm('Tem certeza que deseja excluir este posto de saúde?');
 
-    // Se o usuário clicar em "Cancelar", a função é interrompida aqui.
     if (!confirmacao) {
         return;
     }
     
-    // Continua a execução apenas se o usuário confirmar a ação.
     const id = document.getElementById('idPostoExcluir').value;
 
     try {
@@ -165,17 +162,12 @@
             method: 'DELETE'
         });
 
-        // Mostra uma mensagem de sucesso na interface do usuário.
         mostrarMensagem('mensagemPostoExcluir', 'Posto excluído com sucesso!', 'success');
         
-        // Esconde o formulário de exclusão.
         document.getElementById('excluirPostoForm').style.display = 'none';
-        
-        // Limpa a área de busca.
         document.getElementById('resultadoBuscaPostoExcluir').innerHTML = '';
 
     } catch (erro) {
-        // Exibe uma mensagem de erro se a requisição falhar.
         mostrarMensagem('mensagemPostoExcluir', `Erro ao excluir posto: ${erro.message}`, 'error');
     }
 }
