@@ -1,13 +1,7 @@
 // public/js/gestao.js
 
-// Variável global para armazenar a instância do gráfico. 
-// Inicializada como null.
 let dashboardChartInstance = null;
 
-/**
- * Função principal para buscar os dados na API (/gestao/dados) e 
- * chamar a função de desenho do gráfico.
- */
 function fetchDadosGestao() {
     const canvas = document.getElementById('dashboardChart');
     if (!canvas) {
@@ -24,27 +18,20 @@ function fetchDadosGestao() {
             return response.json();
         })
         .then(dados => {
-            // Se os dados vierem corretamente, desenha o gráfico
+            
             desenharGrafico(dados);
         })
         .catch(error => {
             console.error('Erro ao buscar dados:', error);
-            // Alert foi removido para evitar interrupção excessiva, mas pode ser reativado se preferir
-            // alert('Não foi possível carregar os dados do dashboard: ' + error.message);
+    
         });
 }
 
-/**
- * Desenha o gráfico usando a biblioteca Chart.js.
- * Garante que a instância antiga seja destruída antes de criar uma nova.
- */
 function desenharGrafico(dados) {
     const ctx = document.getElementById('dashboardChart').getContext('2d');
 
-    // **Lógica de DESTRUIÇÃO CORRIGIDA:** // Se uma instância anterior do Chart existir na nossa variável global, destruímos.
     if (dashboardChartInstance) {
         dashboardChartInstance.destroy();
-        // Opcional: console.log('Instância anterior do gráfico destruída.');
     }
     
     const data = {
@@ -61,9 +48,9 @@ function desenharGrafico(dados) {
                 dados.totalAgendamentos
             ],
             backgroundColor: [
-                'rgba(54, 162, 235, 0.6)', // Azul (Cidadãos)
-                'rgba(255, 99, 132, 0.6)', // Vermelho (Vacinas)
-                'rgba(75, 192, 192, 0.6)'  // Ciano (Agendamentos)
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(75, 192, 192, 0.6)' 
             ],
             borderColor: [
                 'rgba(54, 162, 235, 1)',
@@ -105,6 +92,6 @@ function desenharGrafico(dados) {
         },
     };
 
-    // Cria e **ARMAZENA** a nova instância do gráfico na variável global.
+
     dashboardChartInstance = new Chart(ctx, config);
 }
