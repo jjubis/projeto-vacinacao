@@ -1,4 +1,6 @@
 import express from 'express';
+import { capitalizarNome } from '../utils/formatarNome.js';
+
 
 const router = express.Router();
 
@@ -42,6 +44,10 @@ export default (db) => {
     router.post('/', (req, res) => {
     try {
         let { nome, cpf, telefone, email, endereco } = req.body;
+        nome = capitalizarNome(nome);
+        console.log("Nome formatado:", nome);
+
+
 
         cpf = limparCpf(cpf);
         telefone = telefone.replace(/\D/g, '');
@@ -87,6 +93,10 @@ export default (db) => {
         try {
             const { id } = req.params;
             let { nome, cpf, telefone, email, endereco } = req.body;
+            if (nome) nome = capitalizarNome(nome);
+            console.log("Nome formatado:", nome);
+
+
 
             if (cpf) {
                 cpf = limparCpf(cpf);
