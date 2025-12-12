@@ -5,7 +5,6 @@
     <title>Sistema de Vacinação</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-masker/1.2.0/vanilla-masker.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <link rel="stylesheet" href="css/vacinacao.css">
@@ -108,7 +107,7 @@
             </form>
             <div id="mensagemExcluir"></div>
         </section>
-
+        
         <section id="secao5">
             <h3>Cadastrar vacina</h3>
             <form id="cadastroVacinaForm">
@@ -118,6 +117,9 @@
                 <input type="text" id="fabricanteVacina" required />
                 <label>Validade:</label>
                 <input type="date" id="validadeVacina" required />
+                
+                <input type="hidden" id="postoId" value="1" /> 
+                
                 <button type="submit">Cadastrar vacina</button>
             </form>
             <div id="mensagemVacina"></div>
@@ -318,7 +320,6 @@
     </main>
     
     <script src="js/api.js"></script> 
-    
     <script src="js/cidadao.js"></script> 
     <script src="js/vacina.js"></script>
     <script src="js/posto.js"></script>

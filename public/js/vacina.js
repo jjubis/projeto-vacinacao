@@ -1,27 +1,41 @@
  // ===== FUNÇÕES PARA VACINAS =====
 
-        async function cadastrarVacina(e) {
-            e.preventDefault();
+async function cadastrarVacina(e) {
+    e.preventDefault();
+    
+    const postoIdElement = document.getElementById('postoId');
+    const postoIdValue = postoIdElement ? postoIdElement.value.trim() : null;
 
-            const dados = {
-                nome: document.getElementById('nomeVacina').value,
-                fabricante: document.getElementById('fabricanteVacina').value,
-                validade: document.getElementById('validadeVacina').value
-            };
-
-            try {
-                await fazerRequisicao('/vacinas', {
-                    method: 'POST',
-                    body: JSON.stringify(dados)
-                });
-
-                mostrarMensagem('mensagemVacina', 'Vacina cadastrada com sucesso!', 'success');
-                document.getElementById('cadastroVacinaForm').reset();
-            } catch (erro) {
-                mostrarMensagem('mensagemVacina', `Erro ao cadastrar vacina: ${erro.message}`, 'error');
+    const dados = {
+        nome: document.getElementById('nomeVacina').value,
+        fabricante: document.getElementById('fabricanteVacina').value,
+        validade: document.getElementById('validadeVacina').value,
+        
+        postoId: parseInt(postoIdValue) || 1 // Usa o ID capturado, ou 1 como fallback se for null/vazio.
+    };
+    
+    if (!dados.nome || !dados.fabricante || !dados.validade || !dados.postoId) {
+        mostrarMensagem('mensagemVacina', 'Erro: Nome, fabricante, validade e Posto ID são obrigatórios (Verifique o HTML se o Posto ID estiver faltando).', 'error');
+        return;
+    }
+    
+    // O resto da sua lógica de requisição permanece igual
+    try {
+        await fazerRequisicao('/vacinas', {
+            method: 'POST',
+            body: JSON.stringify(dados),
+            // Adicione Headers se o fazerRequisicao não os estiver adicionando
+            headers: {
+                 'Content-Type': 'application/json'
             }
-        }
+        });
 
+        mostrarMensagem('mensagemVacina', 'Vacina cadastrada com sucesso!', 'success');
+        document.getElementById('cadastroVacinaForm').reset();
+    } catch (erro) {
+        mostrarMensagem('mensagemVacina', `Erro ao cadastrar vacina: ${erro.message}`, 'error');
+    }
+}
         async function listarVacinas() {
             try {
                 const vacinas = await fazerRequisicao('/vacinas');

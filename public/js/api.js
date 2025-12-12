@@ -1,5 +1,3 @@
-// Configuração da API (Variável base)
-
 const API_BASE_URL = '';
 
 // Função para mostrar mensagens

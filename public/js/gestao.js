@@ -30,6 +30,9 @@ function fetchDadosGestao() {
 function desenharGrafico(dados) {
     const ctx = document.getElementById('dashboardChart').getContext('2d');
 
+    // Desestruturação dos dados para clareza: garantimos que totalVacinasEmEstoque seja usado
+    const { totalCidadaos, totalVacinasEmEstoque, totalAgendamentos } = dados; 
+    
     if (dashboardChartInstance) {
         dashboardChartInstance.destroy();
     }
@@ -37,25 +40,28 @@ function desenharGrafico(dados) {
     const data = {
         labels: [
             'Cidadãos Cadastrados',
-            'Tipos de Vacinas Disponíveis',
+            // RÓTULO CORRIGIDO: Reflete a métrica de Estoque
+            'Total de Doses em Estoque', 
             'Total de Agendamentos Realizados'
         ],
         datasets: [{
             label: 'Totais do Sistema',
             data: [
-                dados.totalCidadaos, 
-                dados.totalVacinasDisponiveis, 
-                dados.totalAgendamentos
+                totalCidadaos, 
+                // DADO CORRIGIDO: Usa o nome da propriedade enviada pelo Backend
+                totalVacinasEmEstoque, 
+                totalAgendamentos
             ],
+            // Cores ajustadas para usar tons de azul (tema do seu CSS)
             backgroundColor: [
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(75, 192, 192, 0.6)' 
+                'rgba(60, 90, 129, 0.7)',  // Azul escuro
+                'rgba(67, 126, 198, 0.7)', // Azul primário (Estoque)
+                'rgba(179, 229, 252, 0.7)' // Azul claro
             ],
             borderColor: [
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 99, 132, 1)',
-                'rgba(75, 192, 192, 1)'
+                'rgba(60, 90, 129, 1)',
+                'rgba(67, 126, 198, 1)',
+                'rgba(179, 229, 252, 1)'
             ],
             borderWidth: 1
         }]
@@ -95,3 +101,6 @@ function desenharGrafico(dados) {
 
     dashboardChartInstance = new Chart(ctx, config);
 }
+
+// Garante que a função seja chamada ao carregar a página (se a seção estiver visível)
+window.onload = fetchDadosGestao;

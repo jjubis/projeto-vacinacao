@@ -1,6 +1,14 @@
-node_modules/
-*.db
+# DEPENDÊNCIAS
+/node_modules
+
+# ARQUIVOS DE CONFIGURAÇÃO SENSÍVEL
 .env
-cd
-sqlite3
+
+# ARQUIVOS DO BANCO DE DADOS
+# Ignora o arquivo principal e os arquivos de log e cache do WAL mode
+*.db
+*.db-shm
+*.db-wal
+
+# FERRAMENTAS
 .vscode
