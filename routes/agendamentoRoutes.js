@@ -1,13 +1,17 @@
 import express from 'express';
 const router = express.Router();
 
-const STATUS_AGENDADO_ID = 1;   
+const STATUS_AGENDADO_ID = 1;  
 const STATUS_REALIZADO_ID = 2; 
 const STATUS_CANCELADO_ID = 3;
+
+// ID do Posto que gerencia o estoque central (Posto padrão de inicialização)
+const ID_POSTO_ESTOQUE_CENTRAL = 1; 
 
 export default (db) => {
 
     // Rota GET para listar todos os agendamentos (Join com todos os dados)
+   
     router.get('/', (req, res) => {
         try {
             const agendamentos = db.prepare(`
@@ -31,6 +35,7 @@ export default (db) => {
     });
 
     // Rota POST para criar agendamento (Com Validação de Duplicidade Ativa)
+
     router.post('/', (req, res) => {
         try {
             const { cidadaoId, vacinaId, postoId, dataHora } = req.body;
@@ -41,6 +46,7 @@ export default (db) => {
                 return res.status(400).json({ error: 'Dados obrigatórios ausentes (cidadaoId, vacinaId, postoId, dataHora).' });
             }
             
+            // 1. VALIDAÇÃO DE DUPLICIDADE 
             const existingAppointment = db.prepare(`
                 SELECT a.id, s.descricao 
                 FROM agendamentos a
@@ -53,10 +59,11 @@ export default (db) => {
             if (existingAppointment) {
                 return res.status(409).json({ 
                     error: `Este cidadão já possui um agendamento para esta vacina com status '${existingAppointment.descricao}'.`,
-                    details: 'Um novo agendamento só é permitido se o anterior estiver Cancelado.'
+                    details: 'Um novo agendamento só é permitido se o anterior estiver Realizado ou Cancelado.'
                 });
             }
 
+            // 2. INSERÇÃO DO AGENDAMENTO
             const info = db.prepare(`
                 INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
                 VALUES (?, ?, ?, ?, ?)
@@ -71,7 +78,8 @@ export default (db) => {
         }
     });
 
-    // Rota PUT para atualizar status do agendamento (Com Transação e Estoque)
+    // Rota PUT para atualizar status (Com Lógica de Estoque Centralizada)
+    
     router.put('/:id', (req, res) => {
         const { id } = req.params;
         const newStatusId = parseInt(req.body.statusId);
@@ -99,17 +107,18 @@ export default (db) => {
                 }
 
                 if (isBecomingRealizado) {
-                    const { postoId, vacinaId, cidadaoId } = currentAppointment;
+                    const { vacinaId, cidadaoId } = currentAppointment;
+                    
+                    const postoEstoqueId = ID_POSTO_ESTOQUE_CENTRAL; 
                     
                     const baixaEstoqueInfo = db.prepare(`
                         UPDATE estoque 
                         SET quantidade = quantidade - 1 
                         WHERE postoId = ? AND vacinaId = ? AND quantidade > 0
-                    `).run(postoId, vacinaId);
+                    `).run(postoEstoqueId, vacinaId); 
 
                     if (baixaEstoqueInfo.changes === 0) {
-                
-                        throw new Error('Falha na baixa de estoque. Estoque insuficiente ou item não encontrado.'); 
+                        throw new Error('Falha na baixa de estoque. Estoque insuficiente ou item não encontrado no estoque central.'); 
                     }
 
                     const dataAplicacao = new Date().toISOString();
@@ -118,13 +127,15 @@ export default (db) => {
                         VALUES (?, ?, ?, ?)
                     `).run(cidadaoId, vacinaId, dataAplicacao, id);
                 }
-            
+                
                 if (isNoLongerRealizado) {
-                    const { postoId, vacinaId, cidadaoId } = currentAppointment;
+                    const { vacinaId } = currentAppointment;
+                    
+                    const postoEstoqueId = ID_POSTO_ESTOQUE_CENTRAL; 
                     
                     db.prepare(
                         'UPDATE estoque SET quantidade = quantidade + 1 WHERE postoId = ? AND vacinaId = ?'
-                    ).run(postoId, vacinaId);
+                    ).run(postoEstoqueId, vacinaId); 
 
                     db.prepare('DELETE FROM historico_vacinal WHERE agendamentoId = ?').run(id);
                 }
@@ -134,16 +145,18 @@ export default (db) => {
             res.json({ message: 'Agendamento atualizado e estoque processado com sucesso' });
 
         } catch (error) {
-      
+        
             const status = error.message.includes('Estoque insuficiente') ? 409 : 
                            error.message.includes('Agendamento não encontrado') ? 404 : 
-                           400;
+                           400; 
             
             console.error('Erro ao processar atualização de agendamento/estoque:', error.message);
             res.status(status).json({ error: error.message, details: error.message });
         }
     });
 
+    // Rota DELETE para excluir agendamento
+    
     router.delete('/:id', (req, res) => {
         try {
             const { id } = req.params;

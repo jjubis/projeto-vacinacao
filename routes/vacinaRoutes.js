@@ -5,7 +5,7 @@ import { capitalizarNome } from '../utils/formatarNome.js';
 
 export default (db) => {
 
-    // CADASTRAR VACINA (POST)
+    // ROTA POST para CADASTRAR VACINA E ESTOQUE INICIAL (10 doses)
 
     router.post('/', (req, res) => {
 
@@ -15,19 +15,25 @@ export default (db) => {
              return res.status(400).json({ error: 'Nome, fabricante, validade e Posto ID são obrigatórios.' });
         }
         
+        if (isNaN(parseInt(postoId))) {
+            return res.status(400).json({ error: 'Posto ID deve ser um número válido.' });
+        }
+        
         try {
-       
+        
             const nomeFormatado = capitalizarNome ? capitalizarNome(nome) : nome;
             const fabricanteFormatado = capitalizarNome ? capitalizarNome(fabricante) : fabricante;
 
             const result = db.transaction(() => {
 
+                // 1. INSERIR NA TABELA VACINAS
                 const infoVacina = db.prepare(
                     'INSERT INTO vacinas (nome, fabricante, validade) VALUES (?, ?, ?)'
                 ).run(nomeFormatado, fabricanteFormatado, validade);
                 
                 const newVacinaId = infoVacina.lastInsertRowid;
                 
+                // 2. INSERIR NA TABELA ESTOQUE (10 doses)
                 db.prepare(`
                     INSERT INTO estoque (postoId, vacinaId, quantidade) 
                     VALUES (?, ?, 10)
@@ -44,8 +50,12 @@ export default (db) => {
         } catch (error) {
             console.error('Erro ao cadastrar vacina/estoque:', error.message);
         
-            if (error.message.includes('FOREIGN KEY constraint failed') || error.message.includes('SQLITE_CONSTRAINT')) {
-                 return res.status(400).json({ error: 'Erro de dados: Posto ID inválido ou Vacina duplicada.', details: error.message });
+            if (error.message.includes('FOREIGN KEY constraint failed')) {
+                 return res.status(400).json({ error: 'Erro de dados: Posto ID não existe.', details: error.message });
+            }
+            if (error.message.includes('SQLITE_CONSTRAINT')) {
+            
+                 return res.status(409).json({ error: 'Vacina duplicada (nome e fabricante).', details: error.message });
             }
             res.status(500).json({ error: 'Erro interno no servidor ao cadastrar vacina.', details: error.message });
         }
@@ -55,7 +65,7 @@ export default (db) => {
     
     router.get('/', (req, res) => {
         try {
-         
+          
             const vacinas = db.prepare('SELECT id, nome, fabricante, validade FROM vacinas').all();
             res.status(200).json(vacinas);
         } catch (error) {
@@ -65,7 +75,7 @@ export default (db) => {
     });
 
     // GET /vacinas/:id - Buscar vacina por ID
- 
+    
     router.get('/:id', (req, res) => {
         const { id } = req.params;
         try {
@@ -121,10 +131,11 @@ export default (db) => {
     });
 
     // DELETE /vacinas/:id - Excluir vacina
-
+   
     router.delete('/:id', (req, res) => {
         const { id } = req.params;
         try {
+           
             const result = db.prepare('DELETE FROM vacinas WHERE id = ?').run(id);
             if (result.changes > 0) {
                 res.status(200).json({ message: 'Vacina excluída com sucesso.' });
@@ -132,6 +143,10 @@ export default (db) => {
                 res.status(404).json({ error: 'Vacina não encontrada.' });
             }
         } catch (error) {
+           
+            if (error.message.includes('FOREIGN KEY constraint failed')) {
+                return res.status(409).json({ error: 'Não é possível excluir: existem agendamentos ou estoques associados a esta vacina.', details: error.message });
+            }
             console.error('Erro ao excluir vacina:', error);
             res.status(500).json({ error: 'Erro interno ao excluir vacina.', details: error.message });
         }
