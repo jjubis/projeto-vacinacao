@@ -1,15 +1,12 @@
-// index.js (CÓDIGO FINAL, Sem statusRoutes)
-
 import express from 'express';
 import cors from 'cors';
 import Database from 'better-sqlite3'; 
 
-// Rotas: Usamos import para o padrão ES Modules
+// Rotas
 import criarCidadaoRouter from './routes/cidadaoRoutes.js';
 import criarVacinaRouter from './routes/vacinaRoutes.js';
 import criarPostoRouter from './routes/postoRoutes.js';
 import criarAgendamentoRouter from './routes/agendamentoRoutes.js';
-// A ROTA STATUS NÃO ESTÁ MAIS AQUI!
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,11 +25,8 @@ app.get('/', (req, res) => {
     res.sendFile('vacinacao.html', { root: 'public' }); 
 });
 
-/*
-==========================================================
- 📊 ROTA DO GRÁFICO — TOTAL DE VACINAS EM ESTOQUE GLOBAL
-==========================================================
-*/
+ //ROTA DO GRÁFICO — TOTAL DE VACINAS EM ESTOQUE GLOBAL
+
 app.get('/gestao/dados', (req, res) => {
     try {
         const totalCidadaos = db.prepare('SELECT COUNT(*) AS total FROM cidadaos').get().total;
@@ -52,16 +46,11 @@ app.get('/gestao/dados', (req, res) => {
     }
 });
 
+//INICIALIZAÇÃO DO BANCO DE DADOS
 
-/*
-==========================================================
- 📌 INICIALIZAÇÃO DO BANCO DE DADOS (COM ON DELETE CASCADE)
-==========================================================
-*/
 (function initializeDatabase() {
     console.log('Inicializando banco de dados...');
 
-    // As criações de tabela (com ON DELETE CASCADE) permanecem inalteradas
     db.exec(`
         CREATE TABLE IF NOT EXISTS cidadaos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +86,6 @@ app.get('/gestao/dados', (req, res) => {
         );
     `);
 
-    /* ESTOQUE POR POSTO E VACINA (COM ON DELETE CASCADE) */
     db.exec(`
         CREATE TABLE IF NOT EXISTS estoque (
             postoId INTEGER NOT NULL,
@@ -109,7 +97,6 @@ app.get('/gestao/dados', (req, res) => {
         );
     `);
 
-    // AGENDAMENTOS (COM ON DELETE CASCADE)
     db.exec(`
         CREATE TABLE IF NOT EXISTS agendamentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,7 +113,6 @@ app.get('/gestao/dados', (req, res) => {
         );
     `);
 
-    // HISTORICO VACINAL (COM ON DELETE CASCADE)
     db.exec(`
         CREATE TABLE IF NOT EXISTS historico_vacinal (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,17 +126,16 @@ app.get('/gestao/dados', (req, res) => {
         );
     `);
     
-    // --- INSERÇÕES INICIAIS ---
+    //INSERÇÕES INICIAIS
     
-    // STATUS
+    //STATUS
     const statusCount = db.prepare('SELECT COUNT(*) AS c FROM statuses').get().c;
     if (statusCount === 0) {
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Agendado')").run();     // 1
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Realizado')").run();    // 2
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Cancelado')").run();    // 3
+        db.prepare("INSERT INTO statuses (descricao) VALUES ('Agendado')").run();  
+        db.prepare("INSERT INTO statuses (descricao) VALUES ('Realizado')").run(); 
+        db.prepare("INSERT INTO statuses (descricao) VALUES ('Cancelado')").run(); 
     }
     
-    // ... O resto das inserções iniciais (cidadaos, vacinas, postos, estoque, agendamentos) ...
     const cidadaoCount = db.prepare('SELECT COUNT(*) AS c FROM cidadaos').get().c;
     if (cidadaoCount === 0) {
         db.prepare(`INSERT INTO cidadaos (nome, cpf, telefone, email, endereco) VALUES ('João Silva', '12345678901', '999988888', 'joao@email.com', 'Rua A, 123')`).run();
@@ -182,7 +167,7 @@ app.get('/gestao/dados', (req, res) => {
         const cid = db.prepare('SELECT id FROM cidadaos LIMIT 1').get();
         const vac = db.prepare('SELECT id FROM vacinas LIMIT 1').get();
         const pos = db.prepare('SELECT id FROM postos_saude LIMIT 1').get();
-        const sts = 1; // Agendado
+        const sts = 1; 
 
         if (cid && vac && pos) {
             db.prepare(`
@@ -196,17 +181,12 @@ app.get('/gestao/dados', (req, res) => {
 })();
 
 
-/*
-==========================================================
- 🔗 ROTAS
-==========================================================
-*/
+//ROTAS
+
 app.use('/cidadaos', criarCidadaoRouter(db));
 app.use('/vacinas', criarVacinaRouter(db));
 app.use('/postos', criarPostoRouter(db));
 app.use('/agendamentos', criarAgendamentoRouter(db));
-// A rota /status não está mais aqui.
-
 
 // Servidor
 app.listen(PORT, () => {

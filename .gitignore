@@ -5,7 +5,6 @@
 .env
 
 # ARQUIVOS DO BANCO DE DADOS
-# Ignora o arquivo principal e os arquivos de log e cache do WAL mode
 *.db
 *.db-shm
 *.db-wal
