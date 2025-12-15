@@ -1,16 +1,9 @@
-// ===============================
-//   STATUS FIXOS (FRONT-END)
-// ===============================
-
 const STATUSES_FIXOS = [
     { id: 1, descricao: 'Agendado' },
     { id: 2, descricao: 'Realizado' },
     { id: 3, descricao: 'Cancelado' }
 ];
 
-/**
- * Preenche um <select> com os status fixos
- */
 function preencherSelectStatus(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -38,10 +31,6 @@ function listarStatus() {
         </div>
     `).join('');
 }
-
-// ===============================
-//   CARREGAR DADOS PARA AGENDAMENTO
-// ===============================
 
 async function carregarDadosParaAgendamento() {
     try {
@@ -76,10 +65,6 @@ async function carregarDadosParaAgendamento() {
     }
 }
 
-// ===============================
-//  CADASTRAR AGENDAMENTO
-// ===============================
-
 async function cadastrarAgendamento(e) {
     e.preventDefault();
 
@@ -104,10 +89,6 @@ async function cadastrarAgendamento(e) {
         mostrarMensagem('mensagemAgendamento', `Erro ao cadastrar agendamento: ${erro.message}`, 'error');
     }
 }
-
-// ===============================
-//   LISTAR AGENDAMENTOS DETALHADOS
-// ===============================
 
 async function listarAgendamentosDetalhados() {
     const lista = document.getElementById('listaAgendamentos');
@@ -138,10 +119,6 @@ async function listarAgendamentosDetalhados() {
         lista.innerHTML = `<p class="error">Erro ao carregar agendamentos: ${erro.message}</p>`;
     }
 }
-
-// ===============================
-//   ATUALIZAR AGENDAMENTO
-// ===============================
 
 function carregarStatusParaAtualizacao() {
     preencherSelectStatus('novoStatusAgendamento');
@@ -204,13 +181,12 @@ async function atualizarAgendamento(e) {
     const statusId = parseInt(document.getElementById('novoStatusAgendamento').value);
 
     try {
-        // RECEBE OS TOTAIS DO BACK-END
+    
         const dados = await fazerRequisicao(`/agendamentos/${id}`, {
             method: 'PUT',
             body: JSON.stringify({ statusId })
         });
 
-        // ATUALIZA AUTOMATICAMENTE O GRÁFICO
         if (window.desenharGrafico) {
             desenharGrafico(dados);
         }
@@ -224,10 +200,6 @@ async function atualizarAgendamento(e) {
         mostrarMensagem('mensagemAgendamentoAtualizar', `Erro: ${erro.message}`, 'error');
     }
 }
-
-// ===============================
-//     EXCLUIR AGENDAMENTO
-// ===============================
 
 async function buscarAgendamentoParaExcluir() {
     const termo = document.getElementById('buscarAgendamentoExcluir').value.trim();
@@ -286,10 +258,6 @@ async function excluirAgendamento(e) {
         mostrarMensagem('mensagemAgendamentoExcluir', `Erro: ${erro.message}`, 'error');
     }
 }
-
-// ===============================
-//   EXPORTAR FUNÇÕES PARA O HTML
-// ===============================
 
 window.cadastrarAgendamento = cadastrarAgendamento;
 window.atualizarAgendamento = atualizarAgendamento;

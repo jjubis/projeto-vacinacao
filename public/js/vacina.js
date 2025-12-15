@@ -11,7 +11,7 @@ async function cadastrarVacina(e) {
         fabricante: document.getElementById('fabricanteVacina').value,
         validade: document.getElementById('validadeVacina').value,
         
-        postoId: parseInt(postoIdValue) || 1 // Usa o ID capturado, ou 1 como fallback se for null/vazio.
+        postoId: parseInt(postoIdValue) || 1 
     };
     
     if (!dados.nome || !dados.fabricante || !dados.validade || !dados.postoId) {
@@ -19,12 +19,10 @@ async function cadastrarVacina(e) {
         return;
     }
     
-    // O resto da sua lógica de requisição permanece igual
     try {
         await fazerRequisicao('/vacinas', {
             method: 'POST',
             body: JSON.stringify(dados),
-            // Adicione Headers se o fazerRequisicao não os estiver adicionando
             headers: {
                  'Content-Type': 'application/json'
             }
