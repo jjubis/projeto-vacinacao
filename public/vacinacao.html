@@ -28,11 +28,11 @@
             <li data-opcao="10">10 - Listar postos de saúde</li>
             <li data-opcao="11">11 - Atualizar posto de saúde</li>
             <li data-opcao="12">12 - Excluir posto de saúde</li>
-            <li data-opcao="13">13 - Listar status de agendamento</li>
-            <li data-opcao="14">14 - Cadastrar agendamento</li>
-            <li data-opcao="15">15 - Listar agendamentos detalhados</li>
-            <li data-opcao="16">16 - Atualizar agendamento</li>
-            <li data-opcao="17">17 - Excluir agendamento</li>
+            
+            <li data-opcao="13">13 - Cadastrar agendamento</li>
+            <li data-opcao="14">14 - Listar agendamentos detalhados</li>
+            <li data-opcao="15">15 - Atualizar agendamento</li>
+            <li data-opcao="16">16 - Excluir agendamento</li>
             
             <li data-opcao="S">S - Sair do Sistema</li> 
         </ul>
@@ -217,8 +217,8 @@
             <div id="mensagemPostoExcluir"></div>
         </section>
 
-        <section id="secao13">
-            <h3>Lista de Status de Agendamento</h3>
+        <section id="secaoStatusOculta" style="display: none;">
+            <h3>Lista de Status de Agendamento (Oculta)</h3>
             <button onclick="listarStatus()">Atualizar Lista</button>
             <div id="listaStatus" class="lista">
                 <p>Carregando...</p>
@@ -226,7 +226,7 @@
         </section>
 
 
-        <section id="secao14">
+        <section id="secao13">
             <h3>Cadastrar agendamento</h3>
             <form id="cadastroAgendamentoForm">
                 <label>Cidadão:</label>
@@ -257,7 +257,7 @@
             <div id="mensagemAgendamento"></div>
         </section>
 
-        <section id="secao15">
+        <section id="secao14">
             <h3>Lista de Agendamentos Detalhados</h3>
             <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
             <div id="listaAgendamentos" class="lista">
@@ -265,7 +265,7 @@
             </div>
         </section>
 
-        <section id="secao16">
+        <section id="secao15">
             <h3>Atualizar agendamento</h3>
 
             <label for="buscarAgendamentoAtualizar">Buscar agendamento por ID:</label>
@@ -291,7 +291,7 @@
         </section>
 
 
-        <section id="secao17">
+        <section id="secao16">
             <h3>Excluir agendamento</h3>
             <label>Buscar agendamento por ID:</label>
             <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />

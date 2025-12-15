@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             sections.forEach(section => section.classList.remove('active'));
 
-        
+            
             if (opcao === 'S') {
                 const secaoSair = document.getElementById('secaoS'); 
                 if (secaoSair) {
@@ -73,7 +73,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return; 
             }
 
+            // CORREÇÃO DA NAVEGAÇÃO
+            // Se a opção clicada é 13, 14, 15 ou 16, ela corresponde à nova ordem.
             const secaoAtiva = document.getElementById(`secao${opcao}`);
+            
+            // Tratamento especial para o Status de Agendamento (Antiga 13)
+            // Se o usuário clicar em uma opção que precisa de Status (ex: Cadastro Agendamento, agora 13)
+            // Chamamos listarStatus() aqui para carregar os dados no select,
+            // mas a navegação principal (secaoAtiva) segue a nova ordem.
+
             if (secaoAtiva) {
                 secaoAtiva.classList.add('active');
 
@@ -90,17 +98,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     case '10':
                         listarPostos(); 
                         break;
-                    case '13':
-                        listarStatus(); 
-                        break;
-                    case '14':
+                    
+                    // A antiga opção '13' (Listar Status) foi removida do menu
+                    // e a chamada à função listarStatus() agora é feita internamente 
+                    // por 'carregarDadosParaAgendamento' e 'carregarStatusParaAtualizacao'.
+                    // Se você precisar que ela seja chamada *sempre* que o menu for clicado, 
+                    // você deve colocar 'listarStatus()' nos casos abaixo que a utilizam.
+
+                    case '13': // Anteriormente '14' - Cadastrar Agendamento
                         carregarDadosParaAgendamento(); 
                         break;
-                    case '15':
+                    case '14': // Anteriormente '15' - Listar Agendamentos
                         listarAgendamentosDetalhados(); 
                         break;
-                    case '16':
+                    case '15': // Anteriormente '16' - Atualizar Agendamento
                         carregarStatusParaAtualizacao(); 
+                        break;
+                    case '16': // Anteriormente '17' - Excluir Agendamento
+                        // Nenhuma função de inicialização especial necessária aqui
                         break;
                 }
             }
