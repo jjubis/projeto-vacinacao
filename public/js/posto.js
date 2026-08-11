@@ -1,6 +1,4 @@
-// ===== FUNÇÕES PARA POSTOS DE SAÚDE =====
-
-        async function cadastrarPosto(e) {
+async function cadastrarPosto(e) {
             e.preventDefault();
 
             const dados = {
@@ -157,7 +155,7 @@
     const id = document.getElementById('idPostoExcluir').value;
 
     try {
-        // Envia a requisição DELETE para a API.
+       
         await fazerRequisicao(`/postos/${id}`, {
             method: 'DELETE'
         });

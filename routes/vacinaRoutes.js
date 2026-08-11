@@ -1,13 +1,13 @@
 import express from 'express';
+import { requireAuth, requireRole } from '../utils/middlewares.js';
 const router = express.Router();
 
-import { capitalizarNome } from '../utils/formatarNome.js'; 
-
+import { capitalizarNome } from '../utils/formatarNome.js';
 export default (db) => {
 
-    // ROTA POST para CADASTRAR VACINA E ESTOQUE INICIAL (10 doses)
+    // Rota POST para cadastrar vacina e estoque inicial (10 doses)
 
-    router.post('/', (req, res) => {
+    router.post('/', requireRole('funcionario'), (req, res) => {
 
         const { nome, fabricante, validade, postoId } = req.body; 
         
@@ -26,14 +26,12 @@ export default (db) => {
 
             const result = db.transaction(() => {
 
-                // 1. INSERIR NA TABELA VACINAS
                 const infoVacina = db.prepare(
                     'INSERT INTO vacinas (nome, fabricante, validade) VALUES (?, ?, ?)'
                 ).run(nomeFormatado, fabricanteFormatado, validade);
                 
                 const newVacinaId = infoVacina.lastInsertRowid;
                 
-                // 2. INSERIR NA TABELA ESTOQUE (10 doses)
                 db.prepare(`
                     INSERT INTO estoque (postoId, vacinaId, quantidade) 
                     VALUES (?, ?, 10)
@@ -63,7 +61,7 @@ export default (db) => {
 
     // GET /vacinas - Listar todas as vacinas
     
-    router.get('/', (req, res) => {
+    router.get('/', requireAuth, (req, res) => {
         try {
           
             const vacinas = db.prepare('SELECT id, nome, fabricante, validade FROM vacinas').all();
@@ -76,7 +74,7 @@ export default (db) => {
 
     // GET /vacinas/:id - Buscar vacina por ID
     
-    router.get('/:id', (req, res) => {
+    router.get('/:id', requireAuth, (req, res) => {
         const { id } = req.params;
         try {
             const vacina = db.prepare('SELECT id, nome, fabricante, validade FROM vacinas WHERE id = ?').get(id);
@@ -93,7 +91,7 @@ export default (db) => {
 
     // PUT /vacinas/:id - Atualizar vacina
 
-    router.put('/:id', (req, res) => {
+    router.put('/:id', requireRole('funcionario'), (req, res) => {
         const { id } = req.params;
         const { nome, fabricante, validade } = req.body;
         
@@ -132,7 +130,7 @@ export default (db) => {
 
     // DELETE /vacinas/:id - Excluir vacina
    
-    router.delete('/:id', (req, res) => {
+    router.delete('/:id', requireRole('funcionario'), (req, res) => {
         const { id } = req.params;
         try {
            

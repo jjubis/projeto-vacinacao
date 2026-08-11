@@ -25,93 +25,109 @@ function configurarEventListeners() {
     }
 }
 
+function aplicarMascaras() {
+    const cpfCadastro = document.getElementById('cpf');
+    if (cpfCadastro) {
+        VMasker(cpfCadastro).maskPattern('999.999.999-99');
+    }
+    const cpfAtualizar = document.getElementById('novoCpf');
+    if (cpfAtualizar) {
+        VMasker(cpfAtualizar).maskPattern('999.999.999-99');
+    }
 
-// Sistema de navegação principal
-document.addEventListener('DOMContentLoaded', function () {
+    const telefoneCadastro = document.getElementById('telefone');
+    if (telefoneCadastro) {
+        VMasker(telefoneCadastro).maskPattern('(99) 99999-9999');
+    }
+    const telefoneAtualizar = document.getElementById('novoTelefone');
+    if (telefoneAtualizar) {
+        VMasker(telefoneAtualizar).maskPattern('(99) 99999-9999');
+    }
+}
+
+function configurarNavegacaoMenu() {
     const menuItems = document.querySelectorAll('#menu li');
     const sections = document.querySelectorAll('main section');
-
-    function aplicarMascaras() {
-        
-        const cpfCadastro = document.getElementById('cpf');
-        if (cpfCadastro) {
-            VMasker(cpfCadastro).maskPattern('999.999.999-99');
-        }
-        const cpfAtualizar = document.getElementById('novoCpf');
-        if (cpfAtualizar) {
-            VMasker(cpfAtualizar).maskPattern('999.999.999-99');
-        }
-
-        const telefoneCadastro = document.getElementById('telefone');
-        if (telefoneCadastro) {
-            VMasker(telefoneCadastro).maskPattern('(99) 99999-9999');
-        }
-        const telefoneAtualizar = document.getElementById('novoTelefone');
-        if (telefoneAtualizar) {
-            VMasker(telefoneAtualizar).maskPattern('(99) 99999-9999');
-        }
-    }
-    
-    aplicarMascaras();
 
     menuItems.forEach(item => {
         item.addEventListener('click', function () {
             const opcao = this.getAttribute('data-opcao');
 
-            menuItems.forEach(i => i.classList.remove('ativo'));
+            // Opção "Sair do Sistema" agora faz logout de verdade
+            if (opcao === 'S') {
+                fazerLogout();
+                return;
+            }
 
+            menuItems.forEach(i => i.classList.remove('ativo'));
             this.classList.add('ativo');
 
             sections.forEach(section => section.classList.remove('active'));
 
-            
-            if (opcao === 'S') {
-                const secaoSair = document.getElementById('secaoS'); 
-                if (secaoSair) {
-                    secaoSair.classList.add('active');
-                }
-                return; 
-            }
-
             const secaoAtiva = document.getElementById(`secao${opcao}`);
-            
+
             if (secaoAtiva) {
                 secaoAtiva.classList.add('active');
 
                 switch (opcao) {
-                    case '0': 
+                    case '0':
                         fetchDadosGestao();
                         break;
-                    case '2': 
-                        listarCidadaos(); 
+                    case '2':
+                        listarCidadaos();
                         break;
-                    case '6': 
-                        listarVacinas(); 
+                    case '6':
+                        listarVacinas();
                         break;
                     case '10':
-                        listarPostos(); 
+                        listarPostos();
                         break;
-                    case '13': 
-                        carregarDadosParaAgendamento(); 
+                    case '13':
+                        carregarDadosParaAgendamento();
                         break;
                     case '14':
-                        listarAgendamentosDetalhados(); 
+                        listarAgendamentosDetalhados();
                         break;
                     case '15':
-                        carregarStatusParaAtualizacao(); 
+                        carregarStatusParaAtualizacao();
                         break;
-                    case '16': 
+                    case '16':
                         break;
                 }
             }
         });
     });
+}
+
+async function iniciarApp() {
+    mostrarApp();
+
+    aplicarMascaras();
+    configurarNavegacaoMenu();
+    configurarEventListeners();
 
     const primeiroItem = document.querySelector('#menu li[data-opcao="1"]');
     if (primeiroItem) {
         primeiroItem.click();
     }
+}
 
-    // Event listeners para formulários
-    configurarEventListeners();
+// Ponto de entrada da aplicação
+document.addEventListener('DOMContentLoaded', async function () {
+    // Conecta o formulário de login
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', fazerLogin);
+    }
+
+    // Checa se já existe uma sessão ativa antes de decidir o que mostrar
+    const estaLogado = await verificarSessao();
+
+    if (estaLogado) {
+        iniciarApp();
+    } else {
+        mostrarTelaLogin();
+    }
 });
+
+window.iniciarApp = iniciarApp;

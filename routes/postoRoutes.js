@@ -1,14 +1,15 @@
 import express from 'express';
+import { requireAuth, requireRole } from '../utils/middlewares.js';
 
 const router = express.Router();
 
 export default (db) => {
-    router.get('/', (req, res) => {
+    router.get('/', requireAuth, (req, res) => {
         const postos = db.prepare('SELECT * FROM postos_saude').all();
         res.json(postos);
     });
-    
-    router.get('/:id', (req, res) => {
+
+    router.get('/:id', requireAuth, (req, res) => {
         try {
             const { id } = req.params;
             const posto = db.prepare('SELECT * FROM postos_saude WHERE id = ?').get(id);
@@ -22,7 +23,7 @@ export default (db) => {
         }
     });
 
-    router.post('/', (req, res) => {
+    router.post('/', requireRole('funcionario'), (req, res) => {
         try {
             const { nome, endereco } = req.body;
             if (!nome || !endereco) {
@@ -35,7 +36,7 @@ export default (db) => {
         }
     });
 
-    router.put('/:id', (req, res) => {
+    router.put('/:id', requireRole('funcionario'), (req, res) => {
         try {
             const { id } = req.params;
             const { nome, endereco } = req.body;
@@ -51,7 +52,7 @@ export default (db) => {
         }
     });
 
-    router.delete('/:id', (req, res) => {
+    router.delete('/:id', requireRole('funcionario'), (req, res) => {
         try {
             const { id } = req.params;
             const info = db.prepare('DELETE FROM postos_saude WHERE id = ?').run(id);

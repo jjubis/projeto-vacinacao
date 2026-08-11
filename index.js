@@ -1,33 +1,42 @@
 import express from 'express';
+import { requireRole } from './utils/middlewares.js';
 import cors from 'cors';
 import Database from 'better-sqlite3'; 
-
-// Rotas
 import criarCidadaoRouter from './routes/cidadaoRoutes.js';
 import criarVacinaRouter from './routes/vacinaRoutes.js';
 import criarPostoRouter from './routes/postoRoutes.js';
 import criarAgendamentoRouter from './routes/agendamentoRoutes.js';
+import 'dotenv/config';
+import session from 'express-session';
+import criarAuthRouter from './routes/authRoutes.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Banco de dados
 const db = new Database('vacinacao.db');
+
 db.pragma('journal_mode = WAL');
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Página inicial
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false, // true somente quando estiver rodando com HTTPS em produção
+        maxAge: 1000 * 60 * 60 * 2 // 2 horas
+    }
+}));
+
 app.get('/', (req, res) => {
     res.sendFile('vacinacao.html', { root: 'public' }); 
 });
 
- //ROTA DO GRÁFICO — TOTAL DE VACINAS EM ESTOQUE GLOBAL
-
-app.get('/gestao/dados', (req, res) => {
+app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
     try {
         const totalCidadaos = db.prepare('SELECT COUNT(*) AS total FROM cidadaos').get().total;
         const estoqueResult = db.prepare('SELECT SUM(quantidade) AS total FROM estoque').get();
@@ -80,6 +89,19 @@ app.get('/gestao/dados', (req, res) => {
     `);
 
     db.exec(`
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        senhaHash TEXT NOT NULL,
+        papel TEXT NOT NULL CHECK (papel IN ('cidadao', 'funcionario')),
+        cidadaoId INTEGER,
+        criadoEm DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (cidadaoId) REFERENCES cidadaos(id) ON DELETE CASCADE
+    );
+`);
+
+    db.exec(`
         CREATE TABLE IF NOT EXISTS statuses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             descricao TEXT UNIQUE NOT NULL
@@ -126,9 +148,7 @@ app.get('/gestao/dados', (req, res) => {
         );
     `);
     
-    //INSERÇÕES INICIAIS
-    
-    //STATUS
+
     const statusCount = db.prepare('SELECT COUNT(*) AS c FROM statuses').get().c;
     if (statusCount === 0) {
         db.prepare("INSERT INTO statuses (descricao) VALUES ('Agendado')").run();  
@@ -180,15 +200,12 @@ app.get('/gestao/dados', (req, res) => {
     console.log("Banco de dados pronto!");
 })();
 
-
-//ROTAS
-
 app.use('/cidadaos', criarCidadaoRouter(db));
 app.use('/vacinas', criarVacinaRouter(db));
 app.use('/postos', criarPostoRouter(db));
 app.use('/agendamentos', criarAgendamentoRouter(db));
+app.use('/auth', criarAuthRouter(db));
 
-// Servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

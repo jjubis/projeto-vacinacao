@@ -11,321 +11,345 @@
 
 </head>
 <body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="telaLogin" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; width:100%;">
+        <div style="background:white; padding:30px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); width:100%; max-width:360px;">
+            <h2 style="text-align:center; color:var(--cor-secundaria);">Imuniza+</h2>
+            <p style="text-align:center; color:#666; margin-bottom:20px;">Faça login para continuar</p>
+
+            <form id="loginForm">
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" required />
+
+                <label for="loginSenha">Senha:</label>
+                <input type="password" id="loginSenha" required />
+
+                <button type="submit" style="width:100%;">Entrar</button>
+            </form>
+            <div id="mensagemLogin"></div>
+        </div>
+    </div>
+
+    <!-- APP PRINCIPAL (só aparece após login) -->
+    <div id="appContainer" style="display:none; gap: var(--espacamento); min-height: 100vh; width: 100%;">
     <nav id="menu">
-        <h2>--- MENU ---</h2>
-        <ul>
-            <li data-opcao="0">0 - Gestão de Negócio</li>
-            
-            <li data-opcao="1">1 - Cadastrar cidadão</li>
-            <li data-opcao="2">2 - Listar cidadãos</li>
-            <li data-opcao="3">3 - Atualizar cidadão</li>
-            <li data-opcao="4">4 - Excluir cidadão</li>
-            <li data-opcao="5">5 - Cadastrar vacina</li>
-            <li data-opcao="6">6 - Listar vacinas</li>
-            <li data-opcao="7">7 - Atualizar vacina</li>
-            <li data-opcao="8">8 - Excluir vacina</li>
-            <li data-opcao="9">9 - Cadastrar posto de saúde</li>
-            <li data-opcao="10">10 - Listar postos de saúde</li>
-            <li data-opcao="11">11 - Atualizar posto de saúde</li>
-            <li data-opcao="12">12 - Excluir posto de saúde</li>
-            <li data-opcao="13">13 - Cadastrar agendamento</li>
-            <li data-opcao="14">14 - Listar agendamentos detalhados</li>
-            <li data-opcao="15">15 - Atualizar agendamento</li>
-            <li data-opcao="16">16 - Excluir agendamento</li>
-            
-            <li data-opcao="S">S - Sair do Sistema</li> 
-        </ul>
-    </nav>
+            <h2>--- MENU ---</h2>
+            <p id="nomeUsuarioLogado" style="text-align:center; font-size:12px; opacity:0.8; margin-top:-10px; margin-bottom:15px;"></p>
+            <ul>
+                <li data-opcao="0">0 - Gestão de Negócio</li>
 
-    <main>
-        <section id="secao1">
-            <h3>Cadastrar cidadão</h3>
-            <form id="cadastroForm" novalidate>
-                <label for="nome">Nome:</label>
-                <input type="text" id="nome" required />
+                <li data-opcao="1">1 - Cadastrar cidadão</li>
+                <li data-opcao="2">2 - Listar cidadãos</li>
+                <li data-opcao="3">3 - Atualizar cidadão</li>
+                <li data-opcao="4">4 - Excluir cidadão</li>
+                <li data-opcao="5">5 - Cadastrar vacina</li>
+                <li data-opcao="6">6 - Listar vacinas</li>
+                <li data-opcao="7">7 - Atualizar vacina</li>
+                <li data-opcao="8">8 - Excluir vacina</li>
+                <li data-opcao="9">9 - Cadastrar posto de saúde</li>
+                <li data-opcao="10">10 - Listar postos de saúde</li>
+                <li data-opcao="11">11 - Atualizar posto de saúde</li>
+                <li data-opcao="12">12 - Excluir posto de saúde</li>
+                <li data-opcao="13">13 - Cadastrar agendamento</li>
+                <li data-opcao="14">14 - Listar agendamentos detalhados</li>
+                <li data-opcao="15">15 - Atualizar agendamento</li>
+                <li data-opcao="16">16 - Excluir agendamento</li>
 
-                <label for="cpf">CPF (11 dígitos):</label>
-                <input type="text" id="cpf" required />
+                <li data-opcao="S">S - Sair do Sistema</li>
+            </ul>
+        </nav>
 
-                <label for="telefone">Telefone (11 dígitos):</label>
-                <input type="text" id="telefone" required />
+        <main>
+            <section id="secao1">
+                <h3>Cadastrar cidadão</h3>
+                <form id="cadastroForm" novalidate>
+                    <label for="nome">Nome:</label>
+                    <input type="text" id="nome" required />
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" required />
+                    <label for="cpf">CPF (11 dígitos):</label>
+                    <input type="text" id="cpf" required />
 
-                <label for="endereco">Endereço:</label>
-                <textarea id="endereco" required></textarea>
+                    <label for="telefone">Telefone (11 dígitos):</label>
+                    <input type="text" id="telefone" required />
 
-                <button type="submit" id="cadastroCidadaoSbmt">Cadastrar</button>
-            </form>
-            <div id="mensagem"></div>
-        </section>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" required />
 
-        <section id="secao2">
-            <h3>Lista de Cidadãos</h3>
-            <button onclick="listarCidadaos()">Atualizar Lista</button>
-            <div id="listaCidadaos" class="lista">
-                <p>Carregando...</p>
-            </div>
-        </section>
+                    <label for="endereco">Endereço:</label>
+                    <textarea id="endereco" required></textarea>
 
-        <section id="secao3">
-            <h3>Atualizar cidadão</h3>
-            <label>Buscar por CPF ou nome:</label>
-            <input type="text" id="buscarCpfAtualizar" placeholder="Buscar..." />
-            <button type="button" onclick="buscarCidadaoParaAtualizar()">Buscar</button>
-            <div id="resultadoBuscaAtualizar"></div>
-            
-            <form id="atualizarForm" style="display:none;" novalidate>
-                <input type="hidden" id="idAtualizar" />
-                <label>Novo nome:</label>
-                <input type="text" id="novoNome" placeholder="Deixe em branco para manter" />
-                <label>Novo CPF:</label>
-                <input type="text" id="novoCpf" placeholder="Deixe em branco para manter" />
-                <label>Novo telefone:</label>
-                <input type="text" id="novoTelefone" placeholder="Deixe em branco para manter" />
-                <label>Novo email:</label>
-                <input type="email" id="novoEmail" placeholder="Deixe em branco para manter" />
-                <label>Novo endereço:</label>
-                <textarea id="novoEndereco" placeholder="Deixe em branco para manter"></textarea>
-                <button type="submit">Atualizar</button>
-            </form>
-            <div id="mensagemAtualizar"></div>
-        </section>
+                    <button type="submit" id="cadastroCidadaoSbmt">Cadastrar</button>
+                </form>
+                <div id="mensagem"></div>
+            </section>
 
-        <section id="secao4">
-            <h3>Excluir cidadão</h3>
-            <label>Buscar por CPF ou nome:</label>
-            <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
-            <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
-            <div id="resultadoBuscaExcluir"></div>
-            <form id="excluirForm" style="display:none;">
-                <input type="hidden" id="idExcluir" />
-                <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                <button type="submit">Excluir</button>
-            </form>
-            <div id="mensagemExcluir"></div>
-        </section>
-        
-        <section id="secao5">
-            <h3>Cadastrar vacina</h3>
-            <form id="cadastroVacinaForm">
-                <label>Nome da vacina:</label>
-                <input type="text" id="nomeVacina" required />
-                <label>Fabricante:</label>
-                <input type="text" id="fabricanteVacina" required />
-                <label>Validade:</label>
-                <input type="date" id="validadeVacina" required />
-                
-                <input type="hidden" id="postoId" value="1" /> 
-                
-                <button type="submit">Cadastrar vacina</button>
-            </form>
-            <div id="mensagemVacina"></div>
-        </section>
+            <section id="secao2">
+                <h3>Lista de Cidadãos</h3>
+                <button onclick="listarCidadaos()">Atualizar Lista</button>
+                <div id="listaCidadaos" class="lista">
+                    <p>Carregando...</p>
+                </div>
+            </section>
 
-        <section id="secao6">
-            <h3>Lista de Vacinas</h3>
-            <button onclick="listarVacinas()">Atualizar Lista</button>
-            <div id="listaVacinas" class="lista">
-                <p>Carregando...</p>
-            </div>
-        </section>
+            <section id="secao3">
+                <h3>Atualizar cidadão</h3>
+                <label>Buscar por CPF ou nome:</label>
+                <input type="text" id="buscarCpfAtualizar" placeholder="Buscar..." />
+                <button type="button" onclick="buscarCidadaoParaAtualizar()">Buscar</button>
+                <div id="resultadoBuscaAtualizar"></div>
 
-        <section id="secao7">
-            <h3>Atualizar vacina</h3>
-            <label>Buscar por nome ou fabricante:</label>
-            <input type="text" id="buscarVacinaAtualizar" placeholder="Buscar..." />
-            <button type="button" onclick="buscarVacinaParaAtualizar()">Buscar</button>
-            <div id="resultadoBuscaVacinaAtualizar"></div>
-            <form id="atualizarVacinaForm" style="display:none;">
-                <input type="hidden" id="idVacinaAtualizar" />
-                <label>Novo nome:</label>
-                <input type="text" id="novoNomeVacina" placeholder="Deixe em branco para manter" />
-                <label>Novo fabricante:</label>
-                <input type="text" id="novoFabricanteVacina" placeholder="Deixe em branco para manter" />
-                <label>Nova validade:</label>
-                <input type="date" id="novaValidadeVacina" />
-                <button type="submit">Atualizar vacina</button>
-            </form>
-            <div id="mensagemVacinaAtualizar"></div>
-        </section>
+                <form id="atualizarForm" style="display:none;" novalidate>
+                    <input type="hidden" id="idAtualizar" />
+                    <label>Novo nome:</label>
+                    <input type="text" id="novoNome" placeholder="Deixe em branco para manter" />
+                    <label>Novo CPF:</label>
+                    <input type="text" id="novoCpf" placeholder="Deixe em branco para manter" />
+                    <label>Novo telefone:</label>
+                    <input type="text" id="novoTelefone" placeholder="Deixe em branco para manter" />
+                    <label>Novo email:</label>
+                    <input type="email" id="novoEmail" placeholder="Deixe em branco para manter" />
+                    <label>Novo endereço:</label>
+                    <textarea id="novoEndereco" placeholder="Deixe em branco para manter"></textarea>
+                    <button type="submit">Atualizar</button>
+                </form>
+                <div id="mensagemAtualizar"></div>
+            </section>
 
-        <section id="secao8">
-            <h3>Excluir vacina</h3>
-            <label>Buscar por nome ou fabricante:</label>
-            <input type="text" id="buscarVacinaExcluir" placeholder="Buscar..." />
-            <button type="button" onclick="buscarVacinaParaExcluir()">Buscar</button>
-            <div id="resultadoBuscaVacinaExcluir"></div>
-            <form id="excluirVacinaForm" style="display:none;">
-                <input type="hidden" id="idVacinaExcluir" />
-                <p>Selecionado: <span id="nomeSelecionadoVacinaExcluir" style="font-weight:bold;"></span></p>
-                <button type="submit">Excluir vacina</button>
-            </form>
-            <div id="mensagemVacinaExcluir"></div>
-        </section>
+            <section id="secao4">
+                <h3>Excluir cidadão</h3>
+                <label>Buscar por CPF ou nome:</label>
+                <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
+                <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
+                <div id="resultadoBuscaExcluir"></div>
+                <form id="excluirForm" style="display:none;">
+                    <input type="hidden" id="idExcluir" />
+                    <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
+                    <button type="submit">Excluir</button>
+                </form>
+                <div id="mensagemExcluir"></div>
+            </section>
 
-        <section id="secao9">
-            <h3>Cadastrar posto de saúde</h3>
-            <form id="cadastroPostoForm">
-                <label>Nome do posto:</label>
-                <input type="text" id="nomePosto" required />
-                <label>Endereço do posto:</label>
-                <textarea id="enderecoPosto" required></textarea>
-                <button type="submit">Cadastrar posto</button>
-            </form>
-            <div id="mensagemPosto"></div>
-        </section>
+            <section id="secao5">
+                <h3>Cadastrar vacina</h3>
+                <form id="cadastroVacinaForm">
+                    <label>Nome da vacina:</label>
+                    <input type="text" id="nomeVacina" required />
+                    <label>Fabricante:</label>
+                    <input type="text" id="fabricanteVacina" required />
+                    <label>Validade:</label>
+                    <input type="date" id="validadeVacina" required />
 
-        <section id="secao10">
-            <h3>Lista de Postos de Saúde</h3>
-            <button onclick="listarPostos()">Atualizar Lista</button>
-            <div id="listaPostos" class="lista">
-                <p>Carregando...</p>
-            </div>
-        </section>
+                    <input type="hidden" id="postoId" value="1" />
 
-        <section id="secao11">
-            <h3>Atualizar posto de saúde</h3>
-            <label>Buscar por nome:</label>
-            <input type="text" id="buscarPostoAtualizar" placeholder="Buscar..." />
-            <button type="button" onclick="buscarPostoParaAtualizar()">Buscar</button>
-            <div id="resultadoBuscaPostoAtualizar"></div>
-            <form id="atualizarPostoForm" style="display:none;">
-                <input type="hidden" id="idPostoAtualizar" />
-                <label>Novo nome:</label>
-                <input type="text" id="novoNomePosto" placeholder="Deixe em branco para manter" />
-                <label>Novo endereço:</label>
-                <textarea id="novoEnderecoPosto" placeholder="Deixe em branco para manter"></textarea>
-                <button type="submit">Atualizar posto</button>
-            </form>
-            <div id="mensagemPostoAtualizar"></div>
-        </section>
+                    <button type="submit">Cadastrar vacina</button>
+                </form>
+                <div id="mensagemVacina"></div>
+            </section>
 
-        <section id="secao12">
-            <h3>Excluir posto de saúde</h3>
-            <label>Buscar por nome:</label>
-            <input type="text" id="buscarPostoExcluir" placeholder="Buscar..." />
-            <button type="button" onclick="buscarPostoParaExcluir()">Buscar</button>
-            <div id="resultadoBuscaPostoExcluir"></div>
-            <form id="excluirPostoForm" style="display:none;">
-                <input type="hidden" id="idPostoExcluir" />
-                <p>Selecionado: <span id="nomeSelecionadoPostoExcluir" style="font-weight:bold;"></span></p>
-                <button type="submit">Excluir posto</button>
-            </form>
-            <div id="mensagemPostoExcluir"></div>
-        </section>
+            <section id="secao6">
+                <h3>Lista de Vacinas</h3>
+                <button onclick="listarVacinas()">Atualizar Lista</button>
+                <div id="listaVacinas" class="lista">
+                    <p>Carregando...</p>
+                </div>
+            </section>
 
-        <section id="secaoStatusOculta" style="display: none;">
-            <h3>Lista de Status de Agendamento (Oculta)</h3>
-            <button onclick="listarStatus()">Atualizar Lista</button>
-            <div id="listaStatus" class="lista">
-                <p>Carregando...</p>
-            </div>
-        </section>
+            <section id="secao7">
+                <h3>Atualizar vacina</h3>
+                <label>Buscar por nome ou fabricante:</label>
+                <input type="text" id="buscarVacinaAtualizar" placeholder="Buscar..." />
+                <button type="button" onclick="buscarVacinaParaAtualizar()">Buscar</button>
+                <div id="resultadoBuscaVacinaAtualizar"></div>
+                <form id="atualizarVacinaForm" style="display:none;">
+                    <input type="hidden" id="idVacinaAtualizar" />
+                    <label>Novo nome:</label>
+                    <input type="text" id="novoNomeVacina" placeholder="Deixe em branco para manter" />
+                    <label>Novo fabricante:</label>
+                    <input type="text" id="novoFabricanteVacina" placeholder="Deixe em branco para manter" />
+                    <label>Nova validade:</label>
+                    <input type="date" id="novaValidadeVacina" />
+                    <button type="submit">Atualizar vacina</button>
+                </form>
+                <div id="mensagemVacinaAtualizar"></div>
+            </section>
 
+            <section id="secao8">
+                <h3>Excluir vacina</h3>
+                <label>Buscar por nome ou fabricante:</label>
+                <input type="text" id="buscarVacinaExcluir" placeholder="Buscar..." />
+                <button type="button" onclick="buscarVacinaParaExcluir()">Buscar</button>
+                <div id="resultadoBuscaVacinaExcluir"></div>
+                <form id="excluirVacinaForm" style="display:none;">
+                    <input type="hidden" id="idVacinaExcluir" />
+                    <p>Selecionado: <span id="nomeSelecionadoVacinaExcluir" style="font-weight:bold;"></span></p>
+                    <button type="submit">Excluir vacina</button>
+                </form>
+                <div id="mensagemVacinaExcluir"></div>
+            </section>
 
-        <section id="secao13">
-            <h3>Cadastrar agendamento</h3>
-            <form id="cadastroAgendamentoForm">
-                <label>Cidadão:</label>
-                <select id="cidadaoSelect" required>
-                    <option value="">Selecione um cidadão</option>
-                </select>
+            <section id="secao9">
+                <h3>Cadastrar posto de saúde</h3>
+                <form id="cadastroPostoForm">
+                    <label>Nome do posto:</label>
+                    <input type="text" id="nomePosto" required />
+                    <label>Endereço do posto:</label>
+                    <textarea id="enderecoPosto" required></textarea>
+                    <button type="submit">Cadastrar posto</button>
+                </form>
+                <div id="mensagemPosto"></div>
+            </section>
 
-                <label>Vacina:</label>
-                <select id="vacinaSelect" required>
-                    <option value="">Selecione uma vacina</option>
-                </select>
+            <section id="secao10">
+                <h3>Lista de Postos de Saúde</h3>
+                <button onclick="listarPostos()">Atualizar Lista</button>
+                <div id="listaPostos" class="lista">
+                    <p>Carregando...</p>
+                </div>
+            </section>
 
-                <label>Posto de Saúde:</label>
-                <select id="postoSelect" required>
-                    <option value="">Selecione um posto</option>
-                </select>
+            <section id="secao11">
+                <h3>Atualizar posto de saúde</h3>
+                <label>Buscar por nome:</label>
+                <input type="text" id="buscarPostoAtualizar" placeholder="Buscar..." />
+                <button type="button" onclick="buscarPostoParaAtualizar()">Buscar</button>
+                <div id="resultadoBuscaPostoAtualizar"></div>
+                <form id="atualizarPostoForm" style="display:none;">
+                    <input type="hidden" id="idPostoAtualizar" />
+                    <label>Novo nome:</label>
+                    <input type="text" id="novoNomePosto" placeholder="Deixe em branco para manter" />
+                    <label>Novo endereço:</label>
+                    <textarea id="novoEnderecoPosto" placeholder="Deixe em branco para manter"></textarea>
+                    <button type="submit">Atualizar posto</button>
+                </form>
+                <div id="mensagemPostoAtualizar"></div>
+            </section>
 
-                <label>Status:</label>
-                <select id="statusSelect" required>
-                    <option value="">Selecione um status</option>
-                </select>
+            <section id="secao12">
+                <h3>Excluir posto de saúde</h3>
+                <label>Buscar por nome:</label>
+                <input type="text" id="buscarPostoExcluir" placeholder="Buscar..." />
+                <button type="button" onclick="buscarPostoParaExcluir()">Buscar</button>
+                <div id="resultadoBuscaPostoExcluir"></div>
+                <form id="excluirPostoForm" style="display:none;">
+                    <input type="hidden" id="idPostoExcluir" />
+                    <p>Selecionado: <span id="nomeSelecionadoPostoExcluir" style="font-weight:bold;"></span></p>
+                    <button type="submit">Excluir posto</button>
+                </form>
+                <div id="mensagemPostoExcluir"></div>
+            </section>
 
-                <label>Data e Hora:</label>
-                <input type="datetime-local" id="dataHoraAgendamento" required />
-
-                <button type="submit">Cadastrar agendamento</button>
-            </form>
-            <div id="mensagemAgendamento"></div>
-        </section>
-
-        <section id="secao14">
-            <h3>Lista de Agendamentos Detalhados</h3>
-            <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
-            <div id="listaAgendamentos" class="lista">
-                <p>Carregando...</p>
-            </div>
-        </section>
-
-        <section id="secao15">
-            <h3>Atualizar agendamento</h3>
-
-            <label for="buscarAgendamentoAtualizar">Buscar agendamento por ID:</label>
-            <input type="text" id="buscarAgendamentoAtualizar" placeholder="Digite o ID do agendamento..." />
-            <button type="button" onclick="buscarAgendamentoParaAtualizar()">Buscar</button>
-
-            <div id="resultadoBuscaAgendamentoAtualizar"></div>
-
-            <form id="atualizarAgendamentoForm" style="display:none;" onsubmit="atualizarAgendamento(event)">
-                <input type="hidden" id="idAgendamentoAtualizar" />
-
-                <p>Selecionado: <span id="agendamentoSelecionadoAtualizar" style="font-weight: bold;"></span></p>
-
-                <label for="novoStatusAgendamento">Novo status:</label>
-                <select id="novoStatusAgendamento" required>
-                    <option value="">Selecione um status</option>
-                </select>
-
-                <button type="submit">Atualizar agendamento</button>
-            </form>
-
-            <div id="mensagemAgendamentoAtualizar"></div>
-        </section>
+            <section id="secaoStatusOculta" style="display: none;">
+                <h3>Lista de Status de Agendamento (Oculta)</h3>
+                <button onclick="listarStatus()">Atualizar Lista</button>
+                <div id="listaStatus" class="lista">
+                    <p>Carregando...</p>
+                </div>
+            </section>
 
 
-        <section id="secao16">
-            <h3>Excluir agendamento</h3>
-            <label>Buscar agendamento por ID:</label>
-            <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />
-            <button type="button" onclick="buscarAgendamentoParaExcluir()">Buscar</button>
-            <div id="resultadoBuscaAgendamentoExcluir"></div>
-            <form id="excluirAgendamentoForm" style="display:none;">
-                <input type="hidden" id="idAgendamentoExcluir" />
-                <p>Selecionado: <span id="agendamentoSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                <button type="submit">Excluir agendamento</button>
-            </form>
-            <div id="mensagemAgendamentoExcluir"></div>
-        </section>
+            <section id="secao13">
+                <h3>Cadastrar agendamento</h3>
+                <form id="cadastroAgendamentoForm">
+                    <label>Cidadão:</label>
+                    <select id="cidadaoSelect" required>
+                        <option value="">Selecione um cidadão</option>
+                    </select>
 
-        <section id="secao0">
-            <h3>Gestão de Negócio</h3>
-            <p>Métricas Chave do Sistema de Vacinação</p>
-            <div style="width: 80%; margin: 20px auto;">
-                <canvas id="dashboardChart"></canvas>
-            </div>
-        </section>
-        
-        <section id="secaoS" style="display:none;">
-            <h3>Sistema de Vacinação</h3>
-            <p>Obrigado por usar o Sistema de Vacinação!</p>
-        </section>
-    </main>
-    
-    <script src="js/api.js"></script> 
-    <script src="js/cidadao.js"></script> 
+                    <label>Vacina:</label>
+                    <select id="vacinaSelect" required>
+                        <option value="">Selecione uma vacina</option>
+                    </select>
+
+                    <label>Posto de Saúde:</label>
+                    <select id="postoSelect" required>
+                        <option value="">Selecione um posto</option>
+                    </select>
+
+                    <label>Status:</label>
+                    <select id="statusSelect" required>
+                        <option value="">Selecione um status</option>
+                    </select>
+
+                    <label>Data e Hora:</label>
+                    <input type="datetime-local" id="dataHoraAgendamento" required />
+
+                    <button type="submit">Cadastrar agendamento</button>
+                </form>
+                <div id="mensagemAgendamento"></div>
+            </section>
+
+            <section id="secao14">
+                <h3>Lista de Agendamentos Detalhados</h3>
+                <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
+                <div id="listaAgendamentos" class="lista">
+                    <p>Carregando...</p>
+                </div>
+            </section>
+
+            <section id="secao15">
+                <h3>Atualizar agendamento</h3>
+
+                <label for="buscarAgendamentoAtualizar">Buscar agendamento por ID:</label>
+                <input type="text" id="buscarAgendamentoAtualizar" placeholder="Digite o ID do agendamento..." />
+                <button type="button" onclick="buscarAgendamentoParaAtualizar()">Buscar</button>
+
+                <div id="resultadoBuscaAgendamentoAtualizar"></div>
+
+                <form id="atualizarAgendamentoForm" style="display:none;" onsubmit="atualizarAgendamento(event)">
+                    <input type="hidden" id="idAgendamentoAtualizar" />
+
+                    <p>Selecionado: <span id="agendamentoSelecionadoAtualizar" style="font-weight: bold;"></span></p>
+
+                    <label for="novoStatusAgendamento">Novo status:</label>
+                    <select id="novoStatusAgendamento" required>
+                        <option value="">Selecione um status</option>
+                    </select>
+
+                    <button type="submit">Atualizar agendamento</button>
+                </form>
+
+                <div id="mensagemAgendamentoAtualizar"></div>
+            </section>
+
+
+            <section id="secao16">
+                <h3>Excluir agendamento</h3>
+                <label>Buscar agendamento por ID:</label>
+                <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />
+                <button type="button" onclick="buscarAgendamentoParaExcluir()">Buscar</button>
+                <div id="resultadoBuscaAgendamentoExcluir"></div>
+                <form id="excluirAgendamentoForm" style="display:none;">
+                    <input type="hidden" id="idAgendamentoExcluir" />
+                    <p>Selecionado: <span id="agendamentoSelecionadoExcluir" style="font-weight:bold;"></span></p>
+                    <button type="submit">Excluir agendamento</button>
+                </form>
+                <div id="mensagemAgendamentoExcluir"></div>
+            </section>
+
+            <section id="secao0">
+                <h3>Gestão de Negócio</h3>
+                <p>Métricas Chave do Sistema de Vacinação</p>
+                <div style="width: 80%; margin: 20px auto;">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+            </section>
+
+            <section id="secaoS" style="display:none;">
+                <h3>Sistema de Vacinação</h3>
+                <p>Obrigado por usar o Sistema de Vacinação!</p>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/authUI.js"></script>
+    <script src="js/cidadao.js"></script>
     <script src="js/vacina.js"></script>
     <script src="js/posto.js"></script>
     <script src="js/agendamento.js"></script>
-    
-    <script src="js/gestao.js"></script> 
-    
-    <script src="js/vacinacao.js"></script> 
+    <script src="js/gestao.js"></script>
+    <script src="js/vacinacao.js"></script>
+
 </body>
 </html>

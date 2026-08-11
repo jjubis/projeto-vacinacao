@@ -1,6 +1,4 @@
- // ===== FUNÇÕES PARA VACINAS =====
-
-async function cadastrarVacina(e) {
+ async function cadastrarVacina(e) {
     e.preventDefault();
     
     const postoIdElement = document.getElementById('postoId');
