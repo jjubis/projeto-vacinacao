@@ -28,6 +28,42 @@
                 <button type="submit" style="width:100%;">Entrar</button>
             </form>
             <div id="mensagemLogin"></div>
+            <p style="text-align:center; margin-top:15px; font-size:14px;">
+                Ainda não tem acesso? <a href="#" onclick="mostrarTelaRegistro(); return false;">Cadastre-se</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- TELA DE REGISTRO (autorregistro de cidadão) -->
+    <div id="telaRegistro" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; width:100%;">
+        <div style="background:white; padding:30px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); width:100%; max-width:360px;">
+            <h2 style="text-align:center; color:var(--cor-secundaria);">Criar acesso</h2>
+            <p style="text-align:center; color:#666; margin-bottom:20px;">
+                Use o CPF com que você já foi cadastrado em um posto de saúde
+            </p>
+
+            <form id="registroForm">
+                <label for="registroNome">Nome completo:</label>
+                <input type="text" id="registroNome" required />
+
+                <label for="registroCpf">CPF:</label>
+                <input type="text" id="registroCpf" required />
+
+                <label for="registroEmail">Email:</label>
+                <input type="email" id="registroEmail" required />
+
+                <label for="registroSenha">Senha (mínimo 8 caracteres):</label>
+                <input type="password" id="registroSenha" required />
+
+                <label for="registroConfirmarSenha">Confirmar senha:</label>
+                <input type="password" id="registroConfirmarSenha" required />
+
+                <button type="submit" id="registroSbmt" style="width:100%;">Criar acesso</button>
+            </form>
+            <div id="mensagemRegistro"></div>
+            <p style="text-align:center; margin-top:15px; font-size:14px;">
+                Já tem acesso? <a href="#" onclick="mostrarTelaLogin(); return false;">Entrar</a>
+            </p>
         </div>
     </div>
 

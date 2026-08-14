@@ -9,22 +9,30 @@ export default (db) => {
    // Cadastro de novo usuário — SOMENTE cidadão pode se autorregistrar
     router.post('/registrar', async (req, res) => {
         try {
-            const { nome, email, senha, cidadaoId } = req.body;
+            const { nome, email, senha, cpf } = req.body;
 
-            if (!nome || !email || !senha || !cidadaoId) {
-                return res.status(400).json({ error: 'Nome, email, senha e cidadaoId são obrigatórios.' });
+            if (!nome || !email || !senha || !cpf) {
+                return res.status(400).json({ error: 'Nome, email, senha e CPF são obrigatórios.' });
             }
 
             if (senha.length < 8) {
                 return res.status(400).json({ error: 'A senha deve ter no mínimo 8 caracteres.' });
             }
 
-            const cidadao = db.prepare('SELECT id FROM cidadaos WHERE id = ?').get(cidadaoId);
-            if (!cidadao) {
-                return res.status(400).json({ error: 'Cidadão não encontrado. Cadastre-se presencialmente antes de criar seu acesso.' });
+            const cpfLimpo = cpf.replace(/\D/g, '');
+
+            if (cpfLimpo.length !== 11) {
+                return res.status(400).json({ error: 'CPF inválido. Deve conter exatamente 11 dígitos numéricos.' });
             }
 
-            const jaTemLogin = db.prepare('SELECT id FROM usuarios WHERE cidadaoId = ?').get(cidadaoId);
+            const cidadao = db.prepare('SELECT id FROM cidadaos WHERE cpf = ?').get(cpfLimpo);
+            if (!cidadao) {
+                return res.status(400).json({
+                    error: 'CPF não encontrado. Você precisa estar cadastrado como cidadão em um posto de saúde antes de criar seu acesso.'
+                });
+            }
+
+            const jaTemLogin = db.prepare('SELECT id FROM usuarios WHERE cidadaoId = ?').get(cidadao.id);
             if (jaTemLogin) {
                 return res.status(409).json({ error: 'Este cidadão já possui um acesso cadastrado.' });
             }
@@ -39,7 +47,7 @@ export default (db) => {
             const info = db.prepare(`
                 INSERT INTO usuarios (nome, email, senhaHash, papel, cidadaoId)
                 VALUES (?, ?, ?, 'cidadao', ?)
-            `).run(nome, email, senhaHash, cidadaoId);
+            `).run(nome, email, senhaHash, cidadao.id);
 
             res.status(201).json({ message: 'Usuário criado com sucesso', id: info.lastInsertRowid });
 
@@ -79,7 +87,7 @@ export default (db) => {
             res.status(500).json({ error: 'Erro interno ao registrar funcionário.' });
         }
     });
-    
+
     // Login
     router.post('/login', async (req, res) => {
         try {
