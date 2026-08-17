@@ -45,6 +45,13 @@ function aplicarMascaras() {
     }
 }
 
+function aplicarMascarasAuth() {
+    const cpfRegistro = document.getElementById('registroCpf');
+    if (cpfRegistro) {
+        VMasker(cpfRegistro).maskPattern('999.999.999-99');
+    }
+}
+
 function configurarNavegacaoMenu() {
     const menuItems = document.querySelectorAll('#menu li');
     const sections = document.querySelectorAll('main section');
@@ -119,6 +126,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (loginForm) {
         loginForm.addEventListener('submit', fazerLogin);
     }
+
+    // Conecta o formulário de registro (autorregistro de cidadão)
+    const registroForm = document.getElementById('registroForm');
+    if (registroForm) {
+        registroForm.addEventListener('submit', fazerRegistroCidadao);
+    }
+
+    // Máscara de CPF no formulário de registro
+    aplicarMascarasAuth();
 
     // Checa se já existe uma sessão ativa antes de decidir o que mostrar
     const estaLogado = await verificarSessao();

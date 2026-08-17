@@ -25,6 +25,7 @@ function aplicarCapitalizacaoNoInput(inputId) {
 
 aplicarCapitalizacaoNoInput('nome');
 aplicarCapitalizacaoNoInput('novoNome');
+aplicarCapitalizacaoNoInput('registroNome');
 
 let isSubmittingCidadao = false;
 
