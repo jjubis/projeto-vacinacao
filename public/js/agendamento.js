@@ -1,4 +1,3 @@
-
 const STATUSES_FIXOS = [
     { id: 1, descricao: 'Agendado' },
     { id: 2, descricao: 'Realizado' },
@@ -38,24 +37,43 @@ function listarStatus() {
 
 async function carregarDadosParaAgendamento() {
     try {
-        const [cidadaos, vacinas, postos] = await Promise.all([
-            fazerRequisicao('/cidadaos'),
-            fazerRequisicao('/vacinas'),
-            fazerRequisicao('/postos')
-        ]);
+        const ehFuncionario = usuarioLogado && usuarioLogado.papel === 'funcionario';
 
         const cidadaoSelect = document.getElementById('cidadaoSelect');
-        cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
-        cidadaos.forEach(c => {
-            cidadaoSelect.innerHTML += `<option value="${c.id}">${c.nome} - CPF: ${formatarCPF(c.cpf)}</option>`;
-        });
+        const labelCidadaoSelect = document.getElementById('labelCidadaoSelect');
+        const agendandoParaMim = document.getElementById('agendandoParaMim');
 
+        if (ehFuncionario) {
+            // Funcionário escolhe qual cidadão está sendo agendado
+            cidadaoSelect.style.display = '';
+            labelCidadaoSelect.style.display = '';
+            agendandoParaMim.style.display = 'none';
+            cidadaoSelect.required = true;
+
+            const cidadaos = await fazerRequisicao('/cidadaos');
+            cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
+            cidadaos.forEach(c => {
+                cidadaoSelect.innerHTML += `<option value="${c.id}">${c.nome} - CPF: ${formatarCPF(c.cpf)}</option>`;
+            });
+        } else {
+            // Cidadão agenda para si mesmo — não precisa (nem pode) escolher
+            cidadaoSelect.style.display = 'none';
+            labelCidadaoSelect.style.display = 'none';
+            cidadaoSelect.required = false;
+            cidadaoSelect.innerHTML = `<option value="${usuarioLogado.cidadaoId}" selected>${usuarioLogado.nome}</option>`;
+
+            agendandoParaMim.style.display = 'block';
+            agendandoParaMim.textContent = `Agendando para: ${usuarioLogado.nome}`;
+        }
+
+        const vacinas = await fazerRequisicao('/vacinas');
         const vacinaSelect = document.getElementById('vacinaSelect');
         vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
         vacinas.forEach(v => {
             vacinaSelect.innerHTML += `<option value="${v.id}">${v.nome} (${v.fabricante})</option>`;
         });
 
+        const postos = await fazerRequisicao('/postos');
         const postoSelect = document.getElementById('postoSelect');
         postoSelect.innerHTML = '<option value="">Selecione um posto</option>';
         postos.forEach(p => {
@@ -79,7 +97,12 @@ async function carregarDadosParaAgendamento() {
 async function cadastrarAgendamento(e) {
     e.preventDefault();
 
-    const cidadaoId = parseInt(document.getElementById('cidadaoSelect').value);
+    const ehFuncionario = usuarioLogado && usuarioLogado.papel === 'funcionario';
+
+    const cidadaoId = ehFuncionario
+        ? parseInt(document.getElementById('cidadaoSelect').value)
+        : usuarioLogado.cidadaoId;
+
     const vacinaId = parseInt(document.getElementById('vacinaSelect').value);
     const postoId = parseInt(document.getElementById('postoSelect').value);
     const statusId = parseInt(document.getElementById('statusSelect').value);
@@ -115,7 +138,8 @@ async function cadastrarAgendamento(e) {
         mostrarMensagem('mensagemAgendamento', 'Agendamento cadastrado com sucesso!', 'success');
         document.getElementById('cadastroAgendamentoForm').reset();
 
-        if (document.getElementById('secao14').classList.contains('active')) {
+        const secao14 = document.getElementById('secao14');
+        if (secao14 && secao14.classList.contains('active')) {
             listarAgendamentosDetalhados();
         }
 
@@ -249,7 +273,8 @@ async function atualizarAgendamento(e) {
         document.getElementById('resultadoBuscaAgendamentoAtualizar').innerHTML = '';
         document.getElementById('buscarAgendamentoAtualizar').value = '';
 
-        if (document.getElementById('secao14').classList.contains('active')) {
+        const secao14 = document.getElementById('secao14');
+        if (secao14 && secao14.classList.contains('active')) {
             listarAgendamentosDetalhados();
         }
 
@@ -336,12 +361,13 @@ async function excluirAgendamento(e) {
         document.getElementById('resultadoBuscaAgendamentoExcluir').innerHTML = '';
         document.getElementById('buscarAgendamentoExcluir').value = '';
 
-        if (document.getElementById('secao14').classList.contains('active')) {
+        const secao14 = document.getElementById('secao14');
+        if (secao14 && secao14.classList.contains('active')) {
             listarAgendamentosDetalhados();
         }
 
     } catch (erro) {
-        mostrarMensagem('mensagemAgendamentoExcluir', `Erro: ${erro.message}`, 'error');
+        mostrarMensagem('mensagemAgendamentoExcluir', `Erro ao excluir agendamento: ${erro.message}`, 'error');
     }
 }
 

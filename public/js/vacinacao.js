@@ -52,6 +52,22 @@ function aplicarMascarasAuth() {
     }
 }
 
+// Esconde do menu os itens que o papel do usuário logado não pode acessar
+function aplicarPermissoesMenu() {
+    const menuItems = document.querySelectorAll('#menu li[data-opcao]');
+    const papel = usuarioLogado ? usuarioLogado.papel : null;
+
+    menuItems.forEach(item => {
+        const permissaoNecessaria = item.getAttribute('data-permissao');
+
+        if (permissaoNecessaria && permissaoNecessaria !== papel) {
+            item.style.display = 'none';
+        } else {
+            item.style.display = '';
+        }
+    });
+}
+
 function configurarNavegacaoMenu() {
     const menuItems = document.querySelectorAll('#menu li');
     const sections = document.querySelectorAll('main section');
@@ -110,12 +126,16 @@ async function iniciarApp() {
     mostrarApp();
 
     aplicarMascaras();
+    aplicarPermissoesMenu();
     configurarNavegacaoMenu();
     configurarEventListeners();
 
-    const primeiroItem = document.querySelector('#menu li[data-opcao="1"]');
-    if (primeiroItem) {
-        primeiroItem.click();
+    // Clica no primeiro item do menu que estiver VISÍVEL para o papel do usuário
+    const primeiroItemVisivel = Array.from(document.querySelectorAll('#menu li[data-opcao]'))
+        .find(item => item.style.display !== 'none');
+
+    if (primeiroItemVisivel) {
+        primeiroItemVisivel.click();
     }
 }
 

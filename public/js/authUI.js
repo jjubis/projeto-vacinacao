@@ -74,16 +74,23 @@ async function fazerRegistroCidadao(e) {
             body: JSON.stringify({ nome, cpf, email, senha })
         });
 
-        mostrarMensagem('mensagemRegistro', 'Acesso criado com sucesso! Redirecionando para o login...', 'success');
+        mostrarMensagem('mensagemRegistro', 'Acesso criado com sucesso! Entrando...', 'success');
         document.getElementById('registroForm').reset();
 
+        // Login automático com as credenciais recém-criadas
+        const respostaLogin = await fazerRequisicao('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, senha })
+        });
+
+        usuarioLogado = respostaLogin.usuario;
+
         setTimeout(() => {
-            mostrarTelaLogin();
-        }, 1500);
+            iniciarApp();
+        }, 800);
 
     } catch (erro) {
         mostrarMensagem('mensagemRegistro', erro.message, 'error');
-    } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Criar acesso';
     }

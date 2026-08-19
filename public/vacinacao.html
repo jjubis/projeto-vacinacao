@@ -73,27 +73,27 @@
             <h2>--- MENU ---</h2>
             <p id="nomeUsuarioLogado" style="text-align:center; font-size:12px; opacity:0.8; margin-top:-10px; margin-bottom:15px;"></p>
             <ul>
-                <li data-opcao="0">0 - Gestão de Negócio</li>
+    <li data-opcao="0" data-permissao="funcionario">0 - Gestão de Negócio</li>
 
-                <li data-opcao="1">1 - Cadastrar cidadão</li>
-                <li data-opcao="2">2 - Listar cidadãos</li>
-                <li data-opcao="3">3 - Atualizar cidadão</li>
-                <li data-opcao="4">4 - Excluir cidadão</li>
-                <li data-opcao="5">5 - Cadastrar vacina</li>
-                <li data-opcao="6">6 - Listar vacinas</li>
-                <li data-opcao="7">7 - Atualizar vacina</li>
-                <li data-opcao="8">8 - Excluir vacina</li>
-                <li data-opcao="9">9 - Cadastrar posto de saúde</li>
-                <li data-opcao="10">10 - Listar postos de saúde</li>
-                <li data-opcao="11">11 - Atualizar posto de saúde</li>
-                <li data-opcao="12">12 - Excluir posto de saúde</li>
-                <li data-opcao="13">13 - Cadastrar agendamento</li>
-                <li data-opcao="14">14 - Listar agendamentos detalhados</li>
-                <li data-opcao="15">15 - Atualizar agendamento</li>
-                <li data-opcao="16">16 - Excluir agendamento</li>
+    <li data-opcao="1" data-permissao="funcionario">1 - Cadastrar cidadão</li>
+    <li data-opcao="2" data-permissao="funcionario">2 - Listar cidadãos</li>
+    <li data-opcao="3" data-permissao="funcionario">3 - Atualizar cidadão</li>
+    <li data-opcao="4" data-permissao="funcionario">4 - Excluir cidadão</li>
+    <li data-opcao="5" data-permissao="funcionario">5 - Cadastrar vacina</li>
+    <li data-opcao="6">6 - Listar vacinas</li>
+    <li data-opcao="7" data-permissao="funcionario">7 - Atualizar vacina</li>
+    <li data-opcao="8" data-permissao="funcionario">8 - Excluir vacina</li>
+    <li data-opcao="9" data-permissao="funcionario">9 - Cadastrar posto de saúde</li>
+    <li data-opcao="10">10 - Listar postos de saúde</li>
+    <li data-opcao="11" data-permissao="funcionario">11 - Atualizar posto de saúde</li>
+    <li data-opcao="12" data-permissao="funcionario">12 - Excluir posto de saúde</li>
+    <li data-opcao="13">13 - Cadastrar agendamento</li>
+    <li data-opcao="14" data-permissao="funcionario">14 - Listar agendamentos detalhados</li>
+    <li data-opcao="15" data-permissao="funcionario">15 - Atualizar agendamento</li>
+    <li data-opcao="16" data-permissao="funcionario">16 - Excluir agendamento</li>
 
-                <li data-opcao="S">S - Sair do Sistema</li>
-            </ul>
+    <li data-opcao="S">S - Sair do Sistema</li>
+</ul>
         </nav>
 
         <main>
@@ -284,13 +284,14 @@
             </section>
 
 
-            <section id="secao13">
-                <h3>Cadastrar agendamento</h3>
-                <form id="cadastroAgendamentoForm">
-                    <label>Cidadão:</label>
-                    <select id="cidadaoSelect" required>
-                        <option value="">Selecione um cidadão</option>
-                    </select>
+           <section id="secao13">
+    <h3>Cadastrar agendamento</h3>
+    <p id="agendandoParaMim" style="display:none; font-weight:bold; color:var(--cor-secundaria);"></p>
+    <form id="cadastroAgendamentoForm">
+        <label id="labelCidadaoSelect">Cidadão:</label>
+        <select id="cidadaoSelect" required>
+            <option value="">Selecione um cidadão</option>
+        </select>
 
                     <label>Vacina:</label>
                     <select id="vacinaSelect" required>
