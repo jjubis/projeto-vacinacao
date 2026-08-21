@@ -168,7 +168,7 @@ app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
 
     const postoCount = db.prepare('SELECT COUNT(*) AS c FROM postos_saude').get().c;
     if (postoCount === 0) {
-        db.prepare(`INSERT INTO postos_saude (nome, endereco) VALUES ('Posto Central', 'Avenida Principal, 456')`).run();
+        db.prepare(`INSERT INTO postos_saude (nome, endereco) VALUES ('UBS Aterrado', 'Endereço da UBS Aterrado')`).run();
     }
     
     const estoqueCount = db.prepare('SELECT COUNT(*) AS c FROM estoque').get().c;

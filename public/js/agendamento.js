@@ -73,12 +73,18 @@ async function carregarDadosParaAgendamento() {
             vacinaSelect.innerHTML += `<option value="${v.id}">${v.nome} (${v.fabricante})</option>`;
         });
 
+        // Unidade única (UBS Aterrado) — detectada automaticamente, sem seleção manual
         const postos = await fazerRequisicao('/postos');
-        const postoSelect = document.getElementById('postoSelect');
-        postoSelect.innerHTML = '<option value="">Selecione um posto</option>';
-        postos.forEach(p => {
-            postoSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-        });
+        const infoUnidade = document.getElementById('infoUnidade');
+        const postoIdInput = document.getElementById('postoIdAgendamento');
+
+        if (postos && postos.length > 0) {
+            const unidade = postos[0];
+            postoIdInput.value = unidade.id;
+            infoUnidade.textContent = `Unidade: ${unidade.nome} - ${unidade.endereco}`;
+        } else {
+            infoUnidade.textContent = 'Nenhuma unidade de saúde cadastrada no sistema.';
+        }
 
         preencherSelectStatus('statusSelect');
 
@@ -104,7 +110,7 @@ async function cadastrarAgendamento(e) {
         : usuarioLogado.cidadaoId;
 
     const vacinaId = parseInt(document.getElementById('vacinaSelect').value);
-    const postoId = parseInt(document.getElementById('postoSelect').value);
+    const postoId = parseInt(document.getElementById('postoIdAgendamento').value);
     const statusId = parseInt(document.getElementById('statusSelect').value);
     const dataHora = document.getElementById('dataHoraAgendamento').value;
 
