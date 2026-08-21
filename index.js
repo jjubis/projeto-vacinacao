@@ -168,7 +168,7 @@ app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
 
     const postoCount = db.prepare('SELECT COUNT(*) AS c FROM postos_saude').get().c;
     if (postoCount === 0) {
-        db.prepare(`INSERT INTO postos_saude (nome, endereco) VALUES ('UBS Aterrado', 'Endereço da UBS Aterrado')`).run();
+        db.prepare(`INSERT INTO postos_saude (nome, endereco) VALUES ('UBS Aterrado', 'Rua Domingos dos Santos, 105, no bairro Aterrado, em Mogi Mirim - SP')`).run();
     }
     
     const estoqueCount = db.prepare('SELECT COUNT(*) AS c FROM estoque').get().c;
