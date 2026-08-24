@@ -59,7 +59,7 @@ const listarPorPaciente = async (pacienteId) => {
         throw new Error("O ID do paciente é obrigatório para listar agendamentos.");
     }
 
-    const agendamentos = await agendamentoModel.findByPacienteId(pacienteId);
+    const agendamentos = await agendamentoModel.findByCidadao(pacienteId);
     return agendamentos;
 };
 
