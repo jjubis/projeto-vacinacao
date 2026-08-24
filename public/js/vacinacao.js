@@ -11,11 +11,6 @@ function configurarEventListeners() {
         document.getElementById('atualizarVacinaForm').addEventListener('submit', atualizarVacina);
         document.getElementById('excluirVacinaForm').addEventListener('submit', excluirVacina);
 
-        // Posto (usa funções do posto.js)
-        document.getElementById('cadastroPostoForm').addEventListener('submit', cadastrarPosto);
-        document.getElementById('atualizarPostoForm').addEventListener('submit', atualizarPosto);
-        document.getElementById('excluirPostoForm').addEventListener('submit', excluirPosto);
-
         // Agendamento (usa funções do agendamento.js)
         document.getElementById('cadastroAgendamentoForm').addEventListener('submit', cadastrarAgendamento);
         document.getElementById('atualizarAgendamentoForm').addEventListener('submit', atualizarAgendamento);
