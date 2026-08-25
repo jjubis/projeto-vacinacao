@@ -1,8 +1,21 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { hashSenha, verificarSenha } from '../utils/auth.js';
 import { requireRole } from '../utils/middlewares.js';
 
 const router = express.Router();
+
+// Limita tentativas de login: no máx. 5 por IP a cada 15 minutos
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Muitas tentativas de login. Tente novamente em alguns minutos.' },
+    handler: (req, res, next, options) => {
+        res.status(options.statusCode).json(options.message);
+    }
+});
 
 export default (db) => {
 
@@ -89,7 +102,7 @@ export default (db) => {
     });
 
     // Login
-    router.post('/login', async (req, res) => {
+    router.post('/login', loginLimiter, async (req, res) => {
         try {
             const { email, senha } = req.body;
 
