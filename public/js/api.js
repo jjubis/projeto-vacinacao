@@ -1,4 +1,3 @@
-
 const API_BASE_URL = window.location.origin;
 
 function mostrarMensagem(elementoId, mensagem, tipo = 'info') {
@@ -14,19 +13,21 @@ function mostrarMensagem(elementoId, mensagem, tipo = 'info') {
         elemento.innerHTML = '';
     }, 5000);
 }
+
 async function fazerRequisicao(url, options = {}) {
     try {
         const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 
         const response = await fetch(fullUrl, {
-    method: options.method || 'GET',
-    credentials: 'include',
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-    },
-    body: options.body,
-});
+            method: options.method || 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            body: options.body,
+        });
+
         const responseText = await response.text();
 
         if (!response.ok) {
@@ -42,6 +43,15 @@ async function fazerRequisicao(url, options = {}) {
             } catch (e) {
                 if (responseText) {
                     errorMessage = responseText;
+                }
+            }
+
+            // Sessão expirada ou não autenticado: redireciona para o login,
+            // exceto nas próprias rotas de auth, que já tratam isso manualmente.
+            const ehRotaDeAuth = url.startsWith('/auth/');
+            if (response.status === 401 && !ehRotaDeAuth) {
+                if (typeof window.handleSessaoExpirada === 'function') {
+                    window.handleSessaoExpirada();
                 }
             }
 

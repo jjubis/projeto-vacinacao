@@ -107,6 +107,15 @@ async function fazerLogout() {
     }
 }
 
+// Chamada automaticamente pelo api.js quando qualquer requisição
+// (fora das rotas de /auth/) retorna 401 — ou seja, a sessão expirou
+// ou o cookie não é mais válido.
+function handleSessaoExpirada() {
+    usuarioLogado = null;
+    mostrarTelaLogin();
+    mostrarMensagem('mensagemLogin', 'Sua sessão expirou. Faça login novamente.', 'error');
+}
+
 function mostrarTelaLogin() {
     document.getElementById('telaLogin').style.display = 'flex';
     document.getElementById('telaRegistro').style.display = 'none';
@@ -134,6 +143,7 @@ window.verificarSessao = verificarSessao;
 window.fazerLogin = fazerLogin;
 window.fazerRegistroCidadao = fazerRegistroCidadao;
 window.fazerLogout = fazerLogout;
+window.handleSessaoExpirada = handleSessaoExpirada;
 window.mostrarTelaLogin = mostrarTelaLogin;
 window.mostrarTelaRegistro = mostrarTelaRegistro;
 window.mostrarApp = mostrarApp;
