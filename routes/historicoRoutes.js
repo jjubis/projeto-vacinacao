@@ -15,4 +15,6 @@ router.post(
   historicoController.create
 );
 
+router.get('/carteirinha/:pacienteId', historicoController.getCarteirinha);
+
 export default router;

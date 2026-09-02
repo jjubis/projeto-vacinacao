@@ -1,3 +1,4 @@
+import { pool } from '../config/database.js';
 import authService from '../services/authService.js'
 
 const registerCidadao = async (req, res, next) => {
@@ -44,8 +45,25 @@ const login = async (req, res, next) => {
     }
 };
 
+const listarFuncionarios = async (req, res) => {
+    try {
+        const [usuarios] = await pool.query(
+            "SELECT id, nome, email, cpf, papel FROM usuarios WHERE papel = 'funcionario'"
+        );
+
+        return res.json({
+            success: true,
+            data: usuarios
+        });
+    } catch (error) {
+        console.error("Erro ao buscar funcionário:", error);
+        return res.status(500).json({ message: "Erro ao buscar funcionários." })
+    }
+}
+
 export default {
     registerCidadao,
     registerFuncionario,
-    login
+    login,
+    listarFuncionarios
 };

@@ -11,5 +11,6 @@ router.post('/login', authController.login);
 
 // Rota interna (que você pode proteger com middleware de autenticação depois)
 router.post('/admin/cadastrar-funcionario', authController.registerFuncionario);
+router.get('/funcionarios', authController.listarFuncionarios);
 
 export default router;

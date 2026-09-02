@@ -28,4 +28,27 @@ const create = async (req, res, next) => {
   }
 };
 
-export default { getAll, getByPaciente, create };
+const getCarteirinha = async (req, res, next) => {
+  try {
+    const { pacienteId } = req.params;
+
+    const dadosCarteirinha = await historicoService.buscarCarteirinha(pacienteId);
+
+    if (!dadosCarteirinha.paciente) {
+      return res.status(404).json({
+        success: false,
+        message: "Paciente não encontrado."
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: dadosCarteirinha
+    });
+  } catch (error) {
+    console.error("Erro ao buscar carteirinha:", error);
+    next(error);
+  }
+}
+
+export default { getAll, getByPaciente, create, getCarteirinha };

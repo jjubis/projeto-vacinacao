@@ -46,4 +46,24 @@ const create = async (data) => {
   return rows[0];
 };
 
-export default { getAll, getByPaciente, create };
+const buscarCarteirinha = async (pacienteId) => {
+  const [paciente] = await pool.query(
+    "SELECT id, nome, cpf, data_nascimento FROM pacientes WHERE id = ?",
+    [pacienteId]
+  )
+
+  const [historico] = await pool.query(`
+    SELECT h.id, h.data_aplicacao, h.dose, h.lote, h.profissional_responsavel, v.nome AS vacina_nome
+    FROM historico_vacinal h
+    JOIN vacinas v ON h.vacina_id = v.id
+    WHERE h.paciente_id = ?
+    ORDER BY h.data_aplicacao DESC
+  `, [pacienteId]);
+
+  return {
+    paciente: paciente[0] || null,
+    historico: historico || []
+  };
+};
+
+export default { getAll, getByPaciente, create, buscarCarteirinha };
