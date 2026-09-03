@@ -86,8 +86,6 @@ async function carregarDadosParaAgendamento() {
             infoUnidade.textContent = 'Nenhuma unidade de saúde cadastrada no sistema.';
         }
 
-        preencherSelectStatus('statusSelect');
-
         const dataHoraInput = document.getElementById('dataHoraAgendamento');
         if (dataHoraInput) {
             const agora = new Date();
@@ -101,56 +99,163 @@ async function carregarDadosParaAgendamento() {
 }
 
 async function cadastrarAgendamento(e) {
+
     e.preventDefault();
 
-    const ehFuncionario = usuarioLogado && usuarioLogado.papel === 'funcionario';
+    const ehFuncionario =
+        usuarioLogado &&
+        usuarioLogado.papel === 'funcionario';
+
+
+    // =====================================================
+    // CIDADÃO
+    // =====================================================
+    // Para cidadão, o ID vem da sessão.
+    // O valor enviado pelo navegador não é confiável.
+    // =====================================================
 
     const cidadaoId = ehFuncionario
-        ? parseInt(document.getElementById('cidadaoSelect').value)
+        ? parseInt(
+            document.getElementById('cidadaoSelect').value
+        )
         : usuarioLogado.cidadaoId;
 
-    const vacinaId = parseInt(document.getElementById('vacinaSelect').value);
-    const postoId = parseInt(document.getElementById('postoIdAgendamento').value);
-    const statusId = parseInt(document.getElementById('statusSelect').value);
-    const dataHora = document.getElementById('dataHoraAgendamento').value;
 
-    if (!cidadaoId || !vacinaId || !postoId || !statusId || !dataHora) {
-        mostrarMensagem('mensagemAgendamento', 'Por favor, preencha todos os campos.', 'error');
+    const vacinaId =
+        parseInt(
+            document.getElementById('vacinaSelect').value
+        );
+
+
+    const postoId =
+        parseInt(
+            document.getElementById('postoIdAgendamento').value
+        );
+
+
+    const dataHora =
+        document.getElementById('dataHoraAgendamento').value;
+
+
+    // =====================================================
+    // VALIDAÇÃO
+    // =====================================================
+
+    if (
+        !cidadaoId ||
+        !vacinaId ||
+        !postoId ||
+        !dataHora
+    ) {
+
+        mostrarMensagem(
+            'mensagemAgendamento',
+            'Por favor, preencha todos os campos.',
+            'error'
+        );
+
         return;
     }
 
-    const dataAgendamento = new Date(dataHora);
-    const agora = new Date();
 
-    if (dataAgendamento < agora) {
-        mostrarMensagem('mensagemAgendamento', 'A data do agendamento não pode ser no passado.', 'error');
+    // =====================================================
+    // DATA
+    // =====================================================
+
+    const dataAgendamento =
+        new Date(dataHora);
+
+    const agora =
+        new Date();
+
+
+    if (
+        Number.isNaN(
+            dataAgendamento.getTime()
+        )
+    ) {
+
+        mostrarMensagem(
+            'mensagemAgendamento',
+            'Data e hora inválidas.',
+            'error'
+        );
+
         return;
     }
+
+
+    if (dataAgendamento <= agora) {
+
+        mostrarMensagem(
+            'mensagemAgendamento',
+            'A data do agendamento deve ser futura.',
+            'error'
+        );
+
+        return;
+    }
+
+
+    // =====================================================
+    // DADOS
+    // =====================================================
+    // NÃO enviamos statusId.
+    //
+    // O backend determina automaticamente:
+    //
+    // statusId = 1 → Agendado
+    // =====================================================
 
     const dados = {
+
         cidadaoId,
         vacinaId,
         postoId,
-        statusId,
         dataHora
+
     };
 
+
     try {
-        await fazerRequisicao('/agendamentos', {
-            method: 'POST',
-            body: JSON.stringify(dados)
-        });
 
-        mostrarMensagem('mensagemAgendamento', 'Agendamento cadastrado com sucesso!', 'success');
-        document.getElementById('cadastroAgendamentoForm').reset();
+        await fazerRequisicao(
+            '/agendamentos',
+            {
+                method: 'POST',
+                body: JSON.stringify(dados)
+            }
+        );
 
-        const secao14 = document.getElementById('secao14');
-        if (secao14 && secao14.classList.contains('active')) {
-            listarAgendamentosDetalhados();
-        }
+
+        mostrarMensagem(
+            'mensagemAgendamento',
+            'Agendamento cadastrado com sucesso!',
+            'success'
+        );
+
+
+        document
+            .getElementById('cadastroAgendamentoForm')
+            .reset();
+
+
+        // Recarrega os dados do formulário
+        await carregarDadosParaAgendamento();
+
 
     } catch (erro) {
-        mostrarMensagem('mensagemAgendamento', `Erro ao cadastrar agendamento: ${erro.message}`, 'error');
+
+        console.error(
+            'Erro ao cadastrar agendamento:',
+            erro
+        );
+
+        mostrarMensagem(
+            'mensagemAgendamento',
+            `Erro ao cadastrar agendamento: ${erro.message}`,
+            'error'
+        );
     }
 }
 
@@ -187,6 +292,40 @@ async function listarAgendamentosDetalhados() {
 
     } catch (erro) {
         lista.innerHTML = `<p class="error">Erro ao carregar agendamentos: ${erro.message}</p>`;
+    }
+}
+
+async function listarMeusAgendamentos() {
+    const lista = document.getElementById('listaMeusAgendamentos');
+    if (!lista) return;
+
+    lista.innerHTML = '<p>Carregando...</p>';
+
+    try {
+        const agendamentos = await fazerRequisicao('/agendamentos/meus');
+
+        if (!Array.isArray(agendamentos) || agendamentos.length === 0) {
+            lista.innerHTML = '<p>Você ainda não tem nenhum agendamento.</p>';
+            return;
+        }
+
+        lista.innerHTML = agendamentos.map(a => {
+            const statusClass = a.statusId === 1 ? 'status-agendado' :
+                                a.statusId === 2 ? 'status-realizado' :
+                                'status-cancelado';
+
+            return `
+                <div class="resultado-lista ${statusClass}">
+                    <strong>Vacina:</strong> ${a.vacinaNome} (${a.vacinaFabricante})<br>
+                    <strong>Unidade:</strong> ${a.postoNome} - ${a.postoEndereco}<br>
+                    <strong>Status:</strong> <span class="status-badge">${a.statusDescricao}</span><br>
+                    <strong>Data/Hora:</strong> ${formatarDataHora(a.dataHora)}
+                </div>
+            `;
+        }).join('');
+
+    } catch (erro) {
+        lista.innerHTML = `<p class="error">Erro ao carregar seus agendamentos: ${erro.message}</p>`;
     }
 }
 
@@ -404,6 +543,7 @@ window.excluirAgendamento = excluirAgendamento;
 window.listarStatus = listarStatus;
 window.carregarDadosParaAgendamento = carregarDadosParaAgendamento;
 window.listarAgendamentosDetalhados = listarAgendamentosDetalhados;
+window.listarMeusAgendamentos = listarMeusAgendamentos;
 window.carregarStatusParaAtualizacao = carregarStatusParaAtualizacao;
 window.buscarAgendamentoParaAtualizar = buscarAgendamentoParaAtualizar;
 window.buscarAgendamentoParaExcluir = buscarAgendamentoParaExcluir;

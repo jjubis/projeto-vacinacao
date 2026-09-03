@@ -87,6 +87,7 @@
     <li data-opcao="10" data-permissao="funcionario">10 - Listar agendamentos detalhados</li>
     <li data-opcao="11" data-permissao="funcionario">11 - Atualizar agendamento</li>
     <li data-opcao="12" data-permissao="funcionario">12 - Excluir agendamento</li>
+    <li data-opcao="13" data-permissao="cidadao">13 - Meus agendamentos</li>
 
     <li data-opcao="S">S - Sair do Sistema</li>
 </ul>
@@ -231,36 +232,72 @@
 
         <section id="secao9">
     <h3>Cadastrar agendamento</h3>
+
     <p id="infoUnidade" style="color:#555; margin-bottom:10px;"></p>
-    <p id="agendandoParaMim" style="display:none; font-weight:bold; color:var(--cor-secundaria);"></p>
+
+    <p id="agendandoParaMim"
+       style="display:none; font-weight:bold; color:var(--cor-secundaria);">
+    </p>
+
     <form id="cadastroAgendamentoForm">
-        <label id="labelCidadaoSelect">Cidadão:</label>
+
+        <label id="labelCidadaoSelect" for="cidadaoSelect">
+            Cidadão:
+        </label>
+
         <select id="cidadaoSelect" required>
             <option value="">Selecione um cidadão</option>
         </select>
 
-        <label>Vacina:</label>
+
+        <label for="vacinaSelect">
+            Vacina:
+        </label>
+
         <select id="vacinaSelect" required>
             <option value="">Selecione uma vacina</option>
         </select>
 
-        <input type="hidden" id="postoIdAgendamento" />
 
-        <label>Status:</label>
-                    <input type="datetime-local" id="dataHoraAgendamento" required />
+        <input type="hidden" id="postoIdAgendamento">
 
-                    <button type="submit">Cadastrar agendamento</button>
-                </form>
-                <div id="mensagemAgendamento"></div>
-            </section>
 
-            <section id="secao10">
-                <h3>Lista de Agendamentos Detalhados</h3>
-                <button onclick="listarAgendamentosDetalhados()">Atualizar Lista</button>
-                <div id="listaAgendamentos" class="lista">
-                    <p>Carregando...</p>
-                </div>
-            </section>
+        <p style="margin-top: 15px;">
+            <strong>Status:</strong> Agendado
+        </p>
+
+
+        <label for="dataHoraAgendamento">
+            Data e hora:
+        </label>
+
+        <input
+            type="datetime-local"
+            id="dataHoraAgendamento"
+            required
+        >
+
+
+        <button type="submit">
+            Cadastrar agendamento
+        </button>
+
+    </form>
+
+    <div id="mensagemAgendamento"></div>
+</section>
+
+<section id="secao10">
+    <h3>Lista de Agendamentos Detalhados</h3>
+
+    <button type="button" onclick="listarAgendamentosDetalhados()">
+        Atualizar Lista
+    </button>
+
+    <div id="listaAgendamentos" class="lista">
+        <p>Carregando...</p>
+    </div>
+</section>
 
             <section id="secao11">
                 <h3>Atualizar agendamento</h3>
@@ -301,6 +338,14 @@
                 </form>
                 <div id="mensagemAgendamentoExcluir"></div>
             </section>
+
+            <section id="secao13">
+    <h3>Meus agendamentos</h3>
+    <button onclick="listarMeusAgendamentos()">Atualizar Lista</button>
+    <div id="listaMeusAgendamentos" class="lista">
+        <p>Carregando...</p>
+    </div>
+</section>
 
             <section id="secao0">
                 <h3>Gestão de Negócio</h3>

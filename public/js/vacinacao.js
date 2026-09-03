@@ -87,30 +87,44 @@ function configurarNavegacaoMenu() {
             if (secaoAtiva) {
                 secaoAtiva.classList.add('active');
 
-                switch (opcao) {
-                    case '0':
-                        fetchDadosGestao();
-                        break;
-                    case '2':
-                        listarCidadaos();
-                        break;
-                    case '6':
-                        listarVacinas();
-                        break;
-                    case '10':
-                        listarPostos();
-                        break;
-                    case '13':
-                        carregarDadosParaAgendamento();
-                        break;
-                    case '14':
-                        listarAgendamentosDetalhados();
-                        break;
-                    case '15':
-                        carregarStatusParaAtualizacao();
-                        break;
-                    case '16':
-                        break;
+                switch(opcao) {
+
+    case '0':
+        fetchDadosGestao();
+        break;
+
+    case '2':
+        listarCidadaos();
+        break;
+
+    case '6':
+        listarVacinas();
+        break;
+
+    case '9':
+        carregarDadosParaAgendamento();
+        break;
+
+    case '10':
+        listarAgendamentosDetalhados();
+        break;
+
+    case '11':
+        carregarStatusParaAtualizacao();
+        break;
+
+    case '12':
+        break;
+
+   case '13':
+    const secaoMeusAgendamentos = document.getElementById('secao17');
+
+    if (secaoMeusAgendamentos) {
+        secaoMeusAgendamentos.classList.add('active');
+        listarMeusAgendamentos();
+    }
+    break;
+
                 }
             }
         });
