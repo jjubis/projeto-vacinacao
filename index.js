@@ -38,16 +38,47 @@ app.get('/', (req, res) => {
 
 app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
     try {
-        const totalCidadaos = db.prepare('SELECT COUNT(*) AS total FROM cidadaos').get().total;
-        const estoqueResult = db.prepare('SELECT SUM(quantidade) AS total FROM estoque').get();
-        const totalVacinasEmEstoque = estoqueResult && estoqueResult.total ? estoqueResult.total : 0;
-        const totalAgendamentos = db.prepare('SELECT COUNT(*) AS total FROM agendamentos').get().total;
+        const totalCidadaos = db.prepare(`
+            SELECT COUNT(*) AS total 
+            FROM cidadaos
+        `).get().total;
+
+        const estoqueResult = db.prepare(`
+            SELECT SUM(quantidade) AS total 
+            FROM estoque
+        `).get();
+
+        const totalVacinasEmEstoque =
+            estoqueResult && estoqueResult.total
+                ? estoqueResult.total
+                : 0;
+
+
+        const totalAgendados = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM agendamentos
+    WHERE statusId = 1
+`).get().total;
+
+const totalRealizados = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM agendamentos
+    WHERE statusId = 2
+`).get().total;
+
+const totalCancelados = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM agendamentos
+    WHERE statusId = 3
+`).get().total;
 
         res.json({
-            totalCidadaos,
-            totalVacinasEmEstoque, 
-            totalAgendamentos
-        });
+    totalCidadaos,
+    totalVacinasEmEstoque,
+    totalAgendados,
+    totalRealizados,
+    totalCancelados
+});
 
     } catch (error) {
         console.error('Erro ao buscar dados de gestão:', error);
@@ -55,7 +86,8 @@ app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
     }
 });
 
-//INICIALIZAÇÃO DO BANCO DE DADOS
+
+// INICIALIZAÇÃO DO BANCO DE DADOS
 
 (function initializeDatabase() {
     console.log('Inicializando banco de dados...');
@@ -89,17 +121,17 @@ app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
     `);
 
     db.exec(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        senhaHash TEXT NOT NULL,
-        papel TEXT NOT NULL CHECK (papel IN ('cidadao', 'funcionario')),
-        cidadaoId INTEGER,
-        criadoEm DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (cidadaoId) REFERENCES cidadaos(id) ON DELETE CASCADE
-    );
-`);
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            senhaHash TEXT NOT NULL,
+            papel TEXT NOT NULL CHECK (papel IN ('cidadao', 'funcionario')),
+            cidadaoId INTEGER,
+            criadoEm DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (cidadaoId) REFERENCES cidadaos(id) ON DELETE CASCADE
+        );
+    `);
 
     db.exec(`
         CREATE TABLE IF NOT EXISTS statuses (
@@ -149,62 +181,158 @@ app.get('/gestao/dados', requireRole('funcionario'), (req, res) => {
     `);
     
 
-    const statusCount = db.prepare('SELECT COUNT(*) AS c FROM statuses').get().c;
+    const statusCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM statuses
+    `).get().c;
+
     if (statusCount === 0) {
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Agendado')").run();  
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Realizado')").run(); 
-        db.prepare("INSERT INTO statuses (descricao) VALUES ('Cancelado')").run(); 
+        db.prepare(`
+            INSERT INTO statuses (descricao) 
+            VALUES ('Agendado')
+        `).run();
+
+        db.prepare(`
+            INSERT INTO statuses (descricao) 
+            VALUES ('Realizado')
+        `).run();
+
+        db.prepare(`
+            INSERT INTO statuses (descricao) 
+            VALUES ('Cancelado')
+        `).run();
     }
     
-    const cidadaoCount = db.prepare('SELECT COUNT(*) AS c FROM cidadaos').get().c;
+
+    const cidadaoCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM cidadaos
+    `).get().c;
+
     if (cidadaoCount === 0) {
-        db.prepare(`INSERT INTO cidadaos (nome, cpf, telefone, email, endereco) VALUES ('João Silva', '12345678901', '999988888', 'joao@email.com', 'Rua A, 123')`).run();
+        db.prepare(`
+            INSERT INTO cidadaos 
+            (nome, cpf, telefone, email, endereco) 
+            VALUES 
+            ('João Silva', '12345678901', '999988888', 'joao@email.com', 'Rua A, 123')
+        `).run();
     }
     
-    const vacinaCount = db.prepare('SELECT COUNT(*) AS c FROM vacinas').get().c;
+
+    const vacinaCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM vacinas
+    `).get().c;
+
     if (vacinaCount === 0) {
-        db.prepare(`INSERT INTO vacinas (nome, fabricante, validade) VALUES ('Vacina da Gripe', 'Butantan', '2026-12-31')`).run();
+        db.prepare(`
+            INSERT INTO vacinas 
+            (nome, fabricante, validade) 
+            VALUES 
+            ('Vacina da Gripe', 'Butantan', '2026-12-31')
+        `).run();
     }
 
-    const postoCount = db.prepare('SELECT COUNT(*) AS c FROM postos_saude').get().c;
+
+    const postoCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM postos_saude
+    `).get().c;
+
     if (postoCount === 0) {
-        db.prepare(`INSERT INTO postos_saude (nome, endereco) VALUES ('UBS Aterrado', 'Rua Domingos dos Santos, 105, no bairro Aterrado, em Mogi Mirim - SP')`).run();
+        db.prepare(`
+            INSERT INTO postos_saude 
+            (nome, endereco) 
+            VALUES 
+            ('UBS Aterrado', 'Rua Domingos dos Santos, 105, no bairro Aterrado, em Mogi Mirim - SP')
+        `).run();
     }
     
-    const estoqueCount = db.prepare('SELECT COUNT(*) AS c FROM estoque').get().c;
+
+    const estoqueCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM estoque
+    `).get().c;
+
     if (estoqueCount === 0) {
-        const vac = db.prepare('SELECT id FROM vacinas LIMIT 1').get();
-        const pos = db.prepare('SELECT id FROM postos_saude LIMIT 1').get();
+        const vac = db.prepare(`
+            SELECT id 
+            FROM vacinas 
+            LIMIT 1
+        `).get();
+
+        const pos = db.prepare(`
+            SELECT id 
+            FROM postos_saude 
+            LIMIT 1
+        `).get();
         
         if (vac && pos) {
-             console.log("Criando estoque inicial (10 doses) para o Posto 1 / Vacina 1...");
-             db.prepare("INSERT INTO estoque (postoId, vacinaId, quantidade) VALUES (?, ?, 10)").run(pos.id, vac.id);
+            console.log(
+                "Criando estoque inicial (10 doses) para o Posto 1 / Vacina 1..."
+            );
+
+            db.prepare(`
+                INSERT INTO estoque 
+                (postoId, vacinaId, quantidade) 
+                VALUES (?, ?, 10)
+            `).run(pos.id, vac.id);
         }
     }
 
-    const agendamentoCount = db.prepare('SELECT COUNT(*) AS c FROM agendamentos').get().c;
+
+    const agendamentoCount = db.prepare(`
+        SELECT COUNT(*) AS c 
+        FROM agendamentos
+    `).get().c;
+
     if (agendamentoCount === 0) {
-        const cid = db.prepare('SELECT id FROM cidadaos LIMIT 1').get();
-        const vac = db.prepare('SELECT id FROM vacinas LIMIT 1').get();
-        const pos = db.prepare('SELECT id FROM postos_saude LIMIT 1').get();
+        const cid = db.prepare(`
+            SELECT id 
+            FROM cidadaos 
+            LIMIT 1
+        `).get();
+
+        const vac = db.prepare(`
+            SELECT id 
+            FROM vacinas 
+            LIMIT 1
+        `).get();
+
+        const pos = db.prepare(`
+            SELECT id 
+            FROM postos_saude 
+            LIMIT 1
+        `).get();
+
         const sts = 1; 
 
         if (cid && vac && pos) {
             db.prepare(`
-                INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
+                INSERT INTO agendamentos 
+                (cidadaoId, vacinaId, postoId, statusId, dataHora)
                 VALUES (?, ?, ?, ?, ?)
-            `).run(cid.id, vac.id, pos.id, sts, '2025-09-01T10:00');
+            `).run(
+                cid.id,
+                vac.id,
+                pos.id,
+                sts,
+                '2025-09-01T10:00'
+            );
         }
     }
 
+
     console.log("Banco de dados pronto!");
 })();
+
 
 app.use('/cidadaos', criarCidadaoRouter(db));
 app.use('/vacinas', criarVacinaRouter(db));
 app.use('/postos', criarPostoRouter(db));
 app.use('/agendamentos', criarAgendamentoRouter(db));
 app.use('/auth', criarAuthRouter(db));
+
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);

@@ -238,6 +238,39 @@ export default (db) => {
                 });
             }
 
+const estoque = db.prepare(`
+    SELECT quantidade
+    FROM estoque
+    WHERE postoId = ?
+      AND vacinaId = ?
+`).get(postoId, vacinaId);
+
+if (!estoque) {
+    return res.status(409).json({
+        error: 'Não existe estoque desta vacina nesta unidade de saúde.'
+    });
+}
+
+const agendamentosPendentes = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM agendamentos
+    WHERE postoId = ?
+      AND vacinaId = ?
+      AND statusId = ?
+`).get(
+    postoId,
+    vacinaId,
+    STATUS_AGENDADO
+).total;
+
+const dosesDisponiveis =
+    estoque.quantidade - agendamentosPendentes;
+
+if (dosesDisponiveis <= 0) {
+    return res.status(409).json({
+        error: 'Não há doses disponíveis desta vacina para novos agendamentos.'
+    });
+}
             // Todo novo agendamento começa como "Agendado"
             const statusId = STATUS_AGENDADO;
 
