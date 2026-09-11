@@ -34,6 +34,30 @@ function desenharGrafico(dados) {
     totalRealizados,
     totalCancelados
 } = dados;
+
+const alertaEstoque = document.getElementById('alertaEstoque');
+
+if (alertaEstoque) {
+    if (dados.vacinasEstoqueBaixo && dados.vacinasEstoqueBaixo.length > 0) {
+
+        alertaEstoque.innerHTML = `
+            <h3>⚠️ Alerta de estoque baixo</h3>
+            ${dados.vacinasEstoqueBaixo.map(item => `
+                <p>
+                    <strong>${item.vacina}</strong>
+                    — ${item.quantidade} dose(s) disponíveis
+                    (${item.posto})
+                </p>
+            `).join('')}
+        `;
+
+        alertaEstoque.style.display = 'block';
+
+    } else {
+        alertaEstoque.innerHTML = '';
+        alertaEstoque.style.display = 'none';
+    }
+}
     
     if (dashboardChartInstance) {
         dashboardChartInstance.destroy();

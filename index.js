@@ -72,14 +72,26 @@ const totalCancelados = db.prepare(`
     WHERE statusId = 3
 `).get().total;
 
-        res.json({
+const vacinasEstoqueBaixo = db.prepare(`
+    SELECT 
+        v.nome AS vacina,
+        p.nome AS posto,
+        e.quantidade
+    FROM estoque e
+    JOIN vacinas v ON v.id = e.vacinaId
+    JOIN postos_saude p ON p.id = e.postoId
+    WHERE e.quantidade <= 4
+    ORDER BY e.quantidade ASC
+`).all();
+
+    res.json({
     totalCidadaos,
     totalVacinasEmEstoque,
     totalAgendados,
     totalRealizados,
-    totalCancelados
+    totalCancelados,
+    vacinasEstoqueBaixo
 });
-
     } catch (error) {
         console.error('Erro ao buscar dados de gestão:', error);
         res.status(500).json({ error: error.message });

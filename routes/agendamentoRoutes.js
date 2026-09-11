@@ -288,6 +288,57 @@ if (dosesDisponiveis <= 0) {
                 });
             }
 
+const diaDaSemana = dataAgendamento.getDay();
+const hora = dataAgendamento.getHours();
+const minutos = dataAgendamento.getMinutes();
+
+
+const fimDeSemana =
+    diaDaSemana === 0 || diaDaSemana === 6;
+
+if (fimDeSemana) {
+    return res.status(400).json({
+        error: 'A UBS não realiza vacinações aos finais de semana.'
+    });
+}
+
+const antesDaAbertura =
+    hora < 8;
+
+const depoisDoFechamento =
+    hora > 17 || (hora === 17 && minutos > 0);
+
+if (antesDaAbertura || depoisDoFechamento) {
+    return res.status(400).json({
+        error: 'Os agendamentos devem ser realizados entre 08:00 e 17:00.'
+    });
+}
+
+// Horários permitidos somente de 30 em 30 minutos
+if (minutos !== 0 && minutos !== 30) {
+    return res.status(400).json({
+        error: 'Os agendamentos devem ser realizados de 30 em 30 minutos.'
+    });
+}
+
+// Verifica se o horário já está ocupado na UBS
+const conflitoHorario = db.prepare(`
+    SELECT id
+    FROM agendamentos
+    WHERE postoId = ?
+      AND dataHora = ?
+      AND statusId = ?
+`).get(
+    postoId,
+    dataHora,
+    STATUS_AGENDADO
+);
+
+if (conflitoHorario) {
+    return res.status(409).json({
+        error: 'Este horário já está ocupado. Escolha outro horário.'
+    });
+}
             const agendamentoExistente = db.prepare(`
                 SELECT
                     a.id,
@@ -302,22 +353,41 @@ if (dosesDisponiveis <= 0) {
                   AND a.vacinaId = ?
             `).get(cidadaoId, vacinaId);
 
-            if (agendamentoExistente) {
+           if (agendamentoExistente) {
 
-                if (agendamentoExistente.statusId === STATUS_AGENDADO) {
-                    return res.status(409).json({
-                        error: 'Este cidadão já possui um agendamento para esta vacina.'
-                    });
-                }
+    if (agendamentoExistente.statusId === STATUS_AGENDADO) {
+        return res.status(409).json({
+            error: 'Este cidadão já possui um agendamento para esta vacina.'
+        });
+    }
 
-                if (agendamentoExistente.statusId === STATUS_REALIZADO) {
-                    return res.status(409).json({
-                        error: 'Esta vacina já foi realizada para este cidadão.'
-                    });
-                }
+    if (agendamentoExistente.statusId === STATUS_REALIZADO) {
+        return res.status(409).json({
+            error: 'Esta vacina já foi realizada para este cidadão.'
+        });
+    }
 
-                // Se estiver Cancelado, permite criar outro.
-            }
+    if (agendamentoExistente.statusId === STATUS_CANCELADO) {
+
+        db.prepare(`
+            UPDATE agendamentos
+            SET postoId = ?,
+                statusId = ?,
+                dataHora = ?
+            WHERE id = ?
+        `).run(
+            postoId,
+            STATUS_AGENDADO,
+            dataHora,
+            agendamentoExistente.id
+        );
+
+        return res.status(201).json({
+            message: 'Agendamento realizado com sucesso.',
+            id: agendamentoExistente.id
+        });
+    }
+}
 
             const resultado = db.prepare(`
                 INSERT INTO agendamentos (

@@ -299,46 +299,51 @@
     </div>
 </section>
 
-            <section id="secao11">
-                <h3>Atualizar agendamento</h3>
+           <section id="secao11">
+    <h3>Atualizar agendamento</h3>
 
-                <label for="buscarAgendamentoAtualizar">Buscar agendamento por ID:</label>
-                <input type="text" id="buscarAgendamentoAtualizar" placeholder="Digite o ID do agendamento..." />
-                <button type="button" onclick="buscarAgendamentoParaAtualizar()">Buscar</button>
+    <label for="buscarAgendamentoAtualizar">Buscar cidadão por CPF ou nome:</label>
+    <input type="text" id="buscarAgendamentoAtualizar" placeholder="Digite o CPF ou nome do cidadão..." />
+    <button type="button" onclick="buscarAgendamentoParaAtualizar()">Buscar</button>
 
-                <div id="resultadoBuscaAgendamentoAtualizar"></div>
+    <div id="resultadoBuscaAgendamentoAtualizar"></div>
 
-                <form id="atualizarAgendamentoForm" style="display:none;" onsubmit="atualizarAgendamento(event)">
-                    <input type="hidden" id="idAgendamentoAtualizar" />
+    <form id="atualizarAgendamentoForm" style="display:none;" onsubmit="atualizarAgendamento(event)">
+        <input type="hidden" id="idAgendamentoAtualizar" />
 
-                    <p>Selecionado: <span id="agendamentoSelecionadoAtualizar" style="font-weight: bold;"></span></p>
+        <p>Selecionado: <span id="agendamentoSelecionadoAtualizar" style="font-weight: bold;"></span></p>
 
-                    <label for="novoStatusAgendamento">Novo status:</label>
-                    <select id="novoStatusAgendamento" required>
-                        <option value="">Selecione um status</option>
-                    </select>
+        <label for="novoStatusAgendamento">Novo status:</label>
+        <select id="novoStatusAgendamento" required>
+            <option value="">Selecione um status</option>
+        </select>
 
-                    <button type="submit">Atualizar agendamento</button>
-                </form>
+        <button type="submit">Atualizar agendamento</button>
+    </form>
 
-                <div id="mensagemAgendamentoAtualizar"></div>
-            </section>
+    <div id="mensagemAgendamentoAtualizar"></div>
+</section>
 
+           <section id="secao12">
+    <h3>Excluir agendamento</h3>
 
-            <section id="secao12">
-                <h3>Excluir agendamento</h3>
-                <label>Buscar agendamento por ID:</label>
-                <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o ID do agendamento..." />
-                <button type="button" onclick="buscarAgendamentoParaExcluir()">Buscar</button>
-                <div id="resultadoBuscaAgendamentoExcluir"></div>
-                <form id="excluirAgendamentoForm" style="display:none;">
-                    <input type="hidden" id="idAgendamentoExcluir" />
-                    <p>Selecionado: <span id="agendamentoSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                    <button type="submit">Excluir agendamento</button>
-                </form>
-                <div id="mensagemAgendamentoExcluir"></div>
-            </section>
+    <label for="buscarAgendamentoExcluir">Buscar cidadão por CPF ou nome:</label>
+    <input type="text" id="buscarAgendamentoExcluir" placeholder="Digite o CPF ou nome do cidadão..." />
 
+    <button type="button" onclick="buscarAgendamentoParaExcluir()">Buscar</button>
+
+    <div id="resultadoBuscaAgendamentoExcluir"></div>
+
+    <form id="excluirAgendamentoForm" style="display:none;">
+        <input type="hidden" id="idAgendamentoExcluir" />
+
+        <p>Selecionado: <span id="agendamentoSelecionadoExcluir" style="font-weight:bold;"></span></p>
+
+        <button type="submit">Excluir agendamento</button>
+    </form>
+
+    <div id="mensagemAgendamentoExcluir"></div>
+</section>
             <section id="secao13">
     <h3>Meus agendamentos</h3>
     <button onclick="listarMeusAgendamentos()">Atualizar Lista</button>
@@ -350,9 +355,11 @@
             <section id="secao0">
                 <h3>Gestão de Negócio</h3>
                 <p>Métricas Chave do Sistema de Vacinação</p>
-                <div style="width: 80%; margin: 20px auto;">
-                    <canvas id="dashboardChart"></canvas>
-                </div>
+             <div style="width: 80%; margin: 20px auto;">
+    <canvas id="dashboardChart"></canvas>
+
+    <div id="alertaEstoque" class="alerta-estoque"></div>
+</div>
             </section>
 
             <section id="secaoS" style="display:none;">
