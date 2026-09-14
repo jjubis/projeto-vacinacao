@@ -1,27 +1,73 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import authModel from '../models/authModel.js';
+import pacienteModel from '../models/pacienteModel.js';
+import { pool } from "../config/database.js";
+
+// const register = async (userData) => {
+//     const { nome, cpf, email, senha, papel = 'cidadao' } = userData;
+
+//     const senha_hash = await bcrypt.hash(senha, 10);
+
+//     let pacienteId = null;
+//     if (papel === 'cidadao') {
+//         pacienteId = await pacienteModel.create({ nome, cpf, email });
+//     }
+
+//     const userId = await authModel.create({
+//         nome,
+//         cpf,
+//         email,
+//         senha_hash,
+//         papel,
+//         paciente_id: pacienteId
+//     });
+
+//     return { id: userId, nome, email, papel, paciente_id: pacienteId };
+// };
 
 const register = async (userData) => {
-    const { nome, cpf, email, senha, papel = 'cidadao' } = userData;
+    // 1. Extrai data_nascimento do objeto enviado pelo front-end
+    const { nome, cpf, email, senha, dataNascimento: data_nascimento, telefone, papel = 'cidadao' } = userData;
+
+    console.log("Data nascimento extraída do front-end:", data_nascimento);
 
     const senha_hash = await bcrypt.hash(senha, 10);
+    const connection = await pool.getConnection();
 
-    let pacienteId = null;
-    if (papel === 'cidadao') {
-        pacienteId = await pacienteModel.create({ nome, cpf, email });
+    try {
+        await connection.beginTransaction();
+
+        let pacienteId = null;
+
+        if (papel === 'cidadao') {
+            // 2. Repassa data_nascimento para o pacienteModel
+            pacienteId = await pacienteModel.create(
+                {
+                    nome,
+                    cpf,
+                    email,
+                    data_nascimento,
+                    telefone
+                },
+                connection
+            );
+        }
+
+        const userId = await authModel.create(
+            { nome, cpf, email, senha_hash, papel, paciente_id: pacienteId },
+            connection
+        );
+
+        await connection.commit();
+        return { id: userId, nome, email, papel, paciente_id: pacienteId };
+
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
     }
-
-    const userId = await authModel.create({
-        nome,
-        cpf,
-        email,
-        senha_hash,
-        papel,
-        paciente_id: pacienteId
-    });
-
-    return { id: userId, nome, email, papel, paciente_id: pacienteId };
 };
 
 const login = async (email, senha) => {
@@ -56,7 +102,8 @@ const login = async (email, senha) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            papel: usuario.papel
+            papel: usuario.papel,
+            paciente_id: usuario.paciente_id
         }
     };
 };
