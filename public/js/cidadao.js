@@ -40,17 +40,42 @@ async function cadastrarCidadao(e) {
     const submitButton = document.getElementById('cadastroCidadaoSbmt');
 
     const nome = document.getElementById('nome').value.trim();
-    const cpf = document.getElementById('cpf').value.trim();
-    const telefone = document.getElementById('telefone').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const endereco = document.getElementById('endereco').value.trim();
-    const cpfLimpo = cpf.replace(/\D/g, '');
-    const telefoneLimpo = telefone.replace(/\D/g, '');
+const cpf = document.getElementById('cpf').value.trim();
+const telefone = document.getElementById('telefone').value.trim();
+const email = document.getElementById('email').value.trim();
 
-    if (!nome || !cpfLimpo || !telefoneLimpo || !email || !endereco) {
-        mostrarMensagem('mensagem', 'Por favor, preencha todos os campos obrigatórios.', 'error');
-        return;
-    }
+const cep = document.getElementById('cep').value.trim();
+const logradouro = document.getElementById('logradouro').value.trim();
+const numero = document.getElementById('numero').value.trim();
+const complemento = document.getElementById('complemento').value.trim();
+const bairro = document.getElementById('bairro').value.trim();
+const cidade = document.getElementById('cidade').value.trim();
+const uf = document.getElementById('uf').value.trim();
+
+const endereco = `${logradouro}, ${numero}${complemento ? `, ${complemento}` : ''} - ${bairro}, ${cidade} - ${uf} - CEP: ${cep}`;
+
+const cpfLimpo = cpf.replace(/\D/g, '');
+const telefoneLimpo = telefone.replace(/\D/g, '');
+
+    if (
+    !nome ||
+    !cpfLimpo ||
+    !telefoneLimpo ||
+    !email ||
+    !cep ||
+    !logradouro ||
+    !numero ||
+    !bairro ||
+    !cidade ||
+    !uf
+) {
+    mostrarMensagem(
+        'mensagem',
+        'Por favor, preencha todos os campos obrigatórios.',
+        'error'
+    );
+    return;
+}
 
     if (cpfLimpo.length !== 11) {
         mostrarMensagem('mensagem', 'CPF deve conter exatamente 11 números.', 'error');
@@ -338,6 +363,54 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
+async function buscarCep() {
+    const cepInput = document.getElementById('cep');
+    const cep = cepInput.value.replace(/\D/g, '');
+
+    if (cep.length !== 8) {
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const dados = await resposta.json();
+
+        if (dados.erro) {
+            alert('CEP não encontrado.');
+            return;
+        }
+
+        document.getElementById('logradouro').value = dados.logradouro || '';
+        document.getElementById('bairro').value = dados.bairro || '';
+        document.getElementById('cidade').value = dados.localidade || '';
+        document.getElementById('uf').value = dados.uf || '';
+
+        // Verifica se o endereço pertence ao bairro Aterrado,
+        // em Mogi Mirim - SP.
+        if (
+            dados.bairro.toLowerCase() !== 'aterrado' ||
+            dados.localidade.toLowerCase() !== 'mogi mirim' ||
+            dados.uf.toUpperCase() !== 'SP'
+        ) {
+            alert(
+                'O endereço informado não pertence ao bairro Aterrado, ' +
+                'em Mogi Mirim - SP.'
+            );
+
+            document.getElementById('logradouro').value = '';
+            document.getElementById('bairro').value = '';
+            document.getElementById('cidade').value = '';
+            document.getElementById('uf').value = '';
+
+            return;
+        }
+
+    } catch (erro) {
+        console.error('Erro ao consultar CEP:', erro);
+        alert('Não foi possível consultar o CEP. Tente novamente.');
+    }
+}
+
 window.selecionarCidadaoParaAtualizar = selecionarCidadaoParaAtualizar;
 window.selecionarCidadaoParaExcluir = selecionarCidadaoParaExcluir;
 window.cadastrarCidadao = cadastrarCidadao;
@@ -346,3 +419,4 @@ window.buscarCidadaoParaAtualizar = buscarCidadaoParaAtualizar;
 window.atualizarCidadao = atualizarCidadao;
 window.buscarCidadaoParaExcluir = buscarCidadaoParaExcluir;
 window.excluirCidadao = excluirCidadao;
+window.buscarCep = buscarCep;

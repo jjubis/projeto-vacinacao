@@ -38,13 +38,27 @@ export default (db) => {
                 return res.status(400).json({ error: 'CPF inválido. Deve conter exatamente 11 dígitos numéricos.' });
             }
 
-            const cidadao = db.prepare('SELECT id FROM cidadaos WHERE cpf = ?').get(cpfLimpo);
-            if (!cidadao) {
-                return res.status(400).json({
-                    error: 'CPF não encontrado. Você precisa estar cadastrado como cidadão em um posto de saúde antes de criar seu acesso.'
-                });
-            }
+           const cidadao = db.prepare(`
+    SELECT id, nome
+    FROM cidadaos
+    WHERE cpf = ?
+`).get(cpfLimpo);
 
+if (!cidadao) {
+    return res.status(400).json({
+        error: 'CPF não encontrado. Você precisa estar cadastrado como cidadão em um posto de saúde antes de criar seu acesso.'
+    });
+}
+
+// Verifica se o nome informado corresponde ao cadastro do cidadão
+const nomeInformado = nome.trim().toLowerCase();
+const nomeCadastrado = cidadao.nome.trim().toLowerCase();
+
+if (nomeInformado !== nomeCadastrado) {
+    return res.status(400).json({
+        error: 'O nome informado não corresponde ao CPF cadastrado.'
+    });
+}
             const jaTemLogin = db.prepare('SELECT id FROM usuarios WHERE cidadaoId = ?').get(cidadao.id);
             if (jaTemLogin) {
                 return res.status(409).json({ error: 'Este cidadão já possui um acesso cadastrado.' });
