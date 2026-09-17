@@ -507,6 +507,59 @@ if (conflitoHorario) {
                 };
             }
 
+            // Transições permitidas: Agendado -> Realizado/Cancelado e
+            // Cancelado -> Agendado. Um realizado é imutável para preservar
+            // estoque e histórico vacinal.
+            const transicaoPermitida =
+                (agendamento.statusId === STATUS_AGENDADO &&
+                    [STATUS_REALIZADO, STATUS_CANCELADO].includes(novoStatus)) ||
+                (agendamento.statusId === STATUS_CANCELADO &&
+                    novoStatus === STATUS_AGENDADO);
+
+            if (!transicaoPermitida) {
+                throw new Error('Transição de status não permitida.');
+            }
+
+            // Ao reabrir um cancelado, ele volta a reservar dose e horário.
+            if (novoStatus === STATUS_AGENDADO) {
+                const estoque = db.prepare(`
+                    SELECT quantidade FROM estoque
+                    WHERE postoId = ? AND vacinaId = ?
+                `).get(agendamento.postoId, agendamento.vacinaId);
+
+                if (!estoque) {
+                    throw new Error('Não existe estoque desta vacina neste posto.');
+                }
+
+                const pendentes = db.prepare(`
+                    SELECT COUNT(*) AS total FROM agendamentos
+                    WHERE postoId = ? AND vacinaId = ? AND statusId = ? AND id != ?
+                `).get(
+                    agendamento.postoId,
+                    agendamento.vacinaId,
+                    STATUS_AGENDADO,
+                    agendamento.id
+                ).total;
+
+                if (estoque.quantidade - pendentes <= 0) {
+                    throw new Error('Não há doses disponíveis para reativar este agendamento.');
+                }
+
+                const conflitoHorario = db.prepare(`
+                    SELECT id FROM agendamentos
+                    WHERE postoId = ? AND dataHora = ? AND statusId = ? AND id != ?
+                `).get(
+                    agendamento.postoId,
+                    agendamento.dataHora,
+                    STATUS_AGENDADO,
+                    agendamento.id
+                );
+
+                if (conflitoHorario) {
+                    throw new Error('O horário deste agendamento já está ocupado no posto.');
+                }
+            }
+
             // =============================================
             // ALTERANDO PARA REALIZADO
             // =============================================
@@ -587,17 +640,6 @@ if (conflitoHorario) {
                     agendamento.vacinaId,
                     new Date().toISOString(),
                     agendamento.id
-                );
-            }
-
-            // =============================================
-            // NÃO PERMITIR VOLTAR DE REALIZADO
-            // =============================================
-
-            if (agendamento.statusId === STATUS_REALIZADO) {
-
-                throw new Error(
-                    'Um agendamento realizado não pode voltar para outro status.'
                 );
             }
 

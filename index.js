@@ -9,12 +9,15 @@ import criarAgendamentoRouter from './routes/agendamentoRoutes.js';
 import 'dotenv/config';
 import session from 'express-session';
 import criarAuthRouter from './routes/authRoutes.js';
+import criarHistoricoRouter from './routes/historicoRoutes.js';
+import { DATABASE_PATH } from './utils/databasePath.js';
 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const db = new Database('vacinacao.db');
+const db = new Database(DATABASE_PATH);
 
+db.pragma('foreign_keys = ON');
 db.pragma('journal_mode = WAL');
 
 app.use(cors());
@@ -111,9 +114,16 @@ const vacinasEstoqueBaixo = db.prepare(`
             cpf TEXT UNIQUE NOT NULL,
             telefone TEXT,
             email TEXT,
-            endereco TEXT
+            endereco TEXT,
+            ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))
         );
     `);
+
+    // Compatibilidade com bancos criados antes da inativação de cidadãos.
+    const colunasCidadaos = db.prepare('PRAGMA table_info(cidadaos)').all();
+    if (!colunasCidadaos.some(coluna => coluna.name === 'ativo')) {
+        db.exec('ALTER TABLE cidadaos ADD COLUMN ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))');
+    }
 
     db.exec(`
         CREATE TABLE IF NOT EXISTS vacinas (
@@ -343,6 +353,7 @@ app.use('/cidadaos', criarCidadaoRouter(db));
 app.use('/vacinas', criarVacinaRouter(db));
 app.use('/postos', criarPostoRouter(db));
 app.use('/agendamentos', criarAgendamentoRouter(db));
+app.use('/historico', criarHistoricoRouter(db));
 app.use('/auth', criarAuthRouter(db));
 
 

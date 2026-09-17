@@ -9,7 +9,7 @@ npm install
 npm start
 ```
 
-Crie antes um arquivo `.env` com `SESSION_SECRET` e, opcionalmente, `PORT`. A aplicação fica disponível em `http://localhost:3000` por padrão.
+Crie antes um arquivo `.env` a partir de `.env.example`, com `SESSION_SECRET` e, opcionalmente, `PORT`. A aplicação fica disponível em `http://localhost:3000` por padrão. O único banco padrão é `vacinacao.db`; para testes, defina `DATABASE_PATH` para um arquivo temporário isolado.
 
 Consulte os documentos de manutenção antes de desenvolver:
 

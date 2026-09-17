@@ -12,10 +12,11 @@ Leia `docs/CONTEXTO.md` antes de alterar regras de negócio e `docs/API.md` ante
 - Rotas retornam, em geral, `{ error }` para falhas e `{ message | mensagem, id }` para sucesso. Mantenha o contrato já consumido pelo front-end ao mudar uma rota.
 - `public/js/api.js` centraliza `fetch`, JSON, cookie de sessão e o tratamento global de 401. Não replique essa lógica.
 - Não presuma que IDs de status são intercambiáveis: `1=Agendado`, `2=Realizado`, `3=Cancelado` são regras atuais do domínio.
+- Ao renderizar dados dinâmicos no front-end, prefira `textContent` e `addEventListener`. Não interpole dados do sistema em `innerHTML` ou em atributos HTML como `onclick`; se o uso de HTML for inevitável, aplique escape consistente a todos os valores.
 
 ## Verificação mínima
 
-Após mudanças no servidor, execute `node --check index.js` e nos arquivos de rota alterados. Para executar localmente, defina `SESSION_SECRET` no `.env` e use `npm start`.
+Após mudanças no servidor, execute `node --check index.js` e nos arquivos de rota alterados. Para validar fluxos críticos sem tocar no banco local, execute `npm run test:integration`. Para executar localmente, defina `SESSION_SECRET` no `.env` e use `npm start`.
 
 ## Pontos de atenção
 

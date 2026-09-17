@@ -1,6 +1,6 @@
 # Modelo de dados
 
-O banco é SQLite (`vacinacao.db`) e seu esquema é inicializado em `index.js`. Este documento descreve o modelo efetivamente criado pela aplicação; não é uma migração executável.
+O banco é SQLite (`vacinacao.db` por padrão, configurável por `DATABASE_PATH`) e seu esquema é inicializado em `index.js`. Este documento descreve o modelo efetivamente criado pela aplicação; não é uma migração executável.
 
 | Tabela | Campos principais | Observações |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ postos   N ── N vacinas           (estoque)
 agendamentos 1 ── 0..1 historico_vacinal
 ```
 
-As FKs declaradas para cidadão, vacina e posto usam `ON DELETE CASCADE`; `statusId` referencia `statuses` sem cascade. Antes de alterar uma exclusão ou a unicidade de `agendamentos`, confirme o impacto no histórico e no fluxo de reagendamento.
+As FKs declaradas para cidadão, vacina e posto usam `ON DELETE CASCADE`; `statusId` referencia `statuses` sem cascade. A conexão principal habilita explicitamente `PRAGMA foreign_keys = ON`, portanto essas restrições são aplicadas. Antes de alterar uma exclusão ou a unicidade de `agendamentos`, confirme o impacto no histórico e no fluxo de reagendamento. Em particular, para cidadãos, prefira uma futura coluna de inativação/arquivamento à remoção física, preservando rastreabilidade de dados de saúde.
 
 ## Dados iniciais
 

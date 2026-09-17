@@ -16,7 +16,7 @@ Legenda: **P** = público; **A** = usuário autenticado; **C** = cidadão; **F**
 | `GET /cidadaos`, `GET /cidadaos/:id` | F | Lista/busca cidadãos |
 | `POST /cidadaos` | F | `{ nome, cpf, telefone, email, endereco }` |
 | `PUT /cidadaos/:id` | F | Qualquer subconjunto dos campos de cidadão |
-| `DELETE /cidadaos/:id` | F | Exclui cidadão se permitido pelas FKs |
+| `DELETE /cidadaos/:id` | F | Inativa o cidadão e preserva seus relacionamentos e histórico |
 | `GET /vacinas`, `GET /vacinas/:id` | A | Lista/busca vacinas |
 | `POST /vacinas` | F | `{ nome, fabricante, validade, postoId }`; cria vacina e 10 doses no posto |
 | `PUT /vacinas/:id` | F | Subconjunto de `{ nome, fabricante, validade }` |
@@ -26,6 +26,7 @@ Legenda: **P** = público; **A** = usuário autenticado; **C** = cidadão; **F**
 | `PUT /postos/:id` | F | `{ nome?, endereco? }` |
 | `DELETE /postos/:id` | F | Exclui posto se permitido pelas FKs |
 | `GET /agendamentos/meus` | C | Agendamentos do cidadão da sessão, com dados relacionados |
+| `GET /historico/meu` | C | Histórico de vacinações realizadas do cidadão da sessão |
 | `GET /agendamentos` | F | Todos os agendamentos, com dados relacionados |
 | `POST /agendamentos` | A | `{ vacinaId, postoId, dataHora, cidadaoId? }`; `cidadaoId` é obrigatório para F e ignorado para C |
 | `PUT /agendamentos/:id` | F | `{ statusId }`, com transição e estoque/histórico conforme a regra |
@@ -37,6 +38,7 @@ Legenda: **P** = público; **A** = usuário autenticado; **C** = cidadão; **F**
 - Datas de validade são passadas como string para SQLite.
 - IDs devem ser inteiros. Para criação de agendamento a rota converte explicitamente os três IDs com `Number()`.
 - Não dependa de uniformidade entre `message` e `mensagem`: as rotas legadas usam ambos. Padronize somente numa alteração de contrato planejada e coordenada.
+- Toda transição de status deve ser validada. Se uma transição para `Agendado` for permitida, valide novamente disponibilidade de estoque e conflito de horário no posto.
 
 ## Códigos de resposta usuais
 

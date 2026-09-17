@@ -45,9 +45,9 @@
                 lista.innerHTML = vacinas.map(vacina => `
                     <div class="resultado-lista">
                         <strong>ID:</strong> ${vacina.id}<br>
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}<br>
-                        <strong>Validade:</strong> ${vacina.validade}
+                        <strong>Nome:</strong> ${escapeHtml(vacina.nome)}<br>
+                        <strong>Fabricante:</strong> ${escapeHtml(vacina.fabricante)}<br>
+                        <strong>Validade:</strong> ${escapeHtml(vacina.validade)}
                     </div>
                 `).join('');
             } catch (erro) {
@@ -76,12 +76,18 @@
                     return;
                 }
 
-                container.innerHTML = resultados.map(vacina => `
-                    <div class="resultado-lista" onclick="selecionarVacinaParaAtualizar(${vacina.id}, '${vacina.nome}', '${vacina.fabricante}', '${vacina.validade}')">
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}
+                container.innerHTML = resultados.map((vacina, indice) => `
+                    <div class="resultado-lista" data-vacina-indice="${indice}">
+                        <strong>Nome:</strong> ${escapeHtml(vacina.nome)}<br>
+                        <strong>Fabricante:</strong> ${escapeHtml(vacina.fabricante)}
                     </div>
                 `).join('');
+                container.querySelectorAll('[data-vacina-indice]').forEach(elemento => {
+                    elemento.addEventListener('click', () => {
+                        const vacina = resultados[Number(elemento.dataset.vacinaIndice)];
+                        selecionarVacinaParaAtualizar(vacina.id, vacina.nome, vacina.fabricante, vacina.validade);
+                    });
+                });
             } catch (erro) {
                 mostrarMensagem('mensagemVacinaAtualizar', `Erro ao buscar vacina: ${erro.message}`, 'error');
             }
@@ -144,12 +150,18 @@
                     return;
                 }
 
-                container.innerHTML = resultados.map(vacina => `
-                    <div class="resultado-lista" onclick="selecionarVacinaParaExcluir(${vacina.id}, '${vacina.nome}')">
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}
+                container.innerHTML = resultados.map((vacina, indice) => `
+                    <div class="resultado-lista" data-vacina-indice="${indice}">
+                        <strong>Nome:</strong> ${escapeHtml(vacina.nome)}<br>
+                        <strong>Fabricante:</strong> ${escapeHtml(vacina.fabricante)}
                     </div>
                 `).join('');
+                container.querySelectorAll('[data-vacina-indice]').forEach(elemento => {
+                    elemento.addEventListener('click', () => {
+                        const vacina = resultados[Number(elemento.dataset.vacinaIndice)];
+                        selecionarVacinaParaExcluir(vacina.id, vacina.nome);
+                    });
+                });
             } catch (erro) {
                 mostrarMensagem('mensagemVacinaExcluir', `Erro ao buscar vacina: ${erro.message}`, 'error');
             }

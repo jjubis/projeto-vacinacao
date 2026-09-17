@@ -6,6 +6,7 @@
 - Back-end: Express 5 + `better-sqlite3`.
 - Front-end: página estática em `public/`, sem framework ou etapa de build.
 - Banco local: `vacinacao.db`, em modo WAL.
+- A conexão principal SQLite habilita `foreign_keys = ON`; relações e cascatas declaradas no schema são efetivamente aplicadas.
 
 ## Onde procurar
 
@@ -26,8 +27,11 @@
 - Não pode haver dois agendamentos pendentes no mesmo posto, data e hora.
 - Capacidade disponível = estoque físico menos agendamentos pendentes da mesma vacina/posto.
 - Ao realizar um agendamento, a transação desconta uma dose e registra o histórico vacinal.
+- O cidadão consulta somente o próprio histórico pela rota protegida `GET /historico/meu`; nunca recebe um `cidadaoId` controlável pelo cliente.
 - Agendamento realizado não pode mudar de status nem ser excluído.
 - Há unicidade de `cidadaoId + vacinaId`; cancelamentos são reaproveitados ao reagendar.
+- Toda transição entre `Agendado`, `Realizado` e `Cancelado` deve ser validada. Ao retornar para `Agendado`, revalidar disponibilidade de estoque e conflito de horário antes de persistir a mudança.
+- Em contexto de saúde, não tratar a exclusão física de cidadão como operação padrão: ela pode comprometer histórico e relacionamentos. Avaliar/implementar inativação antes de remover registros.
 
 ## Convenções
 
@@ -36,6 +40,7 @@
 - Não altere contrato de rota sem atualizar front-end e `docs/API.md`.
 - Mudanças em status, estoque e histórico devem ser atômicas.
 - Não versionar `.env`, banco SQLite ou arquivos WAL/SHM.
+- Evite XSS no front-end: para dados dinâmicos, prefira `textContent` e `addEventListener`; não use `innerHTML` ou atributos `onclick` com valores vindos do sistema. Se `innerHTML` for inevitável, escape todos os valores interpolados de forma consistente.
 
 ## Estado e riscos conhecidos
 

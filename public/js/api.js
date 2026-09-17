@@ -7,11 +7,24 @@ function mostrarMensagem(elementoId, mensagem, tipo = 'info') {
         return;
     }
 
-    elemento.innerHTML = `<div class="${tipo}">${mensagem}</div>`;
+    const mensagemEl = document.createElement('div');
+    mensagemEl.className = ['info', 'success', 'error'].includes(tipo) ? tipo : 'info';
+    mensagemEl.textContent = String(mensagem);
+    elemento.replaceChildren(mensagemEl);
 
     setTimeout(() => {
-        elemento.innerHTML = '';
+        elemento.replaceChildren();
     }, 5000);
+}
+
+function escapeHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    })[caractere]);
 }
 
 async function fazerRequisicao(url, options = {}) {
@@ -125,3 +138,4 @@ window.fazerRequisicao = fazerRequisicao;
 window.mostrarMensagem = mostrarMensagem;
 window.debounce = debounce;
 window.verificarConexao = verificarConexao;
+window.escapeHtml = escapeHtml;

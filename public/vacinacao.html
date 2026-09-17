@@ -88,6 +88,7 @@
     <li data-opcao="11" data-permissao="funcionario">11 - Atualizar agendamento</li>
     <li data-opcao="12" data-permissao="funcionario">12 - Excluir agendamento</li>
     <li data-opcao="13" data-permissao="cidadao">13 - Meus agendamentos</li>
+    <li data-opcao="14" data-permissao="cidadao">14 - Meu histórico vacinal</li>
 
     <li data-opcao="S">S - Sair do Sistema</li>
 </ul>
@@ -206,7 +207,7 @@
             </section>
 
             <section id="secao4">
-                <h3>Excluir cidadão</h3>
+                <h3>Inativar cidadão</h3>
                 <label>Buscar por CPF ou nome:</label>
                 <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
                 <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
@@ -214,7 +215,7 @@
                 <form id="excluirForm" style="display:none;">
                     <input type="hidden" id="idExcluir" />
                     <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                    <button type="submit">Excluir</button>
+                    <button type="submit">Inativar cidadão</button>
                 </form>
                 <div id="mensagemExcluir"></div>
             </section>
@@ -404,6 +405,14 @@
     <h3>Meus agendamentos</h3>
     <button onclick="listarMeusAgendamentos()">Atualizar Lista</button>
     <div id="listaMeusAgendamentos" class="lista">
+        <p>Carregando...</p>
+    </div>
+</section>
+
+            <section id="secao14">
+    <h3>Meu histórico vacinal</h3>
+    <button type="button" onclick="listarMeuHistoricoVacinal()">Atualizar histórico</button>
+    <div id="listaHistoricoVacinal" class="lista">
         <p>Carregando...</p>
     </div>
 </section>

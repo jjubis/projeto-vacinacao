@@ -142,11 +142,11 @@ async function listarCidadaos() {
         lista.innerHTML = cidadaos.map(cidadao => `
             <div class="resultado-lista">
                 <strong>ID:</strong> ${cidadao.id}<br>
-                <strong>Nome:</strong> ${cidadao.nome}<br>
+                <strong>Nome:</strong> ${escapeHtml(cidadao.nome)}<br>
                 <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}<br>
                 <strong>Telefone:</strong> ${formatarTelefone(cidadao.telefone)}<br>
-                <strong>Email:</strong> ${cidadao.email}<br>
-                <strong>Endereço:</strong> ${cidadao.endereco}
+                <strong>Email:</strong> ${escapeHtml(cidadao.email)}<br>
+                <strong>Endereço:</strong> ${escapeHtml(cidadao.endereco)}
             </div>
         `).join('');
 
@@ -180,12 +180,18 @@ async function buscarCidadaoParaAtualizar() {
             return;
         }
 
-        container.innerHTML = resultados.map(cidadao => `
-            <div class="resultado-lista" onclick="selecionarCidadaoParaAtualizar(${cidadao.id}, '${escapeHtml(cidadao.nome)}', '${cidadao.cpf}', '${cidadao.telefone}', '${escapeHtml(cidadao.email)}', '${escapeHtml(cidadao.endereco)}')">
-                <strong>Nome:</strong> ${cidadao.nome}<br>
+        container.innerHTML = resultados.map((cidadao, indice) => `
+            <div class="resultado-lista" data-cidadao-indice="${indice}">
+                <strong>Nome:</strong> ${escapeHtml(cidadao.nome)}<br>
                 <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}
             </div>
         `).join('');
+        container.querySelectorAll('[data-cidadao-indice]').forEach(elemento => {
+            elemento.addEventListener('click', () => {
+                const cidadao = resultados[Number(elemento.dataset.cidadaoIndice)];
+                selecionarCidadaoParaAtualizar(cidadao.id, cidadao.nome, cidadao.cpf, cidadao.telefone, cidadao.email, cidadao.endereco);
+            });
+        });
 
     } catch (erro) {
         container.innerHTML = `<p class="error">Erro ao buscar cidadão: ${erro.message}</p>`;
@@ -290,12 +296,18 @@ async function buscarCidadaoParaExcluir() {
             return;
         }
 
-        container.innerHTML = resultados.map(cidadao => `
-            <div class="resultado-lista" onclick="selecionarCidadaoParaExcluir(${cidadao.id}, '${escapeHtml(cidadao.nome)}')">
-                <strong>Nome:</strong> ${cidadao.nome}<br>
+        container.innerHTML = resultados.map((cidadao, indice) => `
+            <div class="resultado-lista" data-cidadao-indice="${indice}">
+                <strong>Nome:</strong> ${escapeHtml(cidadao.nome)}<br>
                 <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}
             </div>
         `).join('');
+        container.querySelectorAll('[data-cidadao-indice]').forEach(elemento => {
+            elemento.addEventListener('click', () => {
+                const cidadao = resultados[Number(elemento.dataset.cidadaoIndice)];
+                selecionarCidadaoParaExcluir(cidadao.id, cidadao.nome);
+            });
+        });
 
     } catch (erro) {
         container.innerHTML = `<p class="error">Erro ao buscar cidadão: ${erro.message}</p>`;
@@ -313,7 +325,7 @@ function selecionarCidadaoParaExcluir(id, nome) {
 async function excluirCidadao(e) {
     e.preventDefault();
 
-    const confirmacao = confirm('⚠️ Tem certeza que deseja excluir este cidadão?\n\nEsta ação não pode ser desfeita!');
+    const confirmacao = confirm('Deseja inativar este cidadão?\n\nO histórico será preservado.');
     if (!confirmacao) return;
 
     const id = document.getElementById('idExcluir').value;
@@ -321,7 +333,7 @@ async function excluirCidadao(e) {
     try {
         await fazerRequisicao(`/cidadaos/${id}`, { method: 'DELETE' });
 
-        mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
+        mostrarMensagem('mensagemExcluir', 'Cidadão inativado com sucesso!', 'success');
         document.getElementById('excluirForm').style.display = 'none';
         document.getElementById('resultadoBuscaExcluir').innerHTML = '';
         document.getElementById('buscarCpfExcluir').value = '';
@@ -349,18 +361,6 @@ function formatarTelefone(telefone) {
         return telefone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
     return telefone;
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
 async function buscarCep() {

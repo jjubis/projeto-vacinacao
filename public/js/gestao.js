@@ -40,21 +40,23 @@ const alertaEstoque = document.getElementById('alertaEstoque');
 if (alertaEstoque) {
     if (dados.vacinasEstoqueBaixo && dados.vacinasEstoqueBaixo.length > 0) {
 
-        alertaEstoque.innerHTML = `
-            <h3>⚠️ Alerta de estoque baixo</h3>
-            ${dados.vacinasEstoqueBaixo.map(item => `
-                <p>
-                    <strong>${item.vacina}</strong>
-                    — ${item.quantidade} dose(s) disponíveis
-                    (${item.posto})
-                </p>
-            `).join('')}
-        `;
+        const titulo = document.createElement('h3');
+        titulo.textContent = '⚠️ Alerta de estoque baixo';
+        const itens = dados.vacinasEstoqueBaixo.map(item => {
+            const paragrafo = document.createElement('p');
+            const vacina = document.createElement('strong');
+            vacina.textContent = item.vacina;
+            paragrafo.append(vacina, document.createTextNode(
+                ` — ${item.quantidade} dose(s) disponíveis (${item.posto})`
+            ));
+            return paragrafo;
+        });
+        alertaEstoque.replaceChildren(titulo, ...itens);
 
         alertaEstoque.style.display = 'block';
 
     } else {
-        alertaEstoque.innerHTML = '';
+        alertaEstoque.replaceChildren();
         alertaEstoque.style.display = 'none';
     }
 }

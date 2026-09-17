@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3';
 import 'dotenv/config';
 import { hashSenha } from '../utils/auth.js';
+import { DATABASE_PATH } from '../utils/databasePath.js';
 
-const db = new Database('vacinacao.db');
+const db = new Database(DATABASE_PATH);
 
 async function seedFuncionario() {
     const nome = 'Administrador';

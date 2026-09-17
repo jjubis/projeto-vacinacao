@@ -51,16 +51,24 @@ async function carregarDadosParaAgendamento() {
             cidadaoSelect.required = true;
 
             const cidadaos = await fazerRequisicao('/cidadaos');
-            cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
+            cidadaoSelect.replaceChildren(new Option('Selecione um cidadão', ''));
             cidadaos.forEach(c => {
-                cidadaoSelect.innerHTML += `<option value="${c.id}">${c.nome} - CPF: ${formatarCPF(c.cpf)}</option>`;
+                cidadaoSelect.appendChild(new Option(
+                    `${c.nome} - CPF: ${formatarCPF(c.cpf)}`,
+                    String(c.id)
+                ));
             });
         } else {
             // Cidadão agenda para si mesmo — não precisa (nem pode) escolher
             cidadaoSelect.style.display = 'none';
             labelCidadaoSelect.style.display = 'none';
             cidadaoSelect.required = false;
-            cidadaoSelect.innerHTML = `<option value="${usuarioLogado.cidadaoId}" selected>${usuarioLogado.nome}</option>`;
+            cidadaoSelect.replaceChildren(new Option(
+                usuarioLogado.nome,
+                String(usuarioLogado.cidadaoId),
+                true,
+                true
+            ));
 
             agendandoParaMim.style.display = 'block';
             agendandoParaMim.textContent = `Agendando para: ${usuarioLogado.nome}`;
@@ -68,9 +76,12 @@ async function carregarDadosParaAgendamento() {
 
         const vacinas = await fazerRequisicao('/vacinas');
         const vacinaSelect = document.getElementById('vacinaSelect');
-        vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
+        vacinaSelect.replaceChildren(new Option('Selecione uma vacina', ''));
         vacinas.forEach(v => {
-            vacinaSelect.innerHTML += `<option value="${v.id}">${v.nome} (${v.fabricante})</option>`;
+            vacinaSelect.appendChild(new Option(
+                `${v.nome} (${v.fabricante})`,
+                String(v.id)
+            ));
         });
 
         // Unidade única (UBS Aterrado) — detectada automaticamente, sem seleção manual
@@ -279,12 +290,12 @@ async function listarAgendamentosDetalhados() {
             return `
                 <div class="resultado-lista ${statusClass}">
                     <strong>ID:</strong> ${a.id}<br>
-                    <strong>Cidadão:</strong> ${a.cidadaoNome}<br>
+                    <strong>Cidadão:</strong> ${escapeHtml(a.cidadaoNome)}<br>
                     <strong>CPF:</strong> ${formatarCPF(a.cidadaoCPF)}<br>
-                    <strong>Endereço:</strong> ${a.cidadaoEndereco}<br>
-                    <strong>Vacina:</strong> ${a.vacinaNome} (${a.vacinaFabricante})<br>
-                    <strong>Posto:</strong> ${a.postoNome} - ${a.postoEndereco}<br>
-                    <strong>Status:</strong> <span class="status-badge">${a.statusDescricao}</span><br>
+                    <strong>Endereço:</strong> ${escapeHtml(a.cidadaoEndereco)}<br>
+                    <strong>Vacina:</strong> ${escapeHtml(a.vacinaNome)} (${escapeHtml(a.vacinaFabricante)})<br>
+                    <strong>Posto:</strong> ${escapeHtml(a.postoNome)} - ${escapeHtml(a.postoEndereco)}<br>
+                    <strong>Status:</strong> <span class="status-badge">${escapeHtml(a.statusDescricao)}</span><br>
                     <strong>Data/Hora:</strong> ${formatarDataHora(a.dataHora)}
                 </div>
             `;
@@ -316,9 +327,9 @@ async function listarMeusAgendamentos() {
 
             return `
                 <div class="resultado-lista ${statusClass}">
-                    <strong>Vacina:</strong> ${a.vacinaNome} (${a.vacinaFabricante})<br>
-                    <strong>Unidade:</strong> ${a.postoNome} - ${a.postoEndereco}<br>
-                    <strong>Status:</strong> <span class="status-badge">${a.statusDescricao}</span><br>
+                    <strong>Vacina:</strong> ${escapeHtml(a.vacinaNome)} (${escapeHtml(a.vacinaFabricante)})<br>
+                    <strong>Unidade:</strong> ${escapeHtml(a.postoNome)} - ${escapeHtml(a.postoEndereco)}<br>
+                    <strong>Status:</strong> <span class="status-badge">${escapeHtml(a.statusDescricao)}</span><br>
                     <strong>Data/Hora:</strong> ${formatarDataHora(a.dataHora)}
                 </div>
             `;
@@ -326,6 +337,46 @@ async function listarMeusAgendamentos() {
 
     } catch (erro) {
         lista.innerHTML = `<p class="error">Erro ao carregar seus agendamentos: ${erro.message}</p>`;
+    }
+}
+
+async function listarMeuHistoricoVacinal() {
+    const lista = document.getElementById('listaHistoricoVacinal');
+    if (!lista) return;
+
+    lista.replaceChildren(document.createTextNode('Carregando...'));
+
+    try {
+        const historico = await fazerRequisicao('/historico/meu');
+
+        if (!Array.isArray(historico) || historico.length === 0) {
+            lista.replaceChildren(document.createTextNode('Nenhuma vacinação realizada até o momento.'));
+            return;
+        }
+
+        const itens = historico.map(item => {
+            const card = document.createElement('div');
+            card.className = 'resultado-lista';
+            const linhas = [
+                ['Vacina', `${item.vacinaNome} (${item.vacinaFabricante})`],
+                ['Unidade', `${item.postoNome} - ${item.postoEndereco}`],
+                ['Data de aplicação', formatarDataHora(item.dataAplicacao)]
+            ];
+
+            linhas.forEach(([rotulo, valor]) => {
+                const titulo = document.createElement('strong');
+                titulo.textContent = `${rotulo}: `;
+                card.append(titulo, document.createTextNode(valor), document.createElement('br'));
+            });
+            return card;
+        });
+
+        lista.replaceChildren(...itens);
+    } catch (erro) {
+        const mensagem = document.createElement('p');
+        mensagem.className = 'error';
+        mensagem.textContent = `Erro ao carregar histórico vacinal: ${erro.message}`;
+        lista.replaceChildren(mensagem);
     }
 }
 
@@ -385,7 +436,7 @@ async function buscarAgendamentoParaAtualizar() {
             container.innerHTML = `
                 <p>
                     Nenhum agendamento encontrado para
-                    <strong>${termo}</strong>.
+                    <strong>${escapeHtml(termo)}</strong>.
                 </p>
             `;
 
@@ -404,32 +455,33 @@ async function buscarAgendamentoParaAtualizar() {
                 </strong>
             </p>
 
-            ${agendamentosEncontrados.map(a => `
-                <div class="resultado-lista">
+            ${agendamentosEncontrados.map((a, indice) => `
+                <div class="resultado-lista" data-agendamento-indice="${indice}">
                     <strong>Cidadão:</strong>
-                    ${a.cidadaoNome}<br>
+                    ${escapeHtml(a.cidadaoNome)}<br>
 
                     <strong>CPF:</strong>
                     ${formatarCPF(a.cidadaoCPF)}<br>
 
                     <strong>Vacina:</strong>
-                    ${a.vacinaNome}<br>
+                    ${escapeHtml(a.vacinaNome)}<br>
 
                     <strong>Status:</strong>
-                    ${a.statusDescricao}<br>
+                    ${escapeHtml(a.statusDescricao)}<br>
 
                     <strong>Data/Hora:</strong>
                     ${formatarDataHora(a.dataHora)}<br>
 
-                    <button
-                        type="button"
-                        onclick="selecionarAgendamentoParaAtualizar(${a.id})"
-                    >
-                        Selecionar
-                    </button>
+                    <button type="button" data-acao="selecionar">Selecionar</button>
                 </div>
             `).join('')}
         `;
+        container.querySelectorAll('[data-agendamento-indice]').forEach(elemento => {
+            elemento.querySelector('[data-acao="selecionar"]').addEventListener('click', () => {
+                const agendamento = agendamentosEncontrados[Number(elemento.dataset.agendamentoIndice)];
+                selecionarAgendamentoParaAtualizar(agendamento.id);
+            });
+        });
 
         document
             .getElementById('atualizarAgendamentoForm')
@@ -617,14 +669,14 @@ async function buscarAgendamentoParaExcluir() {
         container.innerHTML = `
             <h4>Agendamentos encontrados:</h4>
 
-            ${resultados.map(a => `
-                <div class="resultado-lista" style="margin-bottom: 10px;">
+            ${resultados.map((a, indice) => `
+                <div class="resultado-lista" style="margin-bottom: 10px;" data-agendamento-indice="${indice}">
 
-                    <strong>Cidadão:</strong> ${a.cidadaoNome}<br>
+                    <strong>Cidadão:</strong> ${escapeHtml(a.cidadaoNome)}<br>
                     <strong>CPF:</strong> ${a.cidadaoCPF}<br>
-                    <strong>Vacina:</strong> ${a.vacinaNome}<br>
-                    <strong>Posto:</strong> ${a.postoNome}<br>
-                    <strong>Status:</strong> ${a.statusDescricao}<br>
+                    <strong>Vacina:</strong> ${escapeHtml(a.vacinaNome)}<br>
+                    <strong>Posto:</strong> ${escapeHtml(a.postoNome)}<br>
+                    <strong>Status:</strong> ${escapeHtml(a.statusDescricao)}<br>
                     <strong>Data/Hora:</strong> ${formatarDataHora(a.dataHora)}
 
                     ${
@@ -635,18 +687,22 @@ async function buscarAgendamentoParaExcluir() {
                                 </p>
                               `
                             : `
-                                <button
-                                    type="button"
-                                    onclick="selecionarAgendamentoParaExcluir(${a.id})"
-                                >
-                                    Selecionar
-                                </button>
+                                <button type="button" data-acao="selecionar">Selecionar</button>
                               `
                     }
 
                 </div>
             `).join('')}
         `;
+        container.querySelectorAll('[data-agendamento-indice]').forEach(elemento => {
+            const botao = elemento.querySelector('[data-acao="selecionar"]');
+            if (botao) {
+                botao.addEventListener('click', () => {
+                    const agendamento = resultados[Number(elemento.dataset.agendamentoIndice)];
+                    selecionarAgendamentoParaExcluir(agendamento.id);
+                });
+            }
+        });
 
     } catch (erro) {
         container.innerHTML = `
@@ -763,6 +819,7 @@ window.listarStatus = listarStatus;
 window.carregarDadosParaAgendamento = carregarDadosParaAgendamento;
 window.listarAgendamentosDetalhados = listarAgendamentosDetalhados;
 window.listarMeusAgendamentos = listarMeusAgendamentos;
+window.listarMeuHistoricoVacinal = listarMeuHistoricoVacinal;
 window.carregarStatusParaAtualizacao = carregarStatusParaAtualizacao;
 window.buscarAgendamentoParaAtualizar = buscarAgendamentoParaAtualizar;
 window.selecionarAgendamentoParaAtualizar = selecionarAgendamentoParaAtualizar;

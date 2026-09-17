@@ -33,15 +33,16 @@ export default (db) => {
             }
 
             const cpfLimpo = cpf.replace(/\D/g, '');
+            const emailNormalizado = email.trim().toLowerCase();
 
             if (cpfLimpo.length !== 11) {
                 return res.status(400).json({ error: 'CPF inválido. Deve conter exatamente 11 dígitos numéricos.' });
             }
 
-           const cidadao = db.prepare(`
+            const cidadao = db.prepare(`
     SELECT id, nome
     FROM cidadaos
-    WHERE cpf = ?
+    WHERE cpf = ? AND ativo = 1
 `).get(cpfLimpo);
 
 if (!cidadao) {
@@ -64,7 +65,7 @@ if (nomeInformado !== nomeCadastrado) {
                 return res.status(409).json({ error: 'Este cidadão já possui um acesso cadastrado.' });
             }
 
-            const emailExistente = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+            const emailExistente = db.prepare('SELECT id FROM usuarios WHERE LOWER(email) = ?').get(emailNormalizado);
             if (emailExistente) {
                 return res.status(409).json({ error: 'Este email já está cadastrado.' });
             }
@@ -74,7 +75,7 @@ if (nomeInformado !== nomeCadastrado) {
             const info = db.prepare(`
                 INSERT INTO usuarios (nome, email, senhaHash, papel, cidadaoId)
                 VALUES (?, ?, ?, 'cidadao', ?)
-            `).run(nome, email, senhaHash, cidadao.id);
+            `).run(nome, emailNormalizado, senhaHash, cidadao.id);
 
             res.status(201).json({ message: 'Usuário criado com sucesso', id: info.lastInsertRowid });
 
@@ -88,6 +89,7 @@ if (nomeInformado !== nomeCadastrado) {
     router.post('/registrar-funcionario', requireRole('funcionario'), async (req, res) => {
         try {
             const { nome, email, senha } = req.body;
+            const emailNormalizado = email?.trim().toLowerCase();
 
             if (!nome || !email || !senha) {
                 return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
@@ -96,7 +98,7 @@ if (nomeInformado !== nomeCadastrado) {
                 return res.status(400).json({ error: 'A senha deve ter no mínimo 8 caracteres.' });
             }
 
-            const emailExistente = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+            const emailExistente = db.prepare('SELECT id FROM usuarios WHERE LOWER(email) = ?').get(emailNormalizado);
             if (emailExistente) {
                 return res.status(409).json({ error: 'Este email já está cadastrado.' });
             }
@@ -105,7 +107,7 @@ if (nomeInformado !== nomeCadastrado) {
             const info = db.prepare(`
                 INSERT INTO usuarios (nome, email, senhaHash, papel, cidadaoId)
                 VALUES (?, ?, ?, 'funcionario', NULL)
-            `).run(nome, email, senhaHash);
+            `).run(nome, emailNormalizado, senhaHash);
 
             res.status(201).json({ message: 'Funcionário criado com sucesso', id: info.lastInsertRowid });
 
@@ -124,7 +126,14 @@ if (nomeInformado !== nomeCadastrado) {
                 return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
             }
 
-            const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+            const emailNormalizado = email.trim().toLowerCase();
+            const usuario = db.prepare(`
+                SELECT u.*
+                FROM usuarios u
+                LEFT JOIN cidadaos c ON c.id = u.cidadaoId
+                WHERE LOWER(u.email) = ?
+                  AND (u.papel = 'funcionario' OR c.ativo = 1)
+            `).get(emailNormalizado);
 
             // Mensagem genérica de propósito - não revela se o email existe ou não
             if (!usuario) {

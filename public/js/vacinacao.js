@@ -116,14 +116,13 @@ function configurarNavegacaoMenu() {
     case '12':
         break;
 
-   case '13':
-    const secaoMeusAgendamentos = document.getElementById('secao17');
-
-    if (secaoMeusAgendamentos) {
-        secaoMeusAgendamentos.classList.add('active');
+    case '13':
         listarMeusAgendamentos();
-    }
-    break;
+        break;
+
+    case '14':
+        listarMeuHistoricoVacinal();
+        break;
 
                 }
             }

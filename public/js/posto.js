@@ -32,8 +32,8 @@ async function cadastrarPosto(e) {
                 lista.innerHTML = postos.map(posto => `
                     <div class="resultado-lista">
                         <strong>ID:</strong> ${posto.id}<br>
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
+                        <strong>Nome:</strong> ${escapeHtml(posto.nome)}<br>
+                        <strong>Endereço:</strong> ${escapeHtml(posto.endereco)}
                     </div>
                 `).join('');
             } catch (erro) {
@@ -61,12 +61,18 @@ async function cadastrarPosto(e) {
                     return;
                 }
 
-                container.innerHTML = resultados.map(posto => `
-                    <div class="resultado-lista" onclick="selecionarPostoParaAtualizar(${posto.id}, '${posto.nome}', '${posto.endereco}')">
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
+                container.innerHTML = resultados.map((posto, indice) => `
+                    <div class="resultado-lista" data-posto-indice="${indice}">
+                        <strong>Nome:</strong> ${escapeHtml(posto.nome)}<br>
+                        <strong>Endereço:</strong> ${escapeHtml(posto.endereco)}
                     </div>
                 `).join('');
+                container.querySelectorAll('[data-posto-indice]').forEach(elemento => {
+                    elemento.addEventListener('click', () => {
+                        const posto = resultados[Number(elemento.dataset.postoIndice)];
+                        selecionarPostoParaAtualizar(posto.id, posto.nome, posto.endereco);
+                    });
+                });
             } catch (erro) {
                 mostrarMensagem('mensagemPostoAtualizar', `Erro ao buscar posto: ${erro.message}`, 'error');
             }
@@ -125,12 +131,18 @@ async function cadastrarPosto(e) {
                     return;
                 }
 
-                container.innerHTML = resultados.map(posto => `
-                    <div class="resultado-lista" onclick="selecionarPostoParaExcluir(${posto.id}, '${posto.nome}')">
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
+                container.innerHTML = resultados.map((posto, indice) => `
+                    <div class="resultado-lista" data-posto-indice="${indice}">
+                        <strong>Nome:</strong> ${escapeHtml(posto.nome)}<br>
+                        <strong>Endereço:</strong> ${escapeHtml(posto.endereco)}
                     </div>
                 `).join('');
+                container.querySelectorAll('[data-posto-indice]').forEach(elemento => {
+                    elemento.addEventListener('click', () => {
+                        const posto = resultados[Number(elemento.dataset.postoIndice)];
+                        selecionarPostoParaExcluir(posto.id, posto.nome);
+                    });
+                });
             } catch (erro) {
                 mostrarMensagem('mensagemPostoExcluir', `Erro ao buscar posto: ${erro.message}`, 'error');
             }

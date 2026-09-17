@@ -43,7 +43,7 @@ export default (db) => {
     
   router.get('/', requireRole('funcionario'), (req, res) => {
         try {
-            const cidadaos = db.prepare('SELECT * FROM cidadaos').all();
+            const cidadaos = db.prepare('SELECT * FROM cidadaos WHERE ativo = 1').all();
             res.json(cidadaos);
         } catch (error) {
             console.error('Erro ao listar cidadãos:', error);
@@ -54,7 +54,7 @@ export default (db) => {
     router.get('/:id', requireRole('funcionario'), (req, res) => {
         try {
             const { id } = req.params;
-            const cidadao = db.prepare('SELECT * FROM cidadaos WHERE id = ?').get(id);
+            const cidadao = db.prepare('SELECT * FROM cidadaos WHERE id = ? AND ativo = 1').get(id);
             
             if (cidadao) {
                 res.json(cidadao);
@@ -234,22 +234,16 @@ export default (db) => {
     router.delete('/:id', requireRole('funcionario'), (req, res) => {
         try {
             const { id } = req.params;
-            const info = db.prepare('DELETE FROM cidadaos WHERE id = ?').run(id);
+            const info = db.prepare('UPDATE cidadaos SET ativo = 0 WHERE id = ? AND ativo = 1').run(id);
 
             if (info.changes > 0) {
-                console.log(`✅ Cidadão ID ${id} excluído com sucesso`);
-                res.json({ message: 'Cidadão excluído com sucesso' });
+                console.log(`✅ Cidadão ID ${id} inativado com sucesso`);
+                res.json({ message: 'Cidadão inativado com sucesso' });
             } else {
                 res.status(404).json({ error: 'Cidadão não encontrado' });
             }
         } catch (error) {
             console.error('❌ Erro ao excluir cidadão:', error);
-
-            if (error.message.includes('FOREIGN KEY constraint failed')) {
-                return res.status(409).json({ 
-                    error: 'Não é possível excluir: existem agendamentos associados a este cidadão.' 
-                });
-            }
 
             res.status(500).json({ 
                 error: 'Erro ao excluir cidadão', 
