@@ -8,6 +8,12 @@ const STATUS_AGENDADO = 1;
 const STATUS_REALIZADO = 2;
 const STATUS_CANCELADO = 3;
 
+function erroDeRegra(status, mensagem) {
+    const erro = new Error(mensagem);
+    erro.status = status;
+    return erro;
+}
+
 export default (db) => {
 
     // =========================================================
@@ -433,12 +439,6 @@ if (conflitoHorario) {
     // =========================================================
    router.put('/:id', requireRole('funcionario'), (req, res) => {
 
-    console.log(
-        'PUT ATUALIZAR AGENDAMENTO:',
-        req.params.id,
-        req.body
-    );
-
     const agendamentoId = Number(req.params.id);
     const { statusId } = req.body;
 
@@ -470,12 +470,7 @@ if (conflitoHorario) {
 
     try {
 
-        console.log('ANTES DA TRANSAÇÃO');
-
         const atualizar = db.transaction(() => {
-
-            console.log('ENTROU NA TRANSAÇÃO');
-
             const agendamento = db.prepare(`
                 SELECT
                     a.*,
@@ -486,15 +481,8 @@ if (conflitoHorario) {
                 WHERE a.id = ?
             `).get(agendamentoId);
 
-            console.log(
-                'AGENDAMENTO ENCONTRADO:',
-                agendamento
-            );
-
             if (!agendamento) {
-                throw new Error(
-                    'Agendamento não encontrado.'
-                );
+                throw erroDeRegra(404, 'Agendamento não encontrado.');
             }
 
             // =============================================
@@ -517,18 +505,27 @@ if (conflitoHorario) {
                     novoStatus === STATUS_AGENDADO);
 
             if (!transicaoPermitida) {
-                throw new Error('Transição de status não permitida.');
+                throw erroDeRegra(400, 'Transição de status não permitida.');
             }
 
             // Ao reabrir um cancelado, ele volta a reservar dose e horário.
             if (novoStatus === STATUS_AGENDADO) {
+                const dataAgendamento = new Date(agendamento.dataHora);
+
+                if (Number.isNaN(dataAgendamento.getTime()) || dataAgendamento <= new Date()) {
+                    throw erroDeRegra(
+                        400,
+                        'Não é possível reativar um agendamento com data/hora inválida ou passada.'
+                    );
+                }
+
                 const estoque = db.prepare(`
                     SELECT quantidade FROM estoque
                     WHERE postoId = ? AND vacinaId = ?
                 `).get(agendamento.postoId, agendamento.vacinaId);
 
                 if (!estoque) {
-                    throw new Error('Não existe estoque desta vacina neste posto.');
+                    throw erroDeRegra(409, 'Não existe estoque desta vacina neste posto.');
                 }
 
                 const pendentes = db.prepare(`
@@ -542,7 +539,7 @@ if (conflitoHorario) {
                 ).total;
 
                 if (estoque.quantidade - pendentes <= 0) {
-                    throw new Error('Não há doses disponíveis para reativar este agendamento.');
+                    throw erroDeRegra(409, 'Não há doses disponíveis para reativar este agendamento.');
                 }
 
                 const conflitoHorario = db.prepare(`
@@ -556,7 +553,7 @@ if (conflitoHorario) {
                 );
 
                 if (conflitoHorario) {
-                    throw new Error('O horário deste agendamento já está ocupado no posto.');
+                    throw erroDeRegra(409, 'O horário deste agendamento já está ocupado no posto.');
                 }
             }
 
@@ -579,19 +576,14 @@ if (conflitoHorario) {
                     agendamento.vacinaId
                 );
 
-                console.log(
-                    'ESTOQUE ENCONTRADO:',
-                    estoque
-                );
-
                 if (!estoque) {
-                    throw new Error(
+                    throw erroDeRegra(409,
                         'Não existe estoque desta vacina neste posto.'
                     );
                 }
 
                 if (estoque.quantidade <= 0) {
-                    throw new Error(
+                    throw erroDeRegra(409,
                         'Não há doses disponíveis desta vacina neste posto.'
                     );
                 }
@@ -608,20 +600,11 @@ if (conflitoHorario) {
                     agendamento.vacinaId
                 );
 
-                console.log(
-                    'RESULTADO UPDATE ESTOQUE:',
-                    resultadoEstoque.changes
-                );
-
                 if (resultadoEstoque.changes === 0) {
-                    throw new Error(
+                    throw erroDeRegra(409,
                         'Não foi possível atualizar o estoque da vacina neste posto.'
                     );
                 }
-
-                console.log(
-                    `Estoque atualizado: posto ${agendamento.postoId}, vacina ${agendamento.vacinaId}, 1 dose retirada.`
-                );
 
                 // =============================================
                 // REGISTRA NO HISTÓRICO VACINAL
@@ -656,17 +639,10 @@ if (conflitoHorario) {
                 agendamentoId
             );
 
-            console.log(
-                'RESULTADO UPDATE STATUS:',
-                resultadoStatus.changes
-            );
-
             return {
                 mensagem: 'Status do agendamento atualizado com sucesso.'
             };
         });
-
-        console.log('DEPOIS DA TRANSAÇÃO');
 
         // EXECUTA A TRANSAÇÃO
         return res.json(atualizar());
@@ -678,7 +654,7 @@ if (conflitoHorario) {
             erro
         );
 
-        return res.status(400).json({
+        return res.status(erro.status || 400).json({
             error: erro.message
         });
     }

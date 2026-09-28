@@ -112,6 +112,70 @@ try {
     assert.equal((await requisicao(`/agendamentos/${agendamentoId}`, {
         cookie: cookieFuncionario, method: 'PUT', body: { statusId: 2 }
     })).status, 200, 'realização deve baixar estoque e criar histórico');
+    assert.equal((await requisicao(`/agendamentos/${agendamentoId}`, {
+        cookie: cookieFuncionario, method: 'PUT', body: { statusId: 3 }
+    })).status, 400, 'agendamento realizado não pode ser cancelado');
+
+    const dbValidacao = new Database(bancoTeste);
+    const inserirCidadao = dbValidacao.prepare(`
+        INSERT INTO cidadaos (nome, cpf, telefone, email, endereco)
+        VALUES (?, ?, ?, ?, ?)
+    `);
+    const inserirAgendamento = dbValidacao.prepare(`
+        INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
+        VALUES (?, 1, 1, ?, ?)
+    `);
+    const dataConflito = proximaDataUtil();
+    const cidadaoCancelado = inserirCidadao.run(
+        'Cidadão Cancelado', '98765432101', '11988887771',
+        'cancelado@teste.local', 'Rua de Teste, 2'
+    ).lastInsertRowid;
+    const agendamentoCancelado = inserirAgendamento.run(
+        cidadaoCancelado, 3, dataConflito
+    ).lastInsertRowid;
+    const cidadaoConflitante = inserirCidadao.run(
+        'Cidadão Conflitante', '98765432102', '11988887772',
+        'conflitante@teste.local', 'Rua de Teste, 3'
+    ).lastInsertRowid;
+    inserirAgendamento.run(cidadaoConflitante, 1, dataConflito);
+    dbValidacao.close();
+
+    assert.equal((await requisicao(`/agendamentos/${agendamentoCancelado}`, {
+        cookie: cookieFuncionario, method: 'PUT', body: { statusId: 1 }
+    })).status, 409, 'reativação deve bloquear horário já ocupado');
+
+    const dbEstoque = new Database(bancoTeste);
+    dbEstoque.prepare('UPDATE estoque SET quantidade = 1 WHERE postoId = 1 AND vacinaId = 1').run();
+    const cidadaoSemEstoque = dbEstoque.prepare(`
+        INSERT INTO cidadaos (nome, cpf, telefone, email, endereco)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(
+        'Cidadão Sem Estoque', '98765432103', '11988887773',
+        'semestoque@teste.local', 'Rua de Teste, 4'
+    ).lastInsertRowid;
+    const agendamentoSemEstoque = dbEstoque.prepare(`
+        INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
+        VALUES (?, 1, 1, 3, ?)
+    `).run(cidadaoSemEstoque, proximaDataUtil()).lastInsertRowid;
+    const cidadaoCanceladoDireto = dbEstoque.prepare(`
+        INSERT INTO cidadaos (nome, cpf, telefone, email, endereco)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(
+        'Cidadão Cancelado Direto', '98765432104', '11988887774',
+        'direto@teste.local', 'Rua de Teste, 5'
+    ).lastInsertRowid;
+    const agendamentoCanceladoDireto = dbEstoque.prepare(`
+        INSERT INTO agendamentos (cidadaoId, vacinaId, postoId, statusId, dataHora)
+        VALUES (?, 1, 1, 3, ?)
+    `).run(cidadaoCanceladoDireto, proximaDataUtil()).lastInsertRowid;
+    dbEstoque.close();
+
+    assert.equal((await requisicao(`/agendamentos/${agendamentoSemEstoque}`, {
+        cookie: cookieFuncionario, method: 'PUT', body: { statusId: 1 }
+    })).status, 409, 'reativação deve bloquear quando não há doses disponíveis');
+    assert.equal((await requisicao(`/agendamentos/${agendamentoCanceladoDireto}`, {
+        cookie: cookieFuncionario, method: 'PUT', body: { statusId: 2 }
+    })).status, 400, 'cancelado não pode ser realizado sem antes ser reagendado');
 
     const historico = await requisicao('/historico/meu', { cookie: cookieCidada });
     assert.equal(historico.status, 200, 'cidadão deve consultar o próprio histórico');
