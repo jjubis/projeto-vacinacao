@@ -26,6 +26,7 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
+    console.log('Dados recebidos para criação do paciente:', req.body);
     const paciente = await pacientesService.create(req.body);
     res.status(201).json({ success: true, message: 'Paciente cadastrado com sucesso', data: paciente });
   } catch (error) {

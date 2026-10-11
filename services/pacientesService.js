@@ -14,22 +14,50 @@ const getById = async (id) => {
 };
 
 const create = async (data) => {
-  const { nome, cpf, data_nascimento, telefone, email } = data;
+  // const { nome, cpf, data_nascimento, telefone, email } = data;
+  const {
+    logradouro,
+    numero,
+    complemento,
+    bairro,
+    cidade,
+    uf,
+    cep,
+    ...outrosDados
+  } = data;
+
+  const complementoTexto = complemento ? `, ${complemento}` : '';
+  const enderecoCompleto = `${logradouro}, ${numero}${complementoTexto}, ${bairro}, ${cidade} - ${uf}, ${cep}`;
+
+  console.log('Endereço completo:', enderecoCompleto);
 
   const [result] = await pool.query(
-    'INSERT INTO pacientes (nome, cpf, data_nascimento, telefone, email) VALUES (?, ?, ?, ?, ?)',
-    [nome, cpf, data_nascimento, telefone || null, email || null]
+    'INSERT INTO pacientes (nome, cpf, data_nascimento, telefone, email, endereco) VALUES (?, ?, ?, ?, ?, ?)',
+    [outrosDados.nome, outrosDados.cpf, outrosDados.data_nascimento, outrosDados.telefone || null, outrosDados.email || null, enderecoCompleto]
   );
 
   return getById(result.insertId);
 };
 
 const update = async (id, data) => {
-  const { nome, cpf, data_nascimento, telefone, email } = data;
+  // const { nome, cpf, data_nascimento, telefone, email } = data;
+  const {
+    logradouro,
+    numero,
+    complemento,
+    bairro,
+    cidade,
+    uf,
+    cep,
+    ...outrosDados
+  } = data;
+
+  const complementoTexto = complemento ? `, ${complemento}` : '';
+  const enderecoCompleto = `${logradouro}, ${numero}${complementoTexto}, ${bairro}, ${cidade} - ${uf}, ${cep}`;
 
   await pool.query(
-    'UPDATE pacientes SET nome = ?, cpf = ?, data_nascimento = ?, telefone = ?, email = ? WHERE id = ?',
-    [nome, cpf, data_nascimento, telefone || null, email || null, id]
+    'UPDATE pacientes SET nome = ?, cpf = ?, data_nascimento = ?, telefone = ?, email = ?, endereco = ? WHERE id = ?',
+    [outrosDados.nome, outrosDados.cpf, outrosDados.data_nascimento, outrosDados.telefone || null, outrosDados.email || null, enderecoCompleto, id]
   );
 
   return getById(id);
