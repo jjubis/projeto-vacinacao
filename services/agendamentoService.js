@@ -63,11 +63,19 @@ const listarPorPaciente = async (pacienteId) => {
     return agendamentos;
 };
 
+const agendamentosPendentes = async (postoId, vacinaId) => {
+    const statusAgendamento = 'agendado';
+
+    const totalPendentes = await agendamentoModel.findAgendamentosPendentes(postoId, vacinaId, statusAgendamento);
+    return totalPendentes;
+}
+
 export default {
     getAll,
     getById,
     create,
     update,
     remove,
-    listarPorPaciente
+    listarPorPaciente,
+    agendamentosPendentes
 }

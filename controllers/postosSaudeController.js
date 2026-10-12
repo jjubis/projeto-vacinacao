@@ -25,6 +25,15 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
+    const { nome, endereco, telefone } = req.body;
+
+    if (!nome || !endereco || !telefone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios ausentes: nome, endereço e telefone são necessários'
+      })
+    }
+
     const posto = await postosSaudeService.create(req.body);
     res.status(201).json({ success: true, message: 'Posto de saúde cadastrado com sucesso', data: posto });
   } catch (error) {

@@ -25,6 +25,15 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
+    const { nome, fabricante, quantidade_estoque, validade, lote, minimo_alerta } = req.body;
+
+    if (!nome || !fabricante || !quantidade_estoque || !validade || !lote || !minimo_alerta) {
+      return res.status(400).json({
+        success: false,
+        message: 'Todos os campos são obrigatórios'
+      })
+    }
+
     const vacina = await vacinasService.create(req.body);
     res.status(201).json({ success: true, message: 'Vacina cadastrada com sucesso', data: vacina });
   } catch (error) {

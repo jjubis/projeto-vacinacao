@@ -13,8 +13,21 @@ export const findByCidadao = async (cidadaoId) => {
     return rows;
 }
 
+export const findAgendamentosPendentes = async (postoId, vacinaId, statusAgendamento) => {
+    const [rows] = await pool.query(
+        `SELECT COUNT(*) AS total
+        FROM agendamentos
+        WHERE postoId = ?
+            AND vacinaId = ?
+            AND status = ?`,
+        [postoId, vacinaId, statusAgendamento]
+    )
+    return rows[0]?.total || 0;
+}
+
 export default {
     tableName: 'agendamentos',
     columns: ['id', 'data_agendamento', 'status', 'vacina_id', 'posto_id', 'paciente_id'],
-    findByCidadao
+    findByCidadao,
+    findAgendamentosPendentes
 }

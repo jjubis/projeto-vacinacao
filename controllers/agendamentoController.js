@@ -25,6 +25,12 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
     try {
+        const { paciente_id, vacina_id, posto_id, data_agendamento } = req.body;
+
+        if (!paciente_id || !vacina_id || !posto_id || !data_agendamento) {
+            return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
+        }
+
         const agendamento = await agendamentosService.create(req.body);
         res.status(201).json({ success: true, message: 'Agendamento cadastrado com sucesso', data: agendamento });
     } catch (error) {
@@ -77,4 +83,34 @@ const listarMeusAgendamentos = async (req, res, next) => {
     }
 };
 
-export default { getAll, getById, create, update, remove, listarMeusAgendamentos };
+const agendamentosPendentes = async (req, res, next) => {
+    try {
+        const { postoId, vacinaId } = req.params;
+
+        if (!postoId || !vacinaId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Parâmetros de postoId e vacinaId são obrigatórios'
+            });
+        }
+
+        const totalPendentes = await agendamentosService.agendamentosPendentes(postoId, vacinaId);
+
+        return res.status(200).json({
+            success: true,
+            data: { totalPendentes }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default {
+    getAll,
+    getById,
+    create,
+    update,
+    remove,
+    listarMeusAgendamentos,
+    agendamentosPendentes
+};
