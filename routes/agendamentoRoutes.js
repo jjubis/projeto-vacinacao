@@ -8,7 +8,7 @@ const CAMPOS_OBRIGATORIOS = ['paciente_id', 'vacina_id', 'posto_id', 'data_agend
 
 router.get('/meus-agendamentos', requireAuth, agendamentoController.listarMeusAgendamentos);
 
-router.get('/', requireRole('funcionario'), agendamentoController.getAll);
+router.get('/', requireAuth, requireRole('funcionario'), agendamentoController.getAll);
 router.get('/:id', agendamentoController.getById);
 router.post('/', requireAuth, validateBody(CAMPOS_OBRIGATORIOS), agendamentoController.create);
 router.put('/:id', requireAuth, validateBody(CAMPOS_OBRIGATORIOS), agendamentoController.update);
