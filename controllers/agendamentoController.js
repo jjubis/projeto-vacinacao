@@ -25,16 +25,27 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
     try {
-        const { paciente_id, vacina_id, posto_id, data_agendamento } = req.body;
+        // const { paciente_id, vacina_id, posto_id, data_agendamento } = req.body;
 
-        if (!paciente_id || !vacina_id || !posto_id || !data_agendamento) {
-            return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
+        // if (!paciente_id || !vacina_id || !posto_id || !data_agendamento) {
+        //     return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
+        // }
+
+        // const agendamento = await agendamentosService.create(req.body);
+        // res.status(201).json({ success: true, message: 'Agendamento cadastrado com sucesso', data: agendamento });
+
+        const usuario = req.usuario || req.session?.usuario;
+
+        const resposta = await agendamentosService.create(usuario, req.body);
+
+        return res.status(201).json(resposta);
+    } catch (error) {
+        if (error.status) {
+            return res.status(error.status).json({ error: error.message });
         }
 
-        const agendamento = await agendamentosService.create(req.body);
-        res.status(201).json({ success: true, message: 'Agendamento cadastrado com sucesso', data: agendamento });
-    } catch (error) {
-        next(error);
+        console.error('Erro ao criar agendamento:', error);
+        return res.status(500).json({ error: 'Erro ao criar agendamento.' });
     }
 };
 

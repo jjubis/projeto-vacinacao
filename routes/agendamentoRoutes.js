@@ -11,7 +11,7 @@ router.get('/meus-agendamentos', requireAuth, agendamentoController.listarMeusAg
 router.get('/', requireAuth, requireRole('funcionario'), agendamentoController.getAll);
 router.get('/:id', agendamentoController.getById);
 router.post('/', requireAuth, validateBody(CAMPOS_OBRIGATORIOS), agendamentoController.create);
-router.put('/:id', requireAuth, validateBody(CAMPOS_OBRIGATORIOS), agendamentoController.update);
+router.put('/:id', requireAuth, agendamentoController.update);
 router.delete('/:id', requireAuth, agendamentoController.remove);
 
 export default router;
