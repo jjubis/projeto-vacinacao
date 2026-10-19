@@ -7,7 +7,7 @@ const router = Router();
 router.get('/', vacinasController.getAll);
 router.get('/:id', vacinasController.getById);
 router.post('/', validateBody(['nome', 'quantidade_estoque']), vacinasController.create);
-router.put('/:id', validateBody(['nome', 'quantidade_estoque']), vacinasController.update);
+router.put('/:id', vacinasController.update);
 router.delete('/:id', vacinasController.remove);
 
 export default router;

@@ -1,3 +1,10 @@
+function normalizarListaVacinas(resposta) {
+    if (Array.isArray(resposta)) return resposta;
+    if (Array.isArray(resposta?.data?.vacinas)) return resposta.data.vacinas;
+    if (Array.isArray(resposta?.data)) return resposta.data;
+    return [];
+}
+
  async function cadastrarVacina(e) {
     e.preventDefault();
     
@@ -8,12 +15,14 @@
         nome: document.getElementById('nomeVacina').value,
         fabricante: document.getElementById('fabricanteVacina').value,
         validade: document.getElementById('validadeVacina').value,
-        
+        lote: document.getElementById('loteVacina').value.trim() || null,
+        quantidade_estoque: Number(document.getElementById('quantidadeEstoqueVacina').value),
+        minimo_alerta: Number(document.getElementById('minimoAlertaVacina').value),
         postoId: parseInt(postoIdValue) || 1 
     };
     
-    if (!dados.nome || !dados.fabricante || !dados.validade || !dados.postoId) {
-        mostrarMensagem('mensagemVacina', 'Erro: Nome, fabricante, validade e Posto ID são obrigatórios (Verifique o HTML se o Posto ID estiver faltando).', 'error');
+    if (!dados.nome || !Number.isInteger(dados.quantidade_estoque) || dados.quantidade_estoque < 0 || !Number.isInteger(dados.minimo_alerta) || dados.minimo_alerta < 0) {
+        mostrarMensagem('mensagemVacina', 'Informe o nome e quantidades inteiras iguais ou maiores que zero.', 'error');
         return;
     }
     
@@ -34,7 +43,7 @@
 }
         async function listarVacinas() {
             try {
-                const vacinas = await fazerRequisicao('/vacinas');
+                const vacinas = normalizarListaVacinas(await fazerRequisicao('/vacinas'));
                 const lista = document.getElementById('listaVacinas');
 
                 if (vacinas.length === 0) {
@@ -63,10 +72,10 @@
             }
 
             try {
-                const vacinas = await fazerRequisicao('/vacinas');
+                const vacinas = normalizarListaVacinas(await fazerRequisicao('/vacinas'));
                 const resultados = vacinas.filter(v =>
                     v.nome.toLowerCase().includes(termo.toLowerCase()) ||
-                    v.fabricante.toLowerCase().includes(termo.toLowerCase())
+                    (v.fabricante || '').toLowerCase().includes(termo.toLowerCase())
                 );
 
                 const container = document.getElementById('resultadoBuscaVacinaAtualizar');
@@ -76,22 +85,31 @@
                     return;
                 }
 
-                container.innerHTML = resultados.map(vacina => `
-                    <div class="resultado-lista" onclick="selecionarVacinaParaAtualizar(${vacina.id}, '${vacina.nome}', '${vacina.fabricante}', '${vacina.validade}')">
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}
-                    </div>
-                `).join('');
+                container.replaceChildren(...resultados.map(vacina => {
+                    const botao = document.createElement('button');
+                    botao.type = 'button';
+                    botao.className = 'resultado-lista';
+                    botao.style.width = '100%';
+                    botao.textContent = `Nome: ${vacina.nome} · Fabricante: ${vacina.fabricante || 'não informado'}`;
+                    botao.addEventListener('click', () => selecionarVacinaParaAtualizar(
+                        vacina.id, vacina.nome, vacina.fabricante || '', vacina.validade || '', vacina.lote || '',
+                        Number(vacina.quantidade_estoque || 0), Number(vacina.minimo_alerta || 0)
+                    ));
+                    return botao;
+                }));
             } catch (erro) {
                 mostrarMensagem('mensagemVacinaAtualizar', `Erro ao buscar vacina: ${erro.message}`, 'error');
             }
         }
 
-        function selecionarVacinaParaAtualizar(id, nome, fabricante, validade) {
+        function selecionarVacinaParaAtualizar(id, nome, fabricante, validade, lote = '', quantidade = 0, minimo = 0) {
             document.getElementById('idVacinaAtualizar').value = id;
             document.getElementById('novoNomeVacina').value = nome;
             document.getElementById('novoFabricanteVacina').value = fabricante;
             document.getElementById('novaValidadeVacina').value = validade;
+            document.getElementById('novoLoteVacina').value = lote || '';
+            document.getElementById('novaQuantidadeEstoqueVacina').value = quantidade;
+            document.getElementById('novoMinimoAlertaVacina').value = minimo;
             document.getElementById('atualizarVacinaForm').style.display = 'block';
         }
 
@@ -104,10 +122,16 @@
             const novoNome = document.getElementById('novoNomeVacina').value.trim();
             const novoFabricante = document.getElementById('novoFabricanteVacina').value.trim();
             const novaValidade = document.getElementById('novaValidadeVacina').value.trim();
+            const novoLote = document.getElementById('novoLoteVacina').value.trim();
+            const novaQuantidade = document.getElementById('novaQuantidadeEstoqueVacina').value;
+            const novoMinimo = document.getElementById('novoMinimoAlertaVacina').value;
 
             if (novoNome) dados.nome = novoNome;
             if (novoFabricante) dados.fabricante = novoFabricante;
             if (novaValidade) dados.validade = novaValidade;
+            if (novoLote) dados.lote = novoLote;
+            if (novaQuantidade !== '') dados.quantidade_estoque = Number(novaQuantidade);
+            if (novoMinimo !== '') dados.minimo_alerta = Number(novoMinimo);
 
             try {
                 await fazerRequisicao(`/vacinas/${id}`, {
@@ -131,10 +155,10 @@
             }
 
             try {
-                const vacinas = await fazerRequisicao('/vacinas');
+                const vacinas = normalizarListaVacinas(await fazerRequisicao('/vacinas'));
                 const resultados = vacinas.filter(v =>
                     v.nome.toLowerCase().includes(termo.toLowerCase()) ||
-                    v.fabricante.toLowerCase().includes(termo.toLowerCase())
+                    (v.fabricante || '').toLowerCase().includes(termo.toLowerCase())
                 );
 
                 const container = document.getElementById('resultadoBuscaVacinaExcluir');

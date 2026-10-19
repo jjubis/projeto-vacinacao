@@ -3,7 +3,8 @@ let usuarioLogado = null;
 async function verificarSessao() {
     try {
         const resposta = await fazerRequisicao('/auth/me');
-        usuarioLogado = resposta.usuario;
+        usuarioLogado = resposta.data?.usuario || resposta.usuario;
+        if (resposta.data?.token) sessionStorage.setItem('imuniza_token', resposta.data.token);
         return true;
     } catch (erro) {
         usuarioLogado = null;
@@ -69,7 +70,7 @@ async function fazerRegistroCidadao(e) {
     submitButton.textContent = 'Criando acesso...';
 
     try {
-        await fazerRequisicao('/auth/registrar', {
+        await fazerRequisicao('/auth/cadastro', {
             method: 'POST',
             body: JSON.stringify({ nome, cpf, email, senha })
         });
@@ -83,7 +84,8 @@ async function fazerRegistroCidadao(e) {
             body: JSON.stringify({ email, senha })
         });
 
-        usuarioLogado = respostaLogin.usuario;
+        usuarioLogado = respostaLogin.data?.usuario || respostaLogin.usuario;
+        if (respostaLogin.data?.token) sessionStorage.setItem('imuniza_token', respostaLogin.data.token);
 
         setTimeout(() => {
             iniciarApp();
@@ -103,6 +105,7 @@ async function fazerLogout() {
         console.warn('Erro ao fazer logout:', erro.message);
     } finally {
         usuarioLogado = null;
+        sessionStorage.removeItem('imuniza_token');
         location.reload();
     }
 }

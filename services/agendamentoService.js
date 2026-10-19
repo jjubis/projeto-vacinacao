@@ -45,10 +45,11 @@ const create = async (usuario, data) => {
     let { paciente_id, vacina_id, posto_id, data_agendamento } = data;
 
     if (usuario.papel === 'cidadao') {
-        if (!usuario.cidadaoId) {
+        const pacienteAutenticado = usuario.paciente_id || usuario.cidadaoId;
+        if (!pacienteAutenticado) {
             throw { status: 400, message: 'Seu usuário não está associado a um cidadão.' }
         }
-        paciente_id = usuario.cidadaoId;
+        paciente_id = pacienteAutenticado;
     }
 
     if (usuario.papel !== 'cidadao' && usuario.papel !== 'funcionario') {
@@ -67,25 +68,25 @@ const create = async (usuario, data) => {
         throw { status: 400, message: 'Os IDs informados são inválidos.' };
     }
 
-    if (!agendamentoModel.buscarCidadaoPorId(paciente_id)) {
+    if (!await agendamentoModel.buscarCidadaoPorId(paciente_id)) {
         throw { status: 404, message: 'Cidadão não encontrado.' }
     }
 
-    if (!agendamentoModel.buscarVacinaPorId(vacina_id)) {
+    if (!await agendamentoModel.buscarVacinaPorId(vacina_id)) {
         throw { status: 404, message: 'Vacina não encontrada.' };
     }
 
-    if (!agendamentoModel.buscarPostoPorId(posto_id)) {
+    if (!await agendamentoModel.buscarPostoPorId(posto_id)) {
         throw { status: 404, message: 'Posto de saúde não encontrado.' };
     }
 
-    const estoque = agendamentoModel.buscarEstoque(vacina_id);
+    const estoque = await agendamentoModel.buscarEstoque(vacina_id);
     if (!estoque) {
         throw { status: 409, message: 'Não existe estoque desta vacina.' }
     }
 
-    const agendamentosPendentes = agendamentoModel.buscarAgendamentosPendentes(posto_id, vacina_id, 'agendado');
-    const dosesDisponiveis = estoque.quantidade - agendamentosPendentes;
+    const agendamentosPendentes = await agendamentoModel.buscarAgendamentosPendentes(posto_id, vacina_id, 'agendado');
+    const dosesDisponiveis = estoque.quantidade_estoque - agendamentosPendentes;
 
     if (dosesDisponiveis <= 0) {
         throw { status: 409, message: 'Não há doses disponíveis desta vacina para novos agendamentos.' }
@@ -119,8 +120,11 @@ const create = async (usuario, data) => {
     console.log('Verificando conflito para:', posto_id, data_agendamento, 'agendado');
     const conflito = await agendamentoModel.verificarConflitoHorario(posto_id, data_agendamento, 'agendado');
     console.log('Resultado do conflito:', conflito);
+    if (conflito) {
+        throw { status: 409, message: 'Este horário já está ocupado. Escolha outro horário.' };
+    }
 
-    const agendamentoExistente = agendamentoModel.buscarAgendamentoExistente(paciente_id, vacina_id);
+    const agendamentoExistente = await agendamentoModel.buscarAgendamentoExistente(paciente_id, vacina_id);
     if (agendamentoExistente) {
         if (agendamentoExistente.status === 'agendado') {
             throw { status: 409, message: 'Este cidadão já possui um agendamento para esta vacina.' }
@@ -129,13 +133,13 @@ const create = async (usuario, data) => {
             throw { status: 409, message: 'Esta vacina já foi realizada para este cidadão.' }
         }
         if (agendamentoExistente.status === 'cancelado') {
-            agendamentoModel.atualizarAgendamentoExistente(posto_id, 'agendado', data_agendamento, agendamentoExistente.id);
+            await agendamentoModel.atualizarAgendamentoExistente(posto_id, 'agendado', data_agendamento, agendamentoExistente.id);
             return { message: 'Agendamento realizado com sucesso.', id: agendamentoExistente.id };
         }
     }
 
-    const resultado = agendamentoModel.inserirAgendamento(paciente_id, vacina_id, posto_id, 'agendado', data_agendamento);
-    return { mensagem: 'Agendamento realizado com sucesso.', id: resultado.lastInsertRowid };
+    const resultado = await agendamentoModel.inserirAgendamento(paciente_id, vacina_id, posto_id, 'agendado', data_agendamento);
+    return { mensagem: 'Agendamento realizado com sucesso.', id: resultado };
 };
 
 const update = async (agendamentoId, dadosOuStatus) => {

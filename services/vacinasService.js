@@ -25,7 +25,14 @@ const create = async (data) => {
 };
 
 const update = async (id, data) => {
-  const { nome, fabricante, quantidade_estoque, validade, lote, minimo_alerta } = data;
+  const atual = await getById(id);
+  if (!atual) return null;
+  const nome = data.nome ?? atual.nome;
+  const fabricante = data.fabricante ?? atual.fabricante;
+  const quantidade_estoque = data.quantidade_estoque ?? atual.quantidade_estoque;
+  const validade = data.validade ?? atual.validade;
+  const lote = data.lote ?? atual.lote;
+  const minimo_alerta = data.minimo_alerta ?? atual.minimo_alerta ?? 0;
 
   await pool.query(
     'UPDATE vacinas SET nome = ?, fabricante = ?, quantidade_estoque = ?, validade = ?, lote = ?, minimo_alerta = ? WHERE id = ?',

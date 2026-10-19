@@ -7,6 +7,7 @@ import vacinasRoutes from './routes/vacinasRoutes.js';
 import postosSaudeRoutes from './routes/postosSaudeRoutes.js';
 import agendamentosRoutes from './routes/agendamentoRoutes.js';
 import historicoRoutes from './routes/historicoRoutes.js';
+import notificacoesRoutes from './routes/notificacoesRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/vacinas', vacinasRoutes);
 app.use('/postos', postosSaudeRoutes);
 app.use('/agendamentos', agendamentosRoutes);
 app.use('/historico', historicoRoutes);
+app.use('/notificacoes', notificacoesRoutes);
 
 app.use(errorHandler);
 

@@ -32,16 +32,15 @@ export const buscarAgendamentosPendentes = async (postoId, vacinaId, statusAgend
             AND status = ?`,
         [postoId, vacinaId, statusAgendamento]
     )
-    // return rows[0]?.total || 0;
-    return rows ? rows.total : 0;
+    return Number(rows[0]?.total || 0);
 }
 
 export const buscarAgendamentosPendentesExcetoId = async (postoId, vacinaId, statusAgendamento, idIgnorado) => {
     const [rows] = await pool.query(
         `SELECT COUNT(*) AS total
         FROM agendamentos
-        WHERE postoId = ?
-            AND vacinaId = ?
+        WHERE posto_id = ?
+            AND vacina_id = ?
             AND status = ?
             AND id != ?`,
         [postoId, vacinaId, statusAgendamento, idIgnorado]
@@ -102,7 +101,7 @@ export const verificarConflitoHorarioExcetoId = async (postoId, dataHora, status
 
 export const buscarAgendamentoExistente = async (cidadaoId, vacinaId) => {
     const [rows] = await pool.query(
-        `SELECT a.id, a.status_id, a.status
+        `SELECT a.id, a.status
         FROM agendamentos a
         WHERE a.paciente_id = ? AND a.vacina_id = ?`,
         [cidadaoId, vacinaId]
@@ -132,7 +131,7 @@ export const inserirAgendamento = async (cidadaoId, vacinaId, postoId, statusAge
 export const decrementarEstoque = async (vacinaId) => {
     const [rows] = await pool.query(
         `UPDATE vacinas
-        SET quatidade_estoque = quantidade_estoque - 1
+    SET quantidade_estoque = quantidade_estoque - 1
         WHERE id = ? AND quantidade_estoque > 0`,
         [vacinaId]
     );

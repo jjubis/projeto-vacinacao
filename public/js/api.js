@@ -18,11 +18,13 @@ async function fazerRequisicao(url, options = {}) {
     try {
         const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 
+        const token = sessionStorage.getItem('imuniza_token');
         const response = await fetch(fullUrl, {
     method: options.method || 'GET',
     credentials: 'include',
     headers: {
         'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
     },
     body: options.body,

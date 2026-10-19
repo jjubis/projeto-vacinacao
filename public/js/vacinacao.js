@@ -116,6 +116,9 @@ function configurarNavegacaoMenu() {
                         break;
                     case '16':
                         break;
+                    case '17':
+                        carregarNotificacoes();
+                        break;
                 }
             }
         });
@@ -129,6 +132,7 @@ async function iniciarApp() {
     aplicarPermissoesMenu();
     configurarNavegacaoMenu();
     configurarEventListeners();
+    atualizarContadorNotificacoes();
 
     // Clica no primeiro item do menu que estiver VISÍVEL para o papel do usuário
     const primeiroItemVisivel = Array.from(document.querySelectorAll('#menu li[data-opcao]'))

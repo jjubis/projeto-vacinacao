@@ -87,6 +87,7 @@
     <li data-opcao="10" data-permissao="funcionario">10 - Listar agendamentos detalhados</li>
     <li data-opcao="11" data-permissao="funcionario">11 - Atualizar agendamento</li>
     <li data-opcao="12" data-permissao="funcionario">12 - Excluir agendamento</li>
+    <li data-opcao="17">🔔 Notificações <span id="contadorNotificacoes" class="notification-count" aria-live="polite">0</span></li>
 
     <li data-opcao="S">S - Sair do Sistema</li>
 </ul>
@@ -170,7 +171,13 @@
                     <label>Fabricante:</label>
                     <input type="text" id="fabricanteVacina" required />
                     <label>Validade:</label>
-                    <input type="date" id="validadeVacina" required />
+                    <input type="date" id="validadeVacina" />
+                    <label>Lote (se disponível):</label>
+                    <input type="text" id="loteVacina" />
+                    <label>Quantidade em estoque:</label>
+                    <input type="number" id="quantidadeEstoqueVacina" min="0" step="1" value="0" required />
+                    <label>Limite mínimo para alerta:</label>
+                    <input type="number" id="minimoAlertaVacina" min="0" step="1" value="0" required />
 
                     <input type="hidden" id="postoId" value="1" />
 
@@ -201,6 +208,12 @@
                     <input type="text" id="novoFabricanteVacina" placeholder="Deixe em branco para manter" />
                     <label>Nova validade:</label>
                     <input type="date" id="novaValidadeVacina" />
+                    <label>Novo lote:</label>
+                    <input type="text" id="novoLoteVacina" />
+                    <label>Nova quantidade em estoque:</label>
+                    <input type="number" id="novaQuantidadeEstoqueVacina" min="0" step="1" />
+                    <label>Novo limite mínimo para alerta:</label>
+                    <input type="number" id="novoMinimoAlertaVacina" min="0" step="1" />
                     <button type="submit">Atualizar vacina</button>
                 </form>
                 <div id="mensagemVacinaAtualizar"></div>
@@ -302,6 +315,23 @@
                 <div id="mensagemAgendamentoExcluir"></div>
             </section>
 
+            <section id="secao17">
+                <h3>Central de notificações</h3>
+                <div class="notification-toolbar">
+                    <label for="filtroCategoriaNotificacoes">Categoria</label>
+                    <select id="filtroCategoriaNotificacoes">
+                        <option value="">Todas</option>
+                        <option value="agendamento">Agendamento</option>
+                        <option value="cancelamento">Cancelamento</option>
+                        <option value="cadastro">Cadastro</option>
+                        <option value="estoque">Estoque</option>
+                        <option value="validade">Validade</option>
+                    </select>
+                    <button type="button" id="marcarTodasNotificacoes">Marcar todas como lidas</button>
+                </div>
+                <div id="listaNotificacoes" class="notification-list" aria-live="polite"></div>
+            </section>
+
             <section id="secao0">
                 <h3>Gestão de Negócio</h3>
                 <p>Métricas Chave do Sistema de Vacinação</p>
@@ -323,6 +353,7 @@
     <script src="js/vacina.js"></script>
     <script src="js/agendamento.js"></script>
     <script src="js/gestao.js"></script>
+    <script src="js/notificacoes.js"></script>
     <script src="js/vacinacao.js"></script>
 
 </body>

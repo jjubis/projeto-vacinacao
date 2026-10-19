@@ -1,4 +1,9 @@
 import agendamentosService from '../services/agendamentoService.js';
+import { notificarCidadao, notificarFuncionarios } from '../services/notificacoesService.js';
+
+async function registrarNotificacao(promise) {
+    try { await promise; } catch (error) { console.error('Falha ao registrar notificação:', error.message); }
+}
 
 const getAll = async (req, res, next) => {
     try {
@@ -38,6 +43,15 @@ const create = async (req, res, next) => {
 
         const resposta = await agendamentosService.create(usuario, req.body);
 
+        const pacienteId = usuario.papel === 'cidadao' ? usuario.paciente_id : req.body.paciente_id;
+        const agendamentoId = resposta.id || resposta.data?.id;
+        await registrarNotificacao(notificarCidadao(pacienteId, 'agendamento', 'Agendamento confirmado',
+            `Seu agendamento de vacinação foi confirmado${req.body.data_agendamento ? ` para ${req.body.data_agendamento}` : ''}.`,
+            agendamentoId ? `agendamento:${agendamentoId}:confirmado` : null));
+        await registrarNotificacao(notificarFuncionarios('agendamento', 'Novo agendamento',
+            `Um novo agendamento foi registrado para o cidadão ${pacienteId}.`,
+            agendamentoId ? `agendamento:${agendamentoId}:novo` : null));
+
         return res.status(201).json(resposta);
     } catch (error) {
         if (error.status) {
@@ -58,6 +72,15 @@ const update = async (req, res, next) => {
         }
 
         const agendamento = await agendamentosService.update(req.params.id, req.body);
+        if (req.body.status && req.body.status !== existing.status) {
+            const categoria = req.body.status === 'cancelado' ? 'cancelamento' : 'agendamento';
+            const titulo = req.body.status === 'cancelado' ? 'Agendamento cancelado' : 'Agendamento atualizado';
+            const mensagem = req.body.status === 'cancelado'
+                ? `O agendamento ${req.params.id} foi cancelado.`
+                : `O status do agendamento ${req.params.id} foi atualizado para ${req.body.status}.`;
+            await registrarNotificacao(notificarCidadao(existing.paciente_id || existing.pacienteId, categoria, titulo, mensagem,
+                `agendamento:${req.params.id}:${req.body.status}`));
+        }
         res.json({ success: true, message: 'Agendamento atualizado com sucesso', data: agendamento });
     } catch (error) {
         next(error);
@@ -71,6 +94,10 @@ const remove = async (req, res, next) => {
         if (!existing) {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
+
+        await registrarNotificacao(notificarCidadao(existing.paciente_id || existing.pacienteId,
+            'cancelamento', 'Agendamento cancelado', `O agendamento ${req.params.id} foi cancelado.`,
+            `agendamento:${req.params.id}:cancelado`));
 
         await agendamentosService.remove(req.params.id);
         res.json({ success: true, message: 'Agendamento removido com sucesso', data: {} });
