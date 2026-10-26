@@ -41,13 +41,14 @@ async function cadastrarCidadao(e) {
 
     const nome = document.getElementById('nome').value.trim();
     const cpf = document.getElementById('cpf').value.trim();
+    const data_nascimento = document.getElementById('dataNascimento').value;
     const telefone = document.getElementById('telefone').value.trim();
     const email = document.getElementById('email').value.trim();
     const endereco = document.getElementById('endereco').value.trim();
     const cpfLimpo = cpf.replace(/\D/g, '');
     const telefoneLimpo = telefone.replace(/\D/g, '');
 
-    if (!nome || !cpfLimpo || !telefoneLimpo || !email || !endereco) {
+    if (!nome || !cpfLimpo || !data_nascimento || !telefoneLimpo || !email || !endereco) {
         mostrarMensagem('mensagem', 'Por favor, preencha todos os campos obrigatórios.', 'error');
         return;
     }
@@ -70,6 +71,7 @@ async function cadastrarCidadao(e) {
     const dados = {
         nome: nome,
         cpf: cpfLimpo,
+        data_nascimento,
         telefone: telefoneLimpo,
         email: email,
         endereco: endereco
@@ -80,7 +82,7 @@ async function cadastrarCidadao(e) {
     submitButton.textContent = 'Cadastrando...';
 
     try {
-        await fazerRequisicao('/cidadaos', {
+        await fazerRequisicao('/pacientes', {
             method: 'POST',
             body: JSON.stringify(dados)
         });
@@ -107,7 +109,8 @@ async function listarCidadaos() {
     lista.innerHTML = '<p>Carregando...</p>';
 
     try {
-        const cidadaos = await fazerRequisicao('/cidadaos');
+        const resposta = await fazerRequisicao('/pacientes');
+        const cidadaos = resposta.data?.pacientes || [];
 
         if (!Array.isArray(cidadaos) || cidadaos.length === 0) {
             lista.innerHTML = '<p>Nenhum cidadão cadastrado.</p>';
@@ -142,7 +145,8 @@ async function buscarCidadaoParaAtualizar() {
     container.innerHTML = '<p>Buscando...</p>';
 
     try {
-        const cidadaos = await fazerRequisicao('/cidadaos');
+        const resposta = await fazerRequisicao('/pacientes');
+        const cidadaos = resposta.data?.pacientes || [];
         const termoLimpo = termo.replace(/\D/g, ''); 
         const resultados = cidadaos.filter(c =>
             c.cpf.includes(termoLimpo) || 
@@ -220,7 +224,7 @@ async function atualizarCidadao(e) {
     }
 
     try {
-        await fazerRequisicao(`/cidadaos/${id}`, {
+        await fazerRequisicao(`/pacientes/${id}`, {
             method: 'PUT',
             body: JSON.stringify(dados)
         });
@@ -251,7 +255,8 @@ async function buscarCidadaoParaExcluir() {
     container.innerHTML = '<p>Buscando...</p>';
 
     try {
-        const cidadaos = await fazerRequisicao('/cidadaos');
+        const resposta = await fazerRequisicao('/pacientes');
+        const cidadaos = resposta.data?.pacientes || [];
         const termoLimpo = termo.replace(/\D/g, '');
 
         const resultados = cidadaos.filter(c =>
@@ -294,7 +299,7 @@ async function excluirCidadao(e) {
     const id = document.getElementById('idExcluir').value;
 
     try {
-        await fazerRequisicao(`/cidadaos/${id}`, { method: 'DELETE' });
+        await fazerRequisicao(`/pacientes/${id}`, { method: 'DELETE' });
 
         mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
         document.getElementById('excluirForm').style.display = 'none';

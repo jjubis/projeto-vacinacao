@@ -2,7 +2,7 @@
 
 ## Convenções
 
-- A aplicação Express monta as rotas em `/auth`, `/pacientes`, `/vacinas`, `/postos`, `/agendamentos`, `/historico` e `/notificacoes`.
+- A aplicação Express monta as rotas em `/auth`, `/pacientes` (também disponíveis pelo alias `/cidadaos`), `/vacinas`, `/postos`, `/agendamentos`, `/historico` e `/notificacoes`.
 - A autenticação implementada usa `Authorization: Bearer <token>`; o JWT contém `id`, `email`, `papel` e, para cidadãos, `paciente_id`.
 - As respostas não são uniformes: vários controllers retornam `{ success, message, data }`, enquanto outros retornam lista ou campos no nível superior. Consulte o controller do endpoint ao integrar um cliente.
 - A classificação abaixo descreve os middlewares presentes no código atual, não o nível de proteção recomendado.
@@ -11,10 +11,10 @@
 
 | Método e rota | Proteção atual | Entrada/resultado observado |
 | --- | --- | --- |
-| `POST /auth/cadastro` | Pública | Cadastro de cidadão; recebe dados como `nome`, `cpf`, `email`, `senha`, `dataNascimento` e `telefone`. |
+| `POST /auth/cadastro` | Pública | Ativa o acesso do cidadão já cadastrado pelo funcionário; recebe `nome`, `cpf`, `email` e `senha`. Nome e email devem corresponder ao cadastro. |
 | `POST /auth/login` | Pública | `{ email, senha }`; retorna o token e o usuário dentro de `data`. |
-| `POST /auth/admin/cadastrar-funcionario` | Sem middleware de autenticação no router atual | Usa o cadastro com papel `funcionario`. Deve ser protegido antes de exposição pública. |
-| `GET /auth/funcionarios` | Sem middleware de autenticação no router atual | Lista funcionários. Deve ser protegido conforme a política do sistema. |
+| `POST /auth/admin/cadastrar-funcionario` | JWT + `funcionario` | Cria uma conta de funcionário. |
+| `GET /auth/funcionarios` | JWT + `funcionario` | Lista funcionários. |
 
 Não há rotas `/auth/me` ou `/auth/logout` no router atual.
 
@@ -26,8 +26,8 @@ Todas as rotas abaixo exigem JWT e papel `funcionario`.
 | --- | --- |
 | `GET /pacientes` | Lista pacientes. |
 | `GET /pacientes/:id` | Busca paciente por ID. |
-| `POST /pacientes` | Exige `nome`, `cpf`, `data_nascimento`, `logradouro`, `numero`, `bairro`, `cidade`, `uf` e `cep`. |
-| `PUT /pacientes/:id` | Exige os mesmos campos obrigatórios da criação na validação atual. |
+| `POST /pacientes` | Exige `nome`, `cpf`, `data_nascimento`, `telefone`, `email` e `endereco`; cria paciente e conta cidadã vinculada, pendente de ativação de senha. |
+| `PUT /pacientes/:id` | Exige `nome`, `cpf`, `telefone`, `email` e `endereco`; sincroniza os dados da conta cidadã vinculada. |
 | `DELETE /pacientes/:id` | Remove o paciente. |
 
 ## Vacinas — `/vacinas`

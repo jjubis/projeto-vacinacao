@@ -1,69 +1,61 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 import authModel from '../models/authModel.js';
-import pacienteModel from '../models/pacienteModel.js';
-import { pool } from "../config/database.js";
+import { pool } from '../config/database.js';
 
-// const register = async (userData) => {
-//     const { nome, cpf, email, senha, papel = 'cidadao' } = userData;
-
-//     const senha_hash = await bcrypt.hash(senha, 10);
-
-//     let pacienteId = null;
-//     if (papel === 'cidadao') {
-//         pacienteId = await pacienteModel.create({ nome, cpf, email });
-//     }
-
-//     const userId = await authModel.create({
-//         nome,
-//         cpf,
-//         email,
-//         senha_hash,
-//         papel,
-//         paciente_id: pacienteId
-//     });
-
-//     return { id: userId, nome, email, papel, paciente_id: pacienteId };
-// };
+const erro = (statusCode, message) => Object.assign(new Error(message), { statusCode });
+const limparCpf = cpf => String(cpf || '').replace(/\D/g, '');
+const emailNormalizado = email => String(email || '').trim().toLowerCase();
+const nomeNormalizado = nome => String(nome || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
 
 const register = async (userData) => {
-    // 1. Extrai data_nascimento do objeto enviado pelo front-end
-    const { nome, cpf, email, senha, dataNascimento: data_nascimento, telefone, papel = 'cidadao' } = userData;
+    const { nome, senha } = userData;
+    const cpf = limparCpf(userData.cpf);
+    const email = emailNormalizado(userData.email);
+    const papel = userData.papel || 'cidadao';
 
-    console.log("Data nascimento extraída do front-end:", data_nascimento);
+    if (!nome?.trim() || !cpf || !email || !senha) throw erro(400, 'Nome, CPF, email e senha são obrigatórios.');
+    if (senha.length < 8) throw erro(400, 'A senha deve ter no mínimo 8 caracteres.');
+    if (!['cidadao', 'funcionario'].includes(papel)) throw erro(400, 'Papel de usuário inválido.');
 
     const senha_hash = await bcrypt.hash(senha, 10);
     const connection = await pool.getConnection();
-
     try {
         await connection.beginTransaction();
-
         let pacienteId = null;
 
         if (papel === 'cidadao') {
-            // 2. Repassa data_nascimento para o pacienteModel
-            pacienteId = await pacienteModel.create(
-                {
-                    nome,
-                    cpf,
-                    email,
-                    data_nascimento,
-                    telefone
-                },
-                connection
-            );
+            const [pacientes] = await connection.query('SELECT * FROM pacientes WHERE cpf = ? FOR UPDATE', [cpf]);
+            const paciente = pacientes[0];
+            if (!paciente) throw erro(404, 'Não encontramos um cidadão cadastrado com este CPF. Procure um funcionário para fazer o cadastro.');
+            if (emailNormalizado(paciente.email) !== email || nomeNormalizado(paciente.nome) !== nomeNormalizado(nome)) {
+                throw erro(403, 'Nome e email devem corresponder ao cadastro feito pelo funcionário.');
+            }
+            pacienteId = paciente.id;
+
+            const existente = await authModel.findByCpfWith(cpf, connection);
+            if (existente) {
+                if (existente.papel !== 'cidadao' || Number(existente.paciente_id) !== Number(pacienteId) || emailNormalizado(existente.email) !== email) {
+                    throw erro(409, 'Este CPF já está associado a outra conta.');
+                }
+                if (existente.senha_hash !== 'PENDING_ACTIVATION') {
+                    throw erro(409, 'Este cidadão já possui acesso. Use a recuperação de senha para redefinir a senha.');
+                }
+                await authModel.activateCitizen(existente.id, senha_hash, connection);
+                await connection.commit();
+                return { id: existente.id, nome: existente.nome, email: existente.email, papel: existente.papel, paciente_id: pacienteId };
+            }
         }
 
         const userId = await authModel.create(
-            { nome, cpf, email, senha_hash, papel, paciente_id: pacienteId },
+            { nome: nome.trim(), cpf, email, senha_hash, papel, paciente_id: pacienteId },
             connection
         );
-
         await connection.commit();
-        return { id: userId, nome, email, papel, paciente_id: pacienteId };
-
+        return { id: userId, nome: nome.trim(), email, papel, paciente_id: pacienteId };
     } catch (error) {
         await connection.rollback();
+        if (error.code === 'ER_DUP_ENTRY') throw erro(409, 'CPF ou email já cadastrado.');
         throw error;
     } finally {
         connection.release();
@@ -71,30 +63,19 @@ const register = async (userData) => {
 };
 
 const login = async (email, senha) => {
-    const usuario = await authModel.findByEmail(email);
-    console.log("Usuário retornado do banco:", usuario)
-
-    if (!usuario) {
-        throw new Error('Credenciais inválidas');
+    const usuario = await authModel.findByEmail(emailNormalizado(email));
+    if (!usuario || usuario.senha_hash === 'PENDING_ACTIVATION' || !(await bcrypt.compare(senha, usuario.senha_hash))) {
+        throw erro(401, 'Credenciais inválidas.');
     }
-
-    const isPasswordValid = await bcrypt.compare(senha, usuario.senha_hash);
-    if (!isPasswordValid) {
-        throw new Error('Credenciais inválidas');
-    }
-
     const secretKey = process.env.JWT_SECRET;
+    if (!secretKey) throw new Error('JWT_SECRET não configurado.');
 
-    const token = jwt.sign(
-        {
-            id: usuario.id,
-            email: usuario.email,
-            papel: usuario.papel,
-            paciente_id: usuario.paciente_id
-        },
-        secretKey,
-        { expiresIn: '1d' }
-    );
+    const token = jwt.sign({
+        id: usuario.id,
+        email: usuario.email,
+        papel: usuario.papel,
+        paciente_id: usuario.paciente_id
+    }, secretKey, { expiresIn: '1d' });
 
     return {
         token,
@@ -108,7 +89,4 @@ const login = async (email, senha) => {
     };
 };
 
-export default {
-    register,
-    login
-};
+export default { register, login };

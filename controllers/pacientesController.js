@@ -32,7 +32,6 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    console.log('Dados recebidos para criação do paciente:', req.body);
     const paciente = await pacientesService.create(req.body);
     if (paciente?.id) await avisarFuncionarios(`Um novo cidadão foi cadastrado (ID ${paciente.id}).`, `cadastro:novo:${paciente.id}`);
     res.status(201).json({ success: true, message: 'Paciente cadastrado com sucesso', data: paciente });

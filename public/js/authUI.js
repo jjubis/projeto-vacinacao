@@ -29,7 +29,8 @@ async function fazerLogin(e) {
             body: JSON.stringify({ email, senha })
         });
 
-        usuarioLogado = resposta.usuario;
+        usuarioLogado = resposta.data?.usuario || resposta.usuario;
+        if (resposta.data?.token) sessionStorage.setItem('imuniza_token', resposta.data.token);
         mostrarMensagem('mensagemLogin', 'Login realizado com sucesso!', 'success');
 
         setTimeout(() => {

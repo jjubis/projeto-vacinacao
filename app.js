@@ -25,6 +25,7 @@ app.use(express.json());
 
 app.use('/auth', authRoutes);
 app.use('/pacientes', pacientesRoutes);
+app.use('/cidadaos', pacientesRoutes);
 app.use('/vacinas', vacinasRoutes);
 app.use('/postos', postosSaudeRoutes);
 app.use('/agendamentos', agendamentosRoutes);

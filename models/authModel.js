@@ -10,6 +10,17 @@ const findByCpf = async (cpf) => {
     return rows[0];
 };
 
+const findByCpfWith = async (cpf, connection) => {
+    const db = connection || pool;
+    const [rows] = await db.query('SELECT * FROM usuarios WHERE cpf = ? FOR UPDATE', [cpf]);
+    return rows[0];
+};
+
+const activateCitizen = async (id, senhaHash, connection) => {
+    const db = connection || pool;
+    await db.query("UPDATE usuarios SET senha_hash = ? WHERE id = ? AND papel = 'cidadao'", [senhaHash, id]);
+};
+
 // const create = async ({ nome, cpf, email, senha_hash, papel }) => {
 //     const [result] = await pool.query(
 //         'INSERT INTO usuarios (nome, cpf, email, senha_hash, papel) VALUES (?, ?, ?, ?, ?)',
@@ -40,5 +51,7 @@ const create = async (dadosUsuario, connection) => {
 export default {
     findByEmail,
     findByCpf,
+    findByCpfWith,
+    activateCitizen,
     create
 };

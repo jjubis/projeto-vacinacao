@@ -1,136 +1,111 @@
-import { pool } from "../config/database.js";
-import { cpfEhValido, emailEhValido, telefoneEhValido } from "../utils/validarDados.js";
+import { pool } from '../config/database.js';
+import { cpfEhValido, emailEhValido, telefoneEhValido } from '../utils/validarDados.js';
+
+const falha = (statusCode, message) => Object.assign(new Error(message), { statusCode });
+const normalizarEmail = email => String(email || '').trim().toLowerCase();
+const normalizarCpf = cpf => String(cpf || '').replace(/\D/g, '');
+
+function validarDados(data) {
+  const nome = String(data.nome || '').trim();
+  const cpf = normalizarCpf(data.cpf);
+  const email = normalizarEmail(data.email);
+  const telefone = normalizarCpf(data.telefone);
+
+  if (!nome || !cpf || !email || !telefone || !data.endereco) {
+    throw falha(400, 'Nome, CPF, email, telefone e endereço são obrigatórios.');
+  }
+  if (!cpfEhValido(cpf)) throw falha(400, 'CPF inválido.');
+  if (!emailEhValido(email)) throw falha(400, 'Email inválido.');
+  if (!telefoneEhValido(telefone)) throw falha(400, 'Telefone inválido.');
+  return { ...data, nome, cpf, email, telefone, endereco: String(data.endereco).trim() };
+}
 
 const getAll = async () => {
   const [rows] = await pool.query('SELECT * FROM pacientes ORDER BY nome');
-  return {
-    total: rows.length,
-    pacientes: rows,
-  };
+  return { total: rows.length, pacientes: rows };
 };
 
-const getById = async (id) => {
+const getById = async id => {
   const [rows] = await pool.query('SELECT * FROM pacientes WHERE id = ?', [id]);
   return rows[0];
 };
 
-const create = async (data) => {
+const create = async data => {
+  const paciente = validarDados(data);
+  if (!paciente.data_nascimento) throw falha(400, 'Data de nascimento é obrigatória.');
+
+  const connection = await pool.getConnection();
   try {
-    // const { nome, cpf, data_nascimento, telefone, email } = data;
-    const {
-      logradouro,
-      numero,
-      complemento,
-      bairro,
-      cidade,
-      uf,
-      cep,
-      ...outrosDados
-    } = data;
+    await connection.beginTransaction();
+    const [existentes] = await connection.query('SELECT id FROM pacientes WHERE cpf = ?', [paciente.cpf]);
+    if (existentes.length) throw falha(409, 'Já existe um cidadão cadastrado com este CPF.');
 
-    if (!nome || !cpf || !data_nascimento || !logradouro || !numero || !bairro || !cidade || !uf || !cep) {
-      throw new Error('Todos os campos obrigatórios devem ser preenchidos.');
-    }
-
-    if (!cpfEhValido(cpf)) {
-      return res.status(400).json({ error: "CPF inválido. Deve conter exetamente 11 dígitos numéricos." })
-    }
-
-    if (!telefoneEhValido(telefone)) {
-      return res.status(400).json({ error: "Telefone inválido. Deve conter 10 ou 11 dígitos numéricos." })
-    }
-
-    email = email.trim().toLowerCase();
-    if (!emailEhValido(email)) {
-      return res.status(400).json({ error: "Email inválido. Deve conter um formato válido." })
-    }
-
-    const complementoTexto = complemento ? `, ${complemento}` : '';
-    const enderecoCompleto = `${logradouro}, ${numero}${complementoTexto}, ${bairro}, ${cidade} - ${uf}, ${cep}`;
-
-    console.log('Endereço completo:', enderecoCompleto);
-
-    const [existing] = await pool.query('SELECT * FROM pacientes WHERE cpf = ?', [outrosDados.cpf]);
-    if (existing.length > 0) {
-      throw new Error('Paciente com este CPF já cadastrado.');
-    }
-
-    const [result] = await pool.query(
+    const [resultado] = await connection.query(
       'INSERT INTO pacientes (nome, cpf, data_nascimento, telefone, email, endereco) VALUES (?, ?, ?, ?, ?, ?)',
-      [outrosDados.nome, outrosDados.cpf, outrosDados.data_nascimento, outrosDados.telefone || null, outrosDados.email || null, enderecoCompleto]
+      [paciente.nome, paciente.cpf, paciente.data_nascimento, paciente.telefone, paciente.email, paciente.endereco]
+    );
+    const pacienteId = resultado.insertId;
+
+    // Marcador não autenticável: o cidadão define a senha no cadastro de acesso.
+    await connection.query(
+      "INSERT INTO usuarios (nome, cpf, email, senha_hash, papel, paciente_id) VALUES (?, ?, ?, ?, 'cidadao', ?)",
+      [paciente.nome, paciente.cpf, paciente.email, 'PENDING_ACTIVATION', pacienteId]
     );
 
-    const id = getById(result.insertId);
-
-    console.log('Paciente cadastrado com sucesso:', id);
-
-    return getById(result.insertId);
+    await connection.commit();
+    return getById(pacienteId);
   } catch (error) {
-    console.error('Erro ao cadastrar paciente:', error.message);
-
-    if (error.message.includes('já cadastrado')) {
-      return res.status(409).json({ error: error.message });
-    }
-
-    return res.status(500).json({
-      error: 'Erro ao cadastrar paciente.',
-      details: error.message,
-    })
+    await connection.rollback();
+    if (error.code === 'ER_DUP_ENTRY') throw falha(409, 'CPF ou email já está vinculado a outra conta.');
+    throw error;
+  } finally {
+    connection.release();
   }
 };
 
 const update = async (id, data) => {
+  const connection = await pool.getConnection();
   try {
-    // const { nome, cpf, data_nascimento, telefone, email } = data;
-    const {
-      logradouro,
-      numero,
-      complemento,
-      bairro,
-      cidade,
-      uf,
-      cep,
-      ...outrosDados
-    } = data;
+    await connection.beginTransaction();
+    const [atual] = await connection.query('SELECT * FROM pacientes WHERE id = ? FOR UPDATE', [id]);
+    if (!atual.length) throw falha(404, 'Cidadão não encontrado.');
+    const paciente = validarDados({ ...atual[0], ...data });
+    const [cpfEmUso] = await connection.query('SELECT id FROM pacientes WHERE cpf = ? AND id <> ?', [paciente.cpf, id]);
+    if (cpfEmUso.length) throw falha(409, 'Já existe um cidadão cadastrado com este CPF.');
 
-    if (!cpfEhValido(cpf)) {
-      return res.status(400).json({ error: "CPF inválido. Deve conter exetamente 11 dígitos numéricos." })
-    }
-
-    if (!telefoneEhValido(telefone)) {
-      return res.status(400).json({ error: "Telefone inválido. Deve conter 10 ou 11 dígitos numéricos." })
-    }
-
-    email = email.trim().toLowerCase();
-    if (!emailEhValido(email)) {
-      return res.status(400).json({ error: "Email inválido. Deve conter um formato válido." })
-    }
-
-    const complementoTexto = complemento ? `, ${complemento}` : '';
-    const enderecoCompleto = `${logradouro}, ${numero}${complementoTexto}, ${bairro}, ${cidade} - ${uf}, ${cep}`;
-
-    const [existing] = await pool.query('SELECT * FROM pacientes WHERE cpf = ?', [outrosDados.cpf]);
-    if (existing.length > 0) {
-      throw new Error('Paciente com este CPF já cadastrado.');
-    }
-
-    await pool.query(
-      'UPDATE pacientes SET nome = ?, cpf = ?, data_nascimento = ?, telefone = ?, email = ?, endereco = ? WHERE id = ?',
-      [outrosDados.nome, outrosDados.cpf, outrosDados.data_nascimento, outrosDados.telefone || null, outrosDados.email || null, enderecoCompleto, id]
+    await connection.query(
+      'UPDATE pacientes SET nome = ?, cpf = ?, telefone = ?, email = ?, endereco = ? WHERE id = ?',
+      [paciente.nome, paciente.cpf, paciente.telefone, paciente.email, paciente.endereco, id]
     );
-
+    await connection.query(
+      "UPDATE usuarios SET nome = ?, cpf = ?, email = ? WHERE paciente_id = ? AND papel = 'cidadao'",
+      [paciente.nome, paciente.cpf, paciente.email, id]
+    );
+    await connection.commit();
     return getById(id);
   } catch (error) {
-    console.error('Erro ao atualizar cidadão:', error);
-    res.status(400).json({
-      error: 'Erro ao atualizar cidadão',
-      details: error.message
-    });
+    await connection.rollback();
+    if (error.code === 'ER_DUP_ENTRY') throw falha(409, 'CPF ou email já está vinculado a outra conta.');
+    throw error;
+  } finally {
+    connection.release();
   }
 };
 
-const remove = async (id) => {
-  await pool.query('DELETE FROM pacientes WHERE id = ?', [id]);
+const remove = async id => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query("DELETE FROM usuarios WHERE paciente_id = ? AND papel = 'cidadao'", [id]);
+    const [result] = await connection.query('DELETE FROM pacientes WHERE id = ?', [id]);
+    if (!result.affectedRows) throw falha(404, 'Cidadão não encontrado.');
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 export default { getAll, getById, create, update, remove };

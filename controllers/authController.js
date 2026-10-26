@@ -3,8 +3,7 @@ import authService from '../services/authService.js'
 
 const registerCidadao = async (req, res, next) => {
     try {
-        console.log("Dados recebidos para registro de cidadão:", req.body);
-        const usuario = await authService.register(req.body);
+        const usuario = await authService.register({ ...req.body, papel: 'cidadao' });
 
         res.status(201).json({
             success: true,

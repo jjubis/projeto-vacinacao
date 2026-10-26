@@ -7,8 +7,8 @@ const router = Router();
 
 router.get('/', requireAuth, requireRole('funcionario'), pacientesController.getAll);
 router.get('/:id', requireAuth, requireRole('funcionario'), pacientesController.getById);
-router.post('/', requireAuth, requireRole('funcionario'), validateBody(['nome', 'cpf', 'data_nascimento', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'cep']), pacientesController.create);
-router.put('/:id', requireAuth, requireRole('funcionario'), validateBody(['nome', 'cpf', 'data_nascimento', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'cep']), pacientesController.update);
+router.post('/', requireAuth, requireRole('funcionario'), validateBody(['nome', 'cpf', 'data_nascimento', 'telefone', 'email', 'endereco']), pacientesController.create);
+router.put('/:id', requireAuth, requireRole('funcionario'), pacientesController.update);
 router.delete('/:id', requireAuth, requireRole('funcionario'), pacientesController.remove);
 
 export default router;
