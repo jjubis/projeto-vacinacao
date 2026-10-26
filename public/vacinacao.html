@@ -262,8 +262,8 @@
 
         <input type="hidden" id="postoIdAgendamento" />
 
-        <label>Status:</label>
-                    <input type="datetime-local" id="dataHoraAgendamento" required />
+        <label for="dataHoraAgendamento">Data e hora:</label>
+        <input type="datetime-local" id="dataHoraAgendamento" required />
 
                     <button type="submit">Cadastrar agendamento</button>
                 </form>
@@ -296,6 +296,11 @@
                     <select id="novoStatusAgendamento" required>
                         <option value="">Selecione um status</option>
                     </select>
+
+                    <div id="doseRealizadaContainer" style="display:none;">
+                        <label for="doseRealizada">Dose aplicada:</label>
+                        <input type="text" id="doseRealizada" maxlength="50" placeholder="Ex.: 1ª dose" />
+                    </div>
 
                     <button type="submit">Atualizar agendamento</button>
                 </form>

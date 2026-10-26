@@ -7,7 +7,7 @@ const SELECT_BASE = `
     a.paciente_id,
     a.vacina_id,
     a.posto_id,
-    a.data_agendamento,
+    DATE_FORMAT(a.data_agendamento, '%Y-%m-%d %H:%i:%s') AS data_agendamento,
     a.status,
     p.nome AS paciente_nome,
     v.nome AS vacina_nome,
@@ -23,6 +23,41 @@ const erroDeRegra = (status, message) => {
     error.status = status;
     return error;
 }
+
+const dataAtualNoBrasil = () => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(new Date());
+
+const partesDataHoraLocal = (valor) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(String(valor || ''));
+    if (!match) return null;
+    const [, ano, mes, dia, hora, minuto, segundo = '00'] = match;
+    const componentes = [ano, mes, dia, hora, minuto, segundo].map(Number);
+    const instanteLocal = Date.UTC(componentes[0], componentes[1] - 1, componentes[2], componentes[3], componentes[4], componentes[5]);
+    const validado = new Date(instanteLocal);
+    if (validado.getUTCFullYear() !== componentes[0] || validado.getUTCMonth() !== componentes[1] - 1 ||
+        validado.getUTCDate() !== componentes[2] || validado.getUTCHours() !== componentes[3] ||
+        validado.getUTCMinutes() !== componentes[4] || validado.getUTCSeconds() !== componentes[5]) return null;
+
+    const agoraBrasil = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date()).reduce((partes, parte) => {
+        if (parte.type !== 'literal') partes[parte.type] = Number(parte.value);
+        return partes;
+    }, {});
+    const instanteAtualBrasil = Date.UTC(agoraBrasil.year, agoraBrasil.month - 1, agoraBrasil.day,
+        agoraBrasil.hour, agoraBrasil.minute, agoraBrasil.second);
+
+    return {
+        instanteLocal,
+        instanteAtualBrasil,
+        dataSql: `${ano}-${mes}-${dia} ${hora}:${minuto}:${segundo}`,
+        diaDaSemana: validado.getUTCDay(),
+        hora: componentes[3],
+        minuto: componentes[4]
+    };
+};
 
 const getAll = async () => {
     const [rows] = await pool.query(`${SELECT_BASE} ORDER BY a.data_agendamento DESC`);
@@ -92,24 +127,21 @@ const create = async (usuario, data) => {
         throw { status: 409, message: 'Não há doses disponíveis desta vacina para novos agendamentos.' }
     }
 
-    const dataAgendamento = new Date(data_agendamento);
-    if (Number.isNaN(dataAgendamento.getTime())) {
-        throw { status: 400, message: 'Data e hora do agendamento inválidos.' }
+    const dataAgendamento = partesDataHoraLocal(data_agendamento);
+    if (!dataAgendamento) {
+        throw { status: 400, message: 'Data e hora do agendamento inv?lidos.' };
+    }
+    if (dataAgendamento.instanteLocal <= dataAgendamento.instanteAtualBrasil) {
+        throw { status: 400, message: 'O agendamento deve ser realizado para uma data futura.' };
     }
 
-    if (dataAgendamento <= new Date()) {
-        throw { status: 400, message: 'O agendamento deve ser realizado para uma data fatura.' }
-    }
-
-    const diaDaSemana = dataAgendamento.getDay();
-    const hora = dataAgendamento.getHours();
-    const minutos = dataAgendamento.getMinutes();
+    const { diaDaSemana, hora, minuto } = dataAgendamento;
 
     if (diaDaSemana === 0 || diaDaSemana === 6) {
         throw { status: 400, message: 'A UBS não realiza vacinações aos finais de semana.' }
     }
 
-    if (hora < 8 || hora > 17 || (hora === 17 && minutos > 0)) {
+    if (hora < 8 || hora > 17 || (hora === 17 && minuto > 0)) {
         throw { status: 400, message: 'Os agendamentos devem ser realizados entre 08:00 e 17:00.' }
     }
 
@@ -117,9 +149,7 @@ const create = async (usuario, data) => {
     //     throw { status: 409, message: 'Este horário já está ocupado. Escolha outro horário.' }
     // }
 
-    console.log('Verificando conflito para:', posto_id, data_agendamento, 'agendado');
-    const conflito = await agendamentoModel.verificarConflitoHorario(posto_id, data_agendamento, 'agendado');
-    console.log('Resultado do conflito:', conflito);
+    const conflito = await agendamentoModel.verificarConflitoHorario(posto_id, dataAgendamento.dataSql, 'agendado');
     if (conflito) {
         throw { status: 409, message: 'Este horário já está ocupado. Escolha outro horário.' };
     }
@@ -133,142 +163,136 @@ const create = async (usuario, data) => {
             throw { status: 409, message: 'Esta vacina já foi realizada para este cidadão.' }
         }
         if (agendamentoExistente.status === 'cancelado') {
-            await agendamentoModel.atualizarAgendamentoExistente(posto_id, 'agendado', data_agendamento, agendamentoExistente.id);
+            await agendamentoModel.atualizarAgendamentoExistente(posto_id, 'agendado', dataAgendamento.dataSql, agendamentoExistente.id);
             return { message: 'Agendamento realizado com sucesso.', id: agendamentoExistente.id };
         }
     }
 
-    const resultado = await agendamentoModel.inserirAgendamento(paciente_id, vacina_id, posto_id, 'agendado', data_agendamento);
+    const resultado = await agendamentoModel.inserirAgendamento(paciente_id, vacina_id, posto_id, 'agendado', dataAgendamento.dataSql);
     return { mensagem: 'Agendamento realizado com sucesso.', id: resultado };
 };
 
-const update = async (agendamentoId, dadosOuStatus) => {
-    /**
-     * Por parâmentro era passado: id e data
-    */
-
-    // const { paciente_id, vacina_id, posto_id, data_agendamento, status } = data;
-
-    // await pool.query(
-    //     'UPDATE agendamentos SET paciente_id = ?, vacina_id = ?, posto_id = ?, data_agendamento = ?, status = ? WHERE id = ?',
-    //     [paciente_id, vacina_id, posto_id, data_agendamento, status || 'agendado', id]
-    // );
-
-    // return getById(id);
-
+const update = async (agendamentoId, dadosOuStatus, usuario = {}) => {
     const status = typeof dadosOuStatus === 'object' && dadosOuStatus !== null
         ? dadosOuStatus.status
         : dadosOuStatus;
-
+    const dose = typeof dadosOuStatus === 'object' && dadosOuStatus !== null
+        ? String(dadosOuStatus.dose || '').trim()
+        : '';
     const idAgendamento = Number(agendamentoId);
-    if (!Number.isInteger(idAgendamento)) {
-        throw erroDeRegra(400, 'ID do agendamento inválido.');
-    }
 
-    const novoStatus = status;
-    if (Number.isInteger(novoStatus)) {
-        throw erroDeRegra(400, 'Status inválido.');
+    if (!Number.isInteger(idAgendamento) || idAgendamento <= 0) {
+        throw erroDeRegra(400, 'ID do agendamento inv?lido.');
     }
-
-    if (!['agendado', 'realizado', 'cancelado'].includes(novoStatus)) {
-        throw erroDeRegra(400, 'Status de agendamento inválido.');
+    if (!['agendado', 'realizado', 'cancelado'].includes(status)) {
+        throw erroDeRegra(400, 'Status de agendamento inv?lido.');
+    }
+    if (status === 'realizado' && (!dose || dose.length > 50)) {
+        throw erroDeRegra(400, 'Informe a dose aplicada (at? 50 caracteres).');
+    }
+    if (status === 'realizado' && !String(usuario.nome || '').trim()) {
+        throw erroDeRegra(400, 'N?o foi poss?vel identificar o profissional respons?vel.');
     }
 
     const connection = await pool.getConnection();
-
+    let transacaoIniciada = false;
     try {
         await connection.beginTransaction();
+        transacaoIniciada = true;
+        const agendamento = await agendamentoModel.buscarAgendamentoPorId(idAgendamento, connection, true);
+        if (!agendamento) throw erroDeRegra(404, 'Agendamento n?o encontrado.');
 
-        const agendamento = await agendamentoModel.buscarAgendamentoPorId(idAgendamento);
-
-        if (!agendamento) {
-            throw erroDeRegra(404, 'Agendamento não encontrado.');
-        }
-
-        const statusAtual = agendamento.status;
-        const postoId = agendamento.postoId || agendamento.posto_id;
-        const vacinaId = agendamento.vacinaId || agendamento.vacina_id;
-        const cidadaoId = agendamento.cidadaoId || agendamento.paciente_id;
-        const dataHora = agendamento.dataHora || agendamento.data_agendamento;
-
-        if (statusAtual === novoStatus) {
+        if (agendamento.status === status) {
             await connection.rollback();
-            connection.release()
-            return { mensagem: 'O agendamento já possui este status.' };
+            transacaoIniciada = false;
+            return { mensagem: 'O agendamento j? possui este status.' };
         }
 
         const transicaoPermitida =
-            (statusAtual === 'agendado' && ['realizado', 'cancelado'].includes(novoStatus)) ||
-            (statusAtual === 'cancelado' && novoStatus === 'agendado');
+            (agendamento.status === 'agendado' && ['realizado', 'cancelado'].includes(status)) ||
+            (agendamento.status === 'cancelado' && status === 'agendado');
+        if (!transicaoPermitida) throw erroDeRegra(400, 'Transi??o de status n?o permitida.');
 
-        if (!transicaoPermitida) {
-            throw erroDeRegra(400, 'Transição de status não permitida.')
-        }
-
-        if (novoStatus === 'agendado') {
-            const dataAgendamento = new Date(dataHora);
-
-            if (Number.isNaN(dataAgendamento.getTime()) || dataAgendamento <= new Date()) {
-                throw erroDeRegra(400, 'Não é possível reativar um agendamento com data/hora inválida ou passada.');
+        if (status === 'agendado') {
+            const dataAgendamento = partesDataHoraLocal(agendamento.data_agendamento_local || agendamento.data_agendamento);
+            if (!dataAgendamento || dataAgendamento.instanteLocal <= dataAgendamento.instanteAtualBrasil) {
+                throw erroDeRegra(400, 'N?o ? poss?vel reativar um agendamento com data/hora inv?lida ou passada.');
             }
-
-            const estoque = await agendamentoModel.buscarEstoque(vacinaId);
-            if (!estoque) {
-                throw erroDeRegra(409, 'Não existe estoque desta vacina.');
-            }
-
-            const pendentes = await agendamentoModel.buscarAgendamentosPendentesExcetoId(postoId, vacinaId, 'agendado', idAgendamento);
-            const qtdEstoque = estoque.quantidade !== undefined ? estoque.quantidade : estoque.quantidade_estoque;
-
-            if (qtdEstoque - pendentes <= 0) {
-                throw erroDeRegra(409, 'Não há doses disponíveis para reativar este agendamento.');
-            }
-
-            const conflitoHorario = await agendamentoModel.verificarConflitoHorarioExcetoId(
-                postoId,
-                dataHora,
-                'agendado',
-                idAgendamento
+            const estoque = await agendamentoModel.buscarEstoque(agendamento.vacina_id, connection, true);
+            const pendentes = await agendamentoModel.buscarAgendamentosPendentesExcetoId(
+                agendamento.posto_id, agendamento.vacina_id, 'agendado', idAgendamento
             );
-
-            if (conflitoHorario) {
-                throw erroDeRegra(409, 'O horário deste agendamento já esta ocupado.')
+            if (!estoque || Number(estoque.quantidade_estoque) - Number(pendentes) <= 0) {
+                throw erroDeRegra(409, 'N?o h? doses dispon?veis para reativar este agendamento.');
             }
+            const conflito = await agendamentoModel.verificarConflitoHorarioExcetoId(
+                agendamento.posto_id, agendamento.data_agendamento_local || agendamento.data_agendamento, 'agendado', idAgendamento
+            );
+            if (conflito) throw erroDeRegra(409, 'O hor?rio deste agendamento j? est? ocupado.');
         }
 
-        if (statusAtual !== 'realizado' && novoStatus === 'realizado') {
-            const estoque = await agendamentoModel.buscarEstoque(vacinaId);
-            if (!estoque) {
-                throw erroDeRegra(409, 'Não existe estoque desta vacina neste posto.');
+        if (status === 'realizado') {
+            const dataAgendada = partesDataHoraLocal(agendamento.data_agendamento_local || agendamento.data_agendamento);
+            if (!dataAgendada || dataAgendada.instanteLocal > dataAgendada.instanteAtualBrasil) {
+                throw erroDeRegra(400, 'A aplicacao nao pode ser registrada antes do horario agendado.');
             }
-
-            const qtdEstoque = estoque.quantidade !== undefined ? estoque.quantidade : estoque.quantidade_estoque;
-
-            if (qtdEstoque <= 0) {
-                throw erroDeRegra(409, 'Não há doses disponíveis desta vacina neste posto.');
+            const estoque = await agendamentoModel.buscarEstoque(agendamento.vacina_id, connection, true);
+            if (!estoque || Number(estoque.quantidade_estoque) <= 0) {
+                throw erroDeRegra(409, 'N?o h? doses dispon?veis desta vacina.');
             }
+            const decrementadas = await agendamentoModel.decrementarEstoque(agendamento.vacina_id, connection);
+            if (decrementadas !== 1) throw erroDeRegra(409, 'Estoque insuficiente para registrar a aplica??o.');
 
-            const linhasAfetadasEstoque = await agendamentosModel.decrementarEstoque(vacinaId);
-            if (linhasAfetadasEstoque === 0) {
-                throw erroDeRegra(409, 'Não foi possível atualizar o estoque da vacina neste posto.');
+            const vacina = await agendamentoModel.buscarLoteVacina(
+                agendamento.vacina_id, dataAtualNoBrasil(), connection
+            );
+            if (!vacina || Number(vacina.vencida)) {
+                throw erroDeRegra(409, 'Não é possível registrar a aplicação de uma vacina vencida.');
             }
+            await agendamentoModel.registrarAplicacao({
+                paciente_id: agendamento.paciente_id,
+                vacina_id: agendamento.vacina_id,
+                lote: vacina?.lote || null,
+                data_aplicacao: dataAtualNoBrasil(),
+                dose,
+                profissional_responsavel: String(usuario.nome).trim()
+            }, connection);
         }
 
-        await agendamentoModel.atualizarStatusAgendamento(novoStatus, idAgendamento);
+        await agendamentoModel.atualizarStatusAgendamento(status, idAgendamento, connection);
         await connection.commit();
-        connection.release();
-
+        transacaoIniciada = false;
         return { mensagem: 'Status do agendamento atualizado com sucesso.' };
     } catch (error) {
-        await connection.rollback();
-        connection.release();
+        if (transacaoIniciada) await connection.rollback();
         throw error;
+    } finally {
+        connection.release();
     }
-
 };
 
 const remove = async (id) => {
-    await pool.query('DELETE FROM agendamentos WHERE id = ?', [id]);
+    const idAgendamento = Number(id);
+    if (!Number.isInteger(idAgendamento) || idAgendamento <= 0) {
+        throw erroDeRegra(400, 'ID do agendamento inválido.');
+    }
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const agendamento = await agendamentoModel.buscarAgendamentoPorId(idAgendamento, connection, true);
+        if (!agendamento) throw erroDeRegra(404, 'Agendamento não encontrado.');
+        if (agendamento.status === 'realizado') {
+            throw erroDeRegra(409, 'Agendamentos realizados não podem ser excluídos; o registro deve permanecer no histórico.');
+        }
+        await agendamentoModel.excluirAgendamento(idAgendamento, connection);
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 };
 
 const listarPorPaciente = async (pacienteId) => {

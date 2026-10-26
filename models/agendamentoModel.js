@@ -1,10 +1,10 @@
 import { pool } from "../config/database.js";
 
-export const buscarAgendamentoPorId = async (agendamentoId) => {
-    const [rows] = await pool.query(
-        `SELECT a.*
+export const buscarAgendamentoPorId = async (agendamentoId, db = pool, lock = false) => {
+    const [rows] = await db.query(
+        `SELECT a.*, DATE_FORMAT(a.data_agendamento, '%Y-%m-%d %H:%i:%s') AS data_agendamento_local
         FROM agendamentos a
-        WHERE a.id = ?`,
+        WHERE a.id = ?${lock ? ' FOR UPDATE' : ''}`,
         [agendamentoId]
     );
     return rows[0];
@@ -12,7 +12,8 @@ export const buscarAgendamentoPorId = async (agendamentoId) => {
 
 export const findByCidadao = async (cidadaoId) => {
     const [rows] = await pool.query(
-        `SELECT a.id, a.data_agendamento, a.status, v.nome AS vacina, p.nome AS posto
+        `SELECT a.id, DATE_FORMAT(a.data_agendamento, '%Y-%m-%d %H:%i:%s') AS data_agendamento,
+            a.status, v.nome AS vacina, p.nome AS posto
         FROM agendamentos a
         JOIN vacinas v ON a.vacina_id = v.id
         JOIN postos_saude p ON a.posto_id = p.id
@@ -73,10 +74,18 @@ export const buscarPostoPorId = async (postoId) => {
     return rows[0];
 };
 
-export const buscarEstoque = async (vacinaId) => {
-    const [rows] = await pool.query(
-        `SELECT quantidade_estoque FROM vacinas WHERE id = ?`,
+export const buscarEstoque = async (vacinaId, db = pool, lock = false) => {
+    const [rows] = await db.query(
+        `SELECT quantidade_estoque FROM vacinas WHERE id = ?${lock ? ' FOR UPDATE' : ''}`,
         [vacinaId]
+    );
+    return rows[0];
+};
+
+export const buscarLoteVacina = async (vacinaId, dataReferencia, db = pool) => {
+    const [rows] = await db.query(
+        'SELECT lote, (validade < ?) AS vencida FROM vacinas WHERE id = ?',
+        [dataReferencia, vacinaId]
     );
     return rows[0];
 };
@@ -128,8 +137,8 @@ export const inserirAgendamento = async (cidadaoId, vacinaId, postoId, statusAge
     return rows.insertId;
 };
 
-export const decrementarEstoque = async (vacinaId) => {
-    const [rows] = await pool.query(
+export const decrementarEstoque = async (vacinaId, db = pool) => {
+    const [rows] = await db.query(
         `UPDATE vacinas
     SET quantidade_estoque = quantidade_estoque - 1
         WHERE id = ? AND quantidade_estoque > 0`,
@@ -138,8 +147,8 @@ export const decrementarEstoque = async (vacinaId) => {
     return rows.affectedRows;
 }
 
-export const atualizarStatusAgendamento = async (novoStatus, agendamentoId) => {
-    const [rows] = await pool.query(
+export const atualizarStatusAgendamento = async (novoStatus, agendamentoId, db = pool) => {
+    const [rows] = await db.query(
         `UPDATE agendamentos
         SET status = ?
         WHERE id = ?`,
@@ -147,6 +156,22 @@ export const atualizarStatusAgendamento = async (novoStatus, agendamentoId) => {
     );
     return rows.affectedRows;
 }
+
+export const registrarAplicacao = async (aplicacao, db = pool) => {
+    const { paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel } = aplicacao;
+    const [result] = await db.query(
+        `INSERT INTO historico_vacinal
+            (paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel]
+    );
+    return result.insertId;
+};
+
+export const excluirAgendamento = async (agendamentoId, db = pool) => {
+    const [result] = await db.query('DELETE FROM agendamentos WHERE id = ?', [agendamentoId]);
+    return result.affectedRows;
+};
 
 export default {
     tableName: 'agendamentos',
@@ -165,5 +190,8 @@ export default {
     atualizarAgendamentoExistente,
     inserirAgendamento,
     decrementarEstoque,
-    atualizarStatusAgendamento
+    atualizarStatusAgendamento,
+    excluirAgendamento,
+    registrarAplicacao,
+    buscarLoteVacina
 }

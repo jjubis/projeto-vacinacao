@@ -75,7 +75,7 @@ const update = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
-        const agendamento = await agendamentosService.update(req.params.id, req.body);
+        const agendamento = await agendamentosService.update(req.params.id, req.body, req.usuario);
         if (req.body.status && req.body.status !== existing.status) {
             const categoria = req.body.status === 'cancelado' ? 'cancelamento' : 'agendamento';
             const titulo = req.body.status === 'cancelado' ? 'Agendamento cancelado' : 'Agendamento atualizado';
@@ -99,11 +99,10 @@ const remove = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
+        await agendamentosService.remove(req.params.id);
         await registrarNotificacao(notificarCidadao(existing.paciente_id || existing.pacienteId,
             'cancelamento', 'Agendamento cancelado', `O agendamento ${req.params.id} foi cancelado.`,
             `agendamento:${req.params.id}:cancelado`));
-
-        await agendamentosService.remove(req.params.id);
         res.json({ success: true, message: 'Agendamento removido com sucesso', data: {} });
     } catch (error) {
         next(error);

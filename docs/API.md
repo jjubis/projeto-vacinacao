@@ -64,11 +64,11 @@ Leituras exigem JWT; criacao, atualizacao e exclusao exigem papel `funcionario`.
 | `GET /agendamentos/meus-agendamentos` | JWT + `cidadao` | Lista somente os agendamentos do `paciente_id` autenticado. |
 | `GET /agendamentos` | JWT + `funcionario` | Lista agendamentos. |
 | `GET /agendamentos/:id` | JWT | Funcionarios consultam qualquer registro; cidadaos somente o proprio. |
-| `POST /agendamentos` | JWT + `cidadao` ou `funcionario` | Exige `paciente_id`, `vacina_id`, `posto_id`, `data_agendamento`; para cidadao, o servico substitui `paciente_id` pelo vinculo do token. |
-| `PUT /agendamentos/:id` | JWT + `funcionario` | Atualiza o status do agendamento. |
-| `DELETE /agendamentos/:id` | JWT + `funcionario` | Exclui o agendamento. |
+| `POST /agendamentos` | JWT + `cidadao` ou `funcionario` | Exige `vacina_id`, `posto_id` e `data_agendamento` (`YYYY-MM-DDTHH:mm`); funcionario também informa `paciente_id`, enquanto para cidadao o vínculo vem do token. |
+| `PUT /agendamentos/:id` | JWT + `funcionario` | Recebe `status` (`agendado`, `realizado` ou `cancelado`). Para `realizado`, exige `dose`; estoque e histórico vacinal são atualizados na mesma transação. |
+| `DELETE /agendamentos/:id` | JWT + `funcionario` | Exclui somente agendamentos não realizados; aplicações concluídas são preservadas no histórico. |
 
-Criação, atualização e exclusão emitem notificações conforme os eventos tratados nos controllers. As regras de disponibilidade e transição devem ser verificadas contra o esquema e os dados reais do MySQL.
+O horário é interpretado no fuso `America/Sao_Paulo`; a unidade atende em dias úteis, das 08h às 17h. A confirmação de uma aplicação verifica estoque e validade do lote e grava, atomicamente, o status, a baixa de uma dose e o histórico com dose, lote, data brasileira e profissional autenticado.
 
 ## Histórico vacinal — `/historico`
 

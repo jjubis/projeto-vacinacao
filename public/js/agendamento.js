@@ -1,7 +1,7 @@
 const STATUSES_FIXOS = [
-    { id: 1, descricao: 'Agendado' },
-    { id: 2, descricao: 'Realizado' },
-    { id: 3, descricao: 'Cancelado' }
+    { id: 'agendado', descricao: 'Agendado' },
+    { id: 'realizado', descricao: 'Realizado' },
+    { id: 'cancelado', descricao: 'Cancelado' }
 ];
 
 function preencherSelectStatus(selectId) {
@@ -89,8 +89,6 @@ async function carregarDadosParaAgendamento() {
             infoUnidade.textContent = 'Nenhuma unidade de saúde cadastrada no sistema.';
         }
 
-        preencherSelectStatus('statusSelect');
-
         const dataHoraInput = document.getElementById('dataHoraAgendamento');
         if (dataHoraInput) {
             const agora = new Date();
@@ -108,16 +106,15 @@ async function cadastrarAgendamento(e) {
 
     const ehFuncionario = usuarioLogado && usuarioLogado.papel === 'funcionario';
 
-    const cidadaoId = ehFuncionario
-        ? parseInt(document.getElementById('cidadaoSelect').value)
-        : usuarioLogado.cidadaoId;
+    const pacienteId = ehFuncionario
+        ? Number(document.getElementById('cidadaoSelect').value)
+        : Number(usuarioLogado.paciente_id);
 
-    const vacinaId = parseInt(document.getElementById('vacinaSelect').value);
-    const postoId = parseInt(document.getElementById('postoIdAgendamento').value);
-    const statusId = parseInt(document.getElementById('statusSelect').value);
+    const vacinaId = Number(document.getElementById('vacinaSelect').value);
+    const postoId = Number(document.getElementById('postoIdAgendamento').value);
     const dataHora = document.getElementById('dataHoraAgendamento').value;
 
-    if (!cidadaoId || !vacinaId || !postoId || !statusId || !dataHora) {
+    if (!pacienteId || !vacinaId || !postoId || !dataHora) {
         mostrarMensagem('mensagemAgendamento', 'Por favor, preencha todos os campos.', 'error');
         return;
     }
@@ -131,11 +128,10 @@ async function cadastrarAgendamento(e) {
     }
 
     const dados = {
-        cidadaoId,
-        vacinaId,
-        postoId,
-        statusId,
-        dataHora
+        paciente_id: pacienteId,
+        vacina_id: vacinaId,
+        posto_id: postoId,
+        data_agendamento: dataHora
     };
 
     try {
@@ -171,20 +167,19 @@ async function listarAgendamentosDetalhados() {
         }
 
         lista.innerHTML = agendamentos.map(a => {
-            const statusClass = a.statusId === 1 ? 'status-agendado' :
-                                a.statusId === 2 ? 'status-realizado' :
+            const statusClass = a.status === 'agendado' ? 'status-agendado' :
+                                a.status === 'realizado' ? 'status-realizado' :
                                 'status-cancelado';
+            const descricaoStatus = STATUSES_FIXOS.find(status => status.id === a.status)?.descricao || a.status;
 
             return `
                 <div class="resultado-lista ${statusClass}">
                     <strong>ID:</strong> ${a.id}<br>
-                    <strong>Cidadão:</strong> ${a.cidadaoNome}<br>
-                    <strong>CPF:</strong> ${formatarCPF(a.cidadaoCPF)}<br>
-                    <strong>Endereço:</strong> ${a.cidadaoEndereco}<br>
-                    <strong>Vacina:</strong> ${a.vacinaNome} (${a.vacinaFabricante})<br>
-                    <strong>Posto:</strong> ${a.postoNome} - ${a.postoEndereco}<br>
-                    <strong>Status:</strong> <span class="status-badge">${a.statusDescricao}</span><br>
-                    <strong>Data/Hora:</strong> ${formatarDataHora(a.dataHora)}
+                    <strong>Cidadão:</strong> ${a.paciente_nome}<br>
+                    <strong>Vacina:</strong> ${a.vacina_nome}<br>
+                    <strong>Posto:</strong> ${a.posto_nome}<br>
+                    <strong>Status:</strong> <span class="status-badge">${descricaoStatus}</span><br>
+                    <strong>Data/Hora:</strong> ${formatarDataHora(a.data_agendamento)}
                 </div>
             `;
         }).join('');
@@ -193,6 +188,20 @@ async function listarAgendamentosDetalhados() {
         lista.innerHTML = `<p class="error">Erro ao carregar agendamentos: ${erro.message}</p>`;
     }
 }
+
+
+function atualizarCampoDoseRealizada() {
+    const status = document.getElementById('novoStatusAgendamento');
+    const container = document.getElementById('doseRealizadaContainer');
+    const dose = document.getElementById('doseRealizada');
+    if (!status || !container || !dose) return;
+    const exigeDose = status.value === 'realizado';
+    container.style.display = exigeDose ? 'block' : 'none';
+    dose.required = exigeDose;
+    if (!exigeDose) dose.value = '';
+}
+
+document.getElementById('novoStatusAgendamento')?.addEventListener('change', atualizarCampoDoseRealizada);
 
 function carregarStatusParaAtualizacao() {
     preencherSelectStatus('novoStatusAgendamento');
@@ -222,16 +231,16 @@ async function buscarAgendamentoParaAtualizar() {
 
         document.getElementById('idAgendamentoAtualizar').value = agendamento.id;
         document.getElementById('agendamentoSelecionadoAtualizar').innerText =
-            `${agendamento.cidadaoNome} - ${agendamento.vacinaNome}`;
+            `${agendamento.paciente_nome} - ${agendamento.vacina_nome}`;
 
         document.getElementById('atualizarAgendamentoForm').style.display = 'block';
 
         container.innerHTML = `
             <div class="resultado-lista">
-                <strong>Cidadão:</strong> ${agendamento.cidadaoNome}<br>
-                <strong>Vacina:</strong> ${agendamento.vacinaNome}<br>
-                <strong>Status Atual:</strong> ${agendamento.statusDescricao}<br>
-                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.dataHora)}
+                <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
+                <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
+                <strong>Status Atual:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}<br>
+                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.data_agendamento)}
             </div>
         `;
 
@@ -242,9 +251,10 @@ async function buscarAgendamentoParaAtualizar() {
             const opt = document.createElement('option');
             opt.value = s.id;
             opt.textContent = s.descricao;
-            if (s.id === agendamento.statusId) opt.selected = true;
+            if (s.id === agendamento.status) opt.selected = true;
             select.appendChild(opt);
         });
+        atualizarCampoDoseRealizada();
 
         document.getElementById('atualizarAgendamentoForm').scrollIntoView({ 
             behavior: 'smooth', 
@@ -261,17 +271,23 @@ async function atualizarAgendamento(e) {
     e.preventDefault();
 
     const id = document.getElementById('idAgendamentoAtualizar').value;
-    const statusId = parseInt(document.getElementById('novoStatusAgendamento').value);
+    const status = document.getElementById('novoStatusAgendamento').value;
+    const dose = document.getElementById('doseRealizada').value.trim();
 
-    if (!statusId) {
+    if (!status) {
         mostrarMensagem('mensagemAgendamentoAtualizar', 'Selecione um status.', 'error');
         return;
     }
 
     try {
+        if (status === 'realizado' && !dose) {
+            mostrarMensagem('mensagemAgendamentoAtualizar', 'Informe a dose aplicada.', 'error');
+            return;
+        }
+
         await fazerRequisicao(`/agendamentos/${id}`, {
             method: 'PUT',
-            body: JSON.stringify({ statusId })
+            body: JSON.stringify({ status, dose })
         });
 
         mostrarMensagem('mensagemAgendamentoAtualizar', 'Agendamento atualizado com sucesso!', 'success');
@@ -281,6 +297,7 @@ async function atualizarAgendamento(e) {
         }
 
         document.getElementById('atualizarAgendamentoForm').style.display = 'none';
+        document.getElementById('doseRealizada').value = '';
         document.getElementById('resultadoBuscaAgendamentoAtualizar').innerHTML = '';
         document.getElementById('buscarAgendamentoAtualizar').value = '';
 
@@ -316,13 +333,13 @@ async function buscarAgendamentoParaExcluir() {
             return;
         }
 
-        if (agendamento.statusId === 2) {
+        if (agendamento.status === 'realizado') {
             container.innerHTML = `
                 <div class="resultado-lista">
                     <p class="error">⚠️ Este agendamento está com status "Realizado" e não pode ser excluído.</p>
-                    <strong>Cidadão:</strong> ${agendamento.cidadaoNome}<br>
-                    <strong>Vacina:</strong> ${agendamento.vacinaNome}<br>
-                    <strong>Status:</strong> ${agendamento.statusDescricao}
+                    <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
+                    <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
+                    <strong>Status:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}
                 </div>
             `;
             document.getElementById('excluirAgendamentoForm').style.display = 'none';
@@ -331,17 +348,17 @@ async function buscarAgendamentoParaExcluir() {
 
         document.getElementById('idAgendamentoExcluir').value = agendamento.id;
         document.getElementById('agendamentoSelecionadoExcluir').innerText =
-            `${agendamento.cidadaoNome} - ${agendamento.vacinaNome}`;
+            `${agendamento.paciente_nome} - ${agendamento.vacina_nome}`;
 
         document.getElementById('excluirAgendamentoForm').style.display = 'block';
 
         container.innerHTML = `
             <div class="resultado-lista">
-                <strong>Cidadão:</strong> ${agendamento.cidadaoNome}<br>
-                <strong>Vacina:</strong> ${agendamento.vacinaNome}<br>
-                <strong>Posto:</strong> ${agendamento.postoNome}<br>
-                <strong>Status:</strong> ${agendamento.statusDescricao}<br>
-                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.dataHora)}
+                <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
+                <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
+                <strong>Posto:</strong> ${agendamento.posto_nome}<br>
+                <strong>Status:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}<br>
+                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.data_agendamento)}
             </div>
         `;
 
