@@ -50,9 +50,9 @@ O fluxo de estoque e histórico existe em diferentes partes do código; antes de
 
 ## Limitações conhecidas
 
-- O esquema real do MySQL e suas permissões ainda precisam ser verificados; uma conexão recusada impede validar as migrações e consultas.
+- O schema MySQL de autenticacao, pacientes e agendamentos foi verificado na instancia de desenvolvimento; as demais regras de negocio ainda precisam de testes integrados.
 - Não há script de testes automatizados no `package.json`; testes simulados não substituem testes integrados no banco real.
-- A proteção por autenticação varia entre grupos de rotas. Consulte `docs/API.md` e confira os middlewares antes de expor o servidor.
+- As rotas exigem autenticacao; operacoes administrativas exigem papel `funcionario`, e recursos do cidadao usam o `paciente_id` vinculado ao token.
 - Há formatos de resposta diferentes entre controllers. Clientes devem seguir o envelope realmente retornado por cada endpoint.
 - O front-end existente ainda tem renderizações com `innerHTML`; novos trechos devem preferir `textContent` e listeners programáticos.
 - O projeto não possui dados de calendário de doses suficientes para lembretes futuros confiáveis.

@@ -22,6 +22,10 @@ const getById = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
+        if (req.usuario.papel === 'cidadao' && Number(agendamento.paciente_id) !== Number(req.usuario.paciente_id)) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+
         res.json({ success: true, message: 'Agendamento encontrado', data: agendamento });
     } catch (error) {
         next(error);
@@ -108,7 +112,10 @@ const remove = async (req, res, next) => {
 
 const listarMeusAgendamentos = async (req, res, next) => {
     try {
-        const pacienteId = req.usuario.id;
+        const pacienteId = req.usuario.paciente_id;
+        if (!pacienteId) {
+            return res.status(403).json({ success: false, message: 'Esta conta não está associada a um cidadão.' });
+        }
 
         const agendamentos = await agendamentosService.listarPorPaciente(pacienteId);
 

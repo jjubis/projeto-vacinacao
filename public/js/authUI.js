@@ -8,6 +8,7 @@ async function verificarSessao() {
         return true;
     } catch (erro) {
         usuarioLogado = null;
+        sessionStorage.removeItem('imuniza_token');
         return false;
     }
 }
@@ -100,15 +101,9 @@ async function fazerRegistroCidadao(e) {
 }
 
 async function fazerLogout() {
-    try {
-        await fazerRequisicao('/auth/logout', { method: 'POST' });
-    } catch (erro) {
-        console.warn('Erro ao fazer logout:', erro.message);
-    } finally {
-        usuarioLogado = null;
-        sessionStorage.removeItem('imuniza_token');
-        location.reload();
-    }
+    usuarioLogado = null;
+    sessionStorage.removeItem('imuniza_token');
+    location.reload();
 }
 
 function mostrarTelaLogin() {

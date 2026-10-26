@@ -9,6 +9,7 @@ router.post('/cadastro', authController.registerCidadao);
 
 // Rota pública de login
 router.post('/login', authController.login);
+router.get('/me', requireAuth, authController.me);
 
 // A criação de novas contas de funcionário fica restrita à equipe autenticada.
 router.post('/admin/cadastrar-funcionario', requireAuth, requireRole('funcionario'), authController.registerFuncionario);

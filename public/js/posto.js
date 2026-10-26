@@ -21,7 +21,8 @@ async function cadastrarPosto(e) {
 
         async function listarPostos() {
             try {
-                const postos = await fazerRequisicao('/postos');
+                const resposta = await fazerRequisicao('/postos');
+                const postos = resposta.data || [];
                 const lista = document.getElementById('listaPostos');
 
                 if (postos.length === 0) {
@@ -49,7 +50,8 @@ async function cadastrarPosto(e) {
             }
 
             try {
-                const postos = await fazerRequisicao('/postos');
+                const resposta = await fazerRequisicao('/postos');
+                const postos = resposta.data || [];
                 const resultados = postos.filter(p =>
                     p.nome.toLowerCase().includes(termo.toLowerCase())
                 );
@@ -113,7 +115,8 @@ async function cadastrarPosto(e) {
             }
 
             try {
-                const postos = await fazerRequisicao('/postos');
+                const resposta = await fazerRequisicao('/postos');
+                const postos = resposta.data || [];
                 const resultados = postos.filter(p =>
                     p.nome.toLowerCase().includes(termo.toLowerCase())
                 );

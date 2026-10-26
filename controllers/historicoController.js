@@ -19,6 +19,15 @@ const getByPaciente = async (req, res, next) => {
   }
 };
 
+const getMeuHistorico = async (req, res, next) => {
+  try {
+    const historico = await historicoService.getByPaciente(req.usuario.paciente_id);
+    return res.json({ success: true, data: historico });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const create = async (req, res, next) => {
   try {
     const registro = await historicoService.create(req.body);
@@ -31,6 +40,9 @@ const create = async (req, res, next) => {
 const getCarteirinha = async (req, res, next) => {
   try {
     const { pacienteId } = req.params;
+    if (req.usuario.papel === 'cidadao' && Number(req.usuario.paciente_id) !== Number(pacienteId)) {
+      return res.status(403).json({ success: false, message: 'Você não tem permissão para consultar este histórico.' });
+    }
 
     const dadosCarteirinha = await historicoService.buscarCarteirinha(pacienteId);
 
@@ -51,4 +63,4 @@ const getCarteirinha = async (req, res, next) => {
   }
 }
 
-export default { getAll, getByPaciente, create, getCarteirinha };
+export default { getAll, getByPaciente, getMeuHistorico, create, getCarteirinha };

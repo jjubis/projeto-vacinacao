@@ -69,6 +69,9 @@ const login = async (email, senha) => {
     }
     const secretKey = process.env.JWT_SECRET;
     if (!secretKey) throw new Error('JWT_SECRET não configurado.');
+    if (usuario.papel === 'cidadao' && !usuario.paciente_id) {
+        throw erro(403, 'Esta conta não está associada a um cidadão. Procure um funcionário.');
+    }
 
     const token = jwt.sign({
         id: usuario.id,

@@ -41,8 +41,11 @@ const login = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
-        console.log("Erro: ", error)
     }
+};
+
+const me = (req, res) => {
+    return res.json({ success: true, data: { usuario: req.usuario } });
 };
 
 const listarFuncionarios = async (req, res) => {
@@ -65,5 +68,6 @@ export default {
     registerCidadao,
     registerFuncionario,
     login,
-    listarFuncionarios
+    listarFuncionarios,
+    me
 };

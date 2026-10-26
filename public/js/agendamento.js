@@ -50,7 +50,8 @@ async function carregarDadosParaAgendamento() {
             agendandoParaMim.style.display = 'none';
             cidadaoSelect.required = true;
 
-            const cidadaos = await fazerRequisicao('/cidadaos');
+            const respostaCidadaos = await fazerRequisicao('/cidadaos');
+            const cidadaos = respostaCidadaos.data?.pacientes || [];
             cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
             cidadaos.forEach(c => {
                 cidadaoSelect.innerHTML += `<option value="${c.id}">${c.nome} - CPF: ${formatarCPF(c.cpf)}</option>`;
@@ -60,13 +61,14 @@ async function carregarDadosParaAgendamento() {
             cidadaoSelect.style.display = 'none';
             labelCidadaoSelect.style.display = 'none';
             cidadaoSelect.required = false;
-            cidadaoSelect.innerHTML = `<option value="${usuarioLogado.cidadaoId}" selected>${usuarioLogado.nome}</option>`;
+            cidadaoSelect.innerHTML = `<option value="${usuarioLogado.paciente_id}" selected>${usuarioLogado.nome}</option>`;
 
             agendandoParaMim.style.display = 'block';
             agendandoParaMim.textContent = `Agendando para: ${usuarioLogado.nome}`;
         }
 
-        const vacinas = await fazerRequisicao('/vacinas');
+        const respostaVacinas = await fazerRequisicao('/vacinas');
+        const vacinas = respostaVacinas.data?.vacinas || [];
         const vacinaSelect = document.getElementById('vacinaSelect');
         vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
         vacinas.forEach(v => {
@@ -74,7 +76,8 @@ async function carregarDadosParaAgendamento() {
         });
 
         // Unidade única (UBS Aterrado) — detectada automaticamente, sem seleção manual
-        const postos = await fazerRequisicao('/postos');
+        const respostaPostos = await fazerRequisicao('/postos');
+        const postos = respostaPostos.data || [];
         const infoUnidade = document.getElementById('infoUnidade');
         const postoIdInput = document.getElementById('postoIdAgendamento');
 
@@ -159,7 +162,8 @@ async function listarAgendamentosDetalhados() {
     lista.innerHTML = '<p>Carregando...</p>';
 
     try {
-        const agendamentos = await fazerRequisicao('/agendamentos');
+        const resposta = await fazerRequisicao('/agendamentos');
+        const agendamentos = resposta.data || [];
 
         if (!Array.isArray(agendamentos) || agendamentos.length === 0) {
             lista.innerHTML = '<p>Nenhum agendamento cadastrado.</p>';
@@ -206,7 +210,8 @@ async function buscarAgendamentoParaAtualizar() {
     container.innerHTML = '<p>Buscando...</p>';
 
     try {
-        const lista = await fazerRequisicao('/agendamentos');
+        const resposta = await fazerRequisicao('/agendamentos');
+        const lista = resposta.data || [];
         const agendamento = lista.find(a => a.id == termo);
 
         if (!agendamento) {
@@ -301,7 +306,8 @@ async function buscarAgendamentoParaExcluir() {
     container.innerHTML = '<p>Buscando...</p>';
 
     try {
-        const lista = await fazerRequisicao('/agendamentos');
+        const resposta = await fazerRequisicao('/agendamentos');
+        const lista = resposta.data || [];
         const agendamento = lista.find(a => a.id == termo);
 
         if (!agendamento) {

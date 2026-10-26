@@ -5,6 +5,13 @@ const findByEmail = async (email) => {
     return rows[0];
 };
 
+const findById = async (id) => {
+    const [rows] = await pool.query(
+        'SELECT id, nome, email, papel, paciente_id FROM usuarios WHERE id = ?', [id]
+    );
+    return rows[0];
+};
+
 const findByCpf = async (cpf) => {
     const [rows] = await pool.query('SELECT * FROM usuarios WHERE cpf = ?', [cpf]);
     return rows[0];
@@ -50,6 +57,7 @@ const create = async (dadosUsuario, connection) => {
 
 export default {
     findByEmail,
+    findById,
     findByCpf,
     findByCpfWith,
     activateCitizen,

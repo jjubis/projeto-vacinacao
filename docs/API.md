@@ -13,10 +13,11 @@
 | --- | --- | --- |
 | `POST /auth/cadastro` | Pública | Ativa o acesso do cidadão já cadastrado pelo funcionário; recebe `nome`, `cpf`, `email` e `senha`. Nome e email devem corresponder ao cadastro. |
 | `POST /auth/login` | Pública | `{ email, senha }`; retorna o token e o usuário dentro de `data`. |
+| `GET /auth/me` | JWT | Retorna os dados atuais do usuario autenticado. |
 | `POST /auth/admin/cadastrar-funcionario` | JWT + `funcionario` | Cria uma conta de funcionário. |
 | `GET /auth/funcionarios` | JWT + `funcionario` | Lista funcionários. |
 
-Não há rotas `/auth/me` ou `/auth/logout` no router atual.
+O endpoint `/auth/me` valida o token e retorna o perfil atual. O logout local remove o JWT do navegador; tokens copiados continuam validos ate expirarem.
 
 ## Pacientes — `/pacientes`
 
@@ -32,7 +33,7 @@ Todas as rotas abaixo exigem JWT e papel `funcionario`.
 
 ## Vacinas — `/vacinas`
 
-O router atual não aplica middleware de autenticação nessas rotas.
+Leituras exigem JWT; criacao, atualizacao e exclusao exigem papel `funcionario`.
 
 | Método e rota | Entrada/resultado |
 | --- | --- |
@@ -46,7 +47,7 @@ Os alertas usam `quantidade_estoque` e `minimo_alerta`; alertas de validade depe
 
 ## Postos — `/postos`
 
-O router atual não aplica middleware de autenticação.
+Leituras exigem JWT; criacao, atualizacao e exclusao exigem papel `funcionario`.
 
 | Método e rota | Entrada/resultado |
 | --- | --- |
@@ -60,25 +61,27 @@ O router atual não aplica middleware de autenticação.
 
 | Método e rota | Proteção atual | Entrada/resultado |
 | --- | --- | --- |
-| `GET /agendamentos/meus-agendamentos` | JWT | Lista agendamentos associados ao usuário. O controller atual usa `req.usuario.id` como ID do paciente; confirme/corrija para `paciente_id` antes de considerar esse endpoint validado para cidadãos. |
+| `GET /agendamentos/meus-agendamentos` | JWT + `cidadao` | Lista somente os agendamentos do `paciente_id` autenticado. |
 | `GET /agendamentos` | JWT + `funcionario` | Lista agendamentos. |
-| `GET /agendamentos/:id` | Sem middleware de autenticação | Busca por ID. Deve receber proteção adequada. |
-| `POST /agendamentos` | JWT | Exige `paciente_id`, `vacina_id`, `posto_id`, `data_agendamento`. Para cidadãos, o serviço substitui o paciente enviado pelo `paciente_id` do JWT. |
-| `PUT /agendamentos/:id` | JWT, sem verificação de papel no router | O serviço recebe status em texto: `agendado`, `realizado` ou `cancelado`. |
-| `DELETE /agendamentos/:id` | JWT, sem verificação de papel no router | Exclui o agendamento após busca. |
+| `GET /agendamentos/:id` | JWT | Funcionarios consultam qualquer registro; cidadaos somente o proprio. |
+| `POST /agendamentos` | JWT + `cidadao` ou `funcionario` | Exige `paciente_id`, `vacina_id`, `posto_id`, `data_agendamento`; para cidadao, o servico substitui `paciente_id` pelo vinculo do token. |
+| `PUT /agendamentos/:id` | JWT + `funcionario` | Atualiza o status do agendamento. |
+| `DELETE /agendamentos/:id` | JWT + `funcionario` | Exclui o agendamento. |
 
 Criação, atualização e exclusão emitem notificações conforme os eventos tratados nos controllers. As regras de disponibilidade e transição devem ser verificadas contra o esquema e os dados reais do MySQL.
 
 ## Histórico vacinal — `/historico`
 
-O router atual não aplica middleware de autenticação.
+Consultas administrativas e gravacao exigem JWT + `funcionario`. `/historico/meu-historico` usa o paciente associado ao token; a carteirinha aceita funcionario ou o proprio cidadao.
 
-| Método e rota | Entrada/resultado |
+| Metodo e rota | Protecao | Entrada/resultado |
+| --- | --- | --- |
 | --- | --- |
-| `GET /historico` | Lista histórico. |
-| `GET /historico/paciente/:pacienteId` | Lista histórico do paciente. |
-| `POST /historico` | Exige `paciente_id`, `vacina_id`, `data_aplicacao`, `dose` e `profissional_responsavel`; `lote` também é aceito pelo serviço. |
-| `GET /historico/carteirinha/:pacienteId` | Retorna dados do paciente e histórico. |
+| `GET /historico` | JWT + `funcionario` | Lista o historico para uso administrativo. |
+| `GET /historico/meu-historico` | JWT + `cidadao` | Lista somente o historico vinculado a conta autenticada. |
+| `GET /historico/paciente/:pacienteId` | JWT + `funcionario` | Consulta o historico de um paciente. |
+| `POST /historico` | JWT + `funcionario` | Registra vacinacao. |
+| `GET /historico/carteirinha/:pacienteId` | JWT | Funcionario ou o proprio cidadao. |
 
 ## Notificações — `/notificacoes`
 
@@ -95,6 +98,6 @@ Todas as rotas exigem JWT. O usuário destinatário é sempre obtido de `req.usu
 
 O middleware de autenticação retorna `401` para token ausente/inválido e `403` para papel sem permissão quando `requireRole` está aplicado. Erros e envelopes variam entre rotas legadas; não presuma uma estrutura única para todas as respostas.
 
-## Observação de segurança
+## Observacao de seguranca
 
-Há endpoints de vacinas, postos, histórico, funcionários e consulta individual de agendamento sem autenticação explícita nos routers atuais. Esta documentação registra o comportamento encontrado, não recomenda que esses endpoints permaneçam públicos. Revise a autorização antes de expor o backend.
+O middleware valida o JWT e recarrega o papel e o vinculo do usuario no MySQL em cada requisicao autenticada. Mantenha testes de papel e propriedade ao alterar rotas.
