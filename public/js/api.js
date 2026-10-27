@@ -8,11 +8,44 @@ function mostrarMensagem(elementoId, mensagem, tipo = 'info') {
         return;
     }
 
-    elemento.innerHTML = `<div class="${tipo}">${mensagem}</div>`;
+    const aviso = document.createElement('div');
+    aviso.className = tipo;
+    aviso.textContent = mensagem;
+    elemento.replaceChildren(aviso);
 
     setTimeout(() => {
-        elemento.innerHTML = '';
+        elemento.replaceChildren();
     }, 5000);
+}
+
+function mostrarTexto(container, mensagem, tipo = '') {
+    if (!container) return;
+    const paragrafo = document.createElement('p');
+    if (tipo) paragrafo.className = tipo;
+    paragrafo.textContent = mensagem;
+    container.replaceChildren(paragrafo);
+}
+
+function criarCartaoResultado(campos, className = 'resultado-lista') {
+    const cartao = document.createElement('div');
+    cartao.className = className;
+    campos.forEach(([rotulo, valor], index) => {
+        const label = document.createElement('strong');
+        label.textContent = `${rotulo}: `;
+        cartao.append(label, document.createTextNode(valor == null ? '' : String(valor)));
+        if (index < campos.length - 1) cartao.append(document.createElement('br'));
+    });
+    return cartao;
+}
+
+function criarBotaoResultado(texto, acao) {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'resultado-lista';
+    botao.style.width = '100%';
+    botao.textContent = texto;
+    botao.addEventListener('click', acao);
+    return botao;
 }
 async function fazerRequisicao(url, options = {}) {
     try {
@@ -115,5 +148,8 @@ async function verificarConexao() {
 
 window.fazerRequisicao = fazerRequisicao;
 window.mostrarMensagem = mostrarMensagem;
+window.mostrarTexto = mostrarTexto;
+window.criarCartaoResultado = criarCartaoResultado;
+window.criarBotaoResultado = criarBotaoResultado;
 window.debounce = debounce;
 window.verificarConexao = verificarConexao;

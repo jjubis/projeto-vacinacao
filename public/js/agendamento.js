@@ -27,12 +27,9 @@ function listarStatus() {
     const lista = document.getElementById('listaStatus');
     if (!lista) return;
 
-    lista.innerHTML = STATUSES_FIXOS.map(status => `
-        <div class="resultado-lista">
-            <strong>ID:</strong> ${status.id}<br>
-            <strong>Descrição:</strong> ${status.descricao}
-        </div>
-    `).join('');
+    lista.replaceChildren(...STATUSES_FIXOS.map(status => criarCartaoResultado([
+        ['ID', status.id], ['Descrição', status.descricao]
+    ])));
 }
 
 async function carregarDadosParaAgendamento() {
@@ -52,16 +49,16 @@ async function carregarDadosParaAgendamento() {
 
             const respostaCidadaos = await fazerRequisicao('/cidadaos');
             const cidadaos = respostaCidadaos.data?.pacientes || [];
-            cidadaoSelect.innerHTML = '<option value="">Selecione um cidadão</option>';
+            cidadaoSelect.replaceChildren(new Option('Selecione um cidadão', ''));
             cidadaos.forEach(c => {
-                cidadaoSelect.innerHTML += `<option value="${c.id}">${c.nome} - CPF: ${formatarCPF(c.cpf)}</option>`;
+                cidadaoSelect.add(new Option(`${c.nome} - CPF: ${formatarCPF(c.cpf)}`, String(c.id)));
             });
         } else {
             // Cidadão agenda para si mesmo — não precisa (nem pode) escolher
             cidadaoSelect.style.display = 'none';
             labelCidadaoSelect.style.display = 'none';
             cidadaoSelect.required = false;
-            cidadaoSelect.innerHTML = `<option value="${usuarioLogado.paciente_id}" selected>${usuarioLogado.nome}</option>`;
+            cidadaoSelect.replaceChildren(new Option(usuarioLogado.nome, String(usuarioLogado.paciente_id), true, true));
 
             agendandoParaMim.style.display = 'block';
             agendandoParaMim.textContent = `Agendando para: ${usuarioLogado.nome}`;
@@ -70,9 +67,9 @@ async function carregarDadosParaAgendamento() {
         const respostaVacinas = await fazerRequisicao('/vacinas');
         const vacinas = respostaVacinas.data?.vacinas || [];
         const vacinaSelect = document.getElementById('vacinaSelect');
-        vacinaSelect.innerHTML = '<option value="">Selecione uma vacina</option>';
+        vacinaSelect.replaceChildren(new Option('Selecione uma vacina', ''));
         vacinas.forEach(v => {
-            vacinaSelect.innerHTML += `<option value="${v.id}">${v.nome} (${v.fabricante})</option>`;
+            vacinaSelect.add(new Option(`${v.nome} (${v.fabricante})`, String(v.id)));
         });
 
         // Unidade única (UBS Aterrado) — detectada automaticamente, sem seleção manual
@@ -155,37 +152,31 @@ async function cadastrarAgendamento(e) {
 
 async function listarAgendamentosDetalhados() {
     const lista = document.getElementById('listaAgendamentos');
-    lista.innerHTML = '<p>Carregando...</p>';
+    mostrarTexto(lista, 'Carregando...');
 
     try {
         const resposta = await fazerRequisicao('/agendamentos');
         const agendamentos = resposta.data || [];
 
         if (!Array.isArray(agendamentos) || agendamentos.length === 0) {
-            lista.innerHTML = '<p>Nenhum agendamento cadastrado.</p>';
+            mostrarTexto(lista, 'Nenhum agendamento cadastrado.');
             return;
         }
 
-        lista.innerHTML = agendamentos.map(a => {
+        lista.replaceChildren(...agendamentos.map(a => {
             const statusClass = a.status === 'agendado' ? 'status-agendado' :
                                 a.status === 'realizado' ? 'status-realizado' :
                                 'status-cancelado';
             const descricaoStatus = STATUSES_FIXOS.find(status => status.id === a.status)?.descricao || a.status;
 
-            return `
-                <div class="resultado-lista ${statusClass}">
-                    <strong>ID:</strong> ${a.id}<br>
-                    <strong>Cidadão:</strong> ${a.paciente_nome}<br>
-                    <strong>Vacina:</strong> ${a.vacina_nome}<br>
-                    <strong>Posto:</strong> ${a.posto_nome}<br>
-                    <strong>Status:</strong> <span class="status-badge">${descricaoStatus}</span><br>
-                    <strong>Data/Hora:</strong> ${formatarDataHora(a.data_agendamento)}
-                </div>
-            `;
-        }).join('');
+            return criarCartaoResultado([
+                ['ID', a.id], ['Cidadão', a.paciente_nome], ['Vacina', a.vacina_nome], ['Posto', a.posto_nome],
+                ['Status', descricaoStatus], ['Data/Hora', formatarDataHora(a.data_agendamento)]
+            ], `resultado-lista ${statusClass}`);
+        }));
 
     } catch (erro) {
-        lista.innerHTML = `<p class="error">Erro ao carregar agendamentos: ${erro.message}</p>`;
+        mostrarTexto(lista, `Erro ao carregar agendamentos: ${erro.message}`, 'error');
     }
 }
 
@@ -216,7 +207,7 @@ async function buscarAgendamentoParaAtualizar() {
         return;
     }
 
-    container.innerHTML = '<p>Buscando...</p>';
+    mostrarTexto(container, 'Buscando...');
 
     try {
         const resposta = await fazerRequisicao('/agendamentos');
@@ -224,7 +215,7 @@ async function buscarAgendamentoParaAtualizar() {
         const agendamento = lista.find(a => a.id == termo);
 
         if (!agendamento) {
-            container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+            mostrarTexto(container, 'Nenhum agendamento encontrado.');
             document.getElementById('atualizarAgendamentoForm').style.display = 'none';
             return;
         }
@@ -235,17 +226,14 @@ async function buscarAgendamentoParaAtualizar() {
 
         document.getElementById('atualizarAgendamentoForm').style.display = 'block';
 
-        container.innerHTML = `
-            <div class="resultado-lista">
-                <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
-                <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
-                <strong>Status Atual:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}<br>
-                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.data_agendamento)}
-            </div>
-        `;
+        container.replaceChildren(criarCartaoResultado([
+            ['Cidadão', agendamento.paciente_nome], ['Vacina', agendamento.vacina_nome],
+            ['Status Atual', STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status],
+            ['Data/Hora', formatarDataHora(agendamento.data_agendamento)]
+        ]));
 
         const select = document.getElementById('novoStatusAgendamento');
-        select.innerHTML = '<option value="">Selecione um status</option>';
+        select.replaceChildren(new Option('Selecione um status', ''));
 
         STATUSES_FIXOS.forEach(s => {
             const opt = document.createElement('option');
@@ -262,7 +250,7 @@ async function buscarAgendamentoParaAtualizar() {
         });
 
     } catch (erro) {
-        container.innerHTML = `<p class="error">Erro: ${erro.message}</p>`;
+        mostrarTexto(container, `Erro: ${erro.message}`, 'error');
         mostrarMensagem('mensagemAgendamentoAtualizar', `Erro: ${erro.message}`, 'error');
     }
 }
@@ -298,7 +286,7 @@ async function atualizarAgendamento(e) {
 
         document.getElementById('atualizarAgendamentoForm').style.display = 'none';
         document.getElementById('doseRealizada').value = '';
-        document.getElementById('resultadoBuscaAgendamentoAtualizar').innerHTML = '';
+        document.getElementById('resultadoBuscaAgendamentoAtualizar').replaceChildren();
         document.getElementById('buscarAgendamentoAtualizar').value = '';
 
         const secao14 = document.getElementById('secao14');
@@ -320,7 +308,7 @@ async function buscarAgendamentoParaExcluir() {
         return;
     }
 
-    container.innerHTML = '<p>Buscando...</p>';
+    mostrarTexto(container, 'Buscando...');
 
     try {
         const resposta = await fazerRequisicao('/agendamentos');
@@ -328,20 +316,19 @@ async function buscarAgendamentoParaExcluir() {
         const agendamento = lista.find(a => a.id == termo);
 
         if (!agendamento) {
-            container.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+            mostrarTexto(container, 'Nenhum agendamento encontrado.');
             document.getElementById('excluirAgendamentoForm').style.display = 'none';
             return;
         }
 
         if (agendamento.status === 'realizado') {
-            container.innerHTML = `
-                <div class="resultado-lista">
-                    <p class="error">⚠️ Este agendamento está com status "Realizado" e não pode ser excluído.</p>
-                    <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
-                    <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
-                    <strong>Status:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}
-                </div>
-            `;
+            const aviso = document.createElement('p');
+            aviso.className = 'error';
+            aviso.textContent = '⚠️ Este agendamento está com status "Realizado" e não pode ser excluído.';
+            container.replaceChildren(aviso, criarCartaoResultado([
+                ['Cidadão', agendamento.paciente_nome], ['Vacina', agendamento.vacina_nome],
+                ['Status', STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status]
+            ]));
             document.getElementById('excluirAgendamentoForm').style.display = 'none';
             return;
         }
@@ -352,15 +339,11 @@ async function buscarAgendamentoParaExcluir() {
 
         document.getElementById('excluirAgendamentoForm').style.display = 'block';
 
-        container.innerHTML = `
-            <div class="resultado-lista">
-                <strong>Cidadão:</strong> ${agendamento.paciente_nome}<br>
-                <strong>Vacina:</strong> ${agendamento.vacina_nome}<br>
-                <strong>Posto:</strong> ${agendamento.posto_nome}<br>
-                <strong>Status:</strong> ${STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status}<br>
-                <strong>Data/Hora:</strong> ${formatarDataHora(agendamento.data_agendamento)}
-            </div>
-        `;
+        container.replaceChildren(criarCartaoResultado([
+            ['Cidadão', agendamento.paciente_nome], ['Vacina', agendamento.vacina_nome], ['Posto', agendamento.posto_nome],
+            ['Status', STATUSES_FIXOS.find(s => s.id === agendamento.status)?.descricao || agendamento.status],
+            ['Data/Hora', formatarDataHora(agendamento.data_agendamento)]
+        ]));
 
         document.getElementById('excluirAgendamentoForm').scrollIntoView({ 
             behavior: 'smooth', 
@@ -368,7 +351,7 @@ async function buscarAgendamentoParaExcluir() {
         });
 
     } catch (erro) {
-        container.innerHTML = `<p class="error">Erro: ${erro.message}</p>`;
+        mostrarTexto(container, `Erro: ${erro.message}`, 'error');
         mostrarMensagem('mensagemAgendamentoExcluir', `Erro: ${erro.message}`, 'error');
     }
 }
@@ -387,7 +370,7 @@ async function excluirAgendamento(e) {
         mostrarMensagem('mensagemAgendamentoExcluir', 'Agendamento excluído com sucesso!', 'success');
 
         document.getElementById('excluirAgendamentoForm').style.display = 'none';
-        document.getElementById('resultadoBuscaAgendamentoExcluir').innerHTML = '';
+        document.getElementById('resultadoBuscaAgendamentoExcluir').replaceChildren();
         document.getElementById('buscarAgendamentoExcluir').value = '';
 
         const secao14 = document.getElementById('secao14');

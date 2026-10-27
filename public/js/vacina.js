@@ -47,20 +47,15 @@ function normalizarListaVacinas(resposta) {
                 const lista = document.getElementById('listaVacinas');
 
                 if (vacinas.length === 0) {
-                    lista.innerHTML = '<p>Nenhuma vacina cadastrada.</p>';
+                    mostrarTexto(lista, 'Nenhuma vacina cadastrada.');
                     return;
                 }
 
-                lista.innerHTML = vacinas.map(vacina => `
-                    <div class="resultado-lista">
-                        <strong>ID:</strong> ${vacina.id}<br>
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}<br>
-                        <strong>Validade:</strong> ${vacina.validade}
-                    </div>
-                `).join('');
+                lista.replaceChildren(...vacinas.map(vacina => criarCartaoResultado([
+                    ['ID', vacina.id], ['Nome', vacina.nome], ['Fabricante', vacina.fabricante], ['Validade', vacina.validade]
+                ])));
             } catch (erro) {
-                document.getElementById('listaVacinas').innerHTML = `<p class="error">Erro ao carregar vacinas: ${erro.message}</p>`;
+                mostrarTexto(document.getElementById('listaVacinas'), `Erro ao carregar vacinas: ${erro.message}`, 'error');
             }
         }
 
@@ -81,7 +76,7 @@ function normalizarListaVacinas(resposta) {
                 const container = document.getElementById('resultadoBuscaVacinaAtualizar');
 
                 if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhuma vacina encontrada.</p>';
+                    mostrarTexto(container, 'Nenhuma vacina encontrada.');
                     return;
                 }
 
@@ -141,7 +136,7 @@ function normalizarListaVacinas(resposta) {
 
                 mostrarMensagem('mensagemVacinaAtualizar', 'Vacina atualizada com sucesso!', 'success');
                 document.getElementById('atualizarVacinaForm').style.display = 'none';
-                document.getElementById('resultadoBuscaVacinaAtualizar').innerHTML = '';
+                document.getElementById('resultadoBuscaVacinaAtualizar').replaceChildren();
             } catch (erro) {
                 mostrarMensagem('mensagemVacinaAtualizar', `Erro ao atualizar vacina: ${erro.message}`, 'error');
             }
@@ -164,16 +159,14 @@ function normalizarListaVacinas(resposta) {
                 const container = document.getElementById('resultadoBuscaVacinaExcluir');
 
                 if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhuma vacina encontrada.</p>';
+                    mostrarTexto(container, 'Nenhuma vacina encontrada.');
                     return;
                 }
 
-                container.innerHTML = resultados.map(vacina => `
-                    <div class="resultado-lista" onclick="selecionarVacinaParaExcluir(${vacina.id}, '${vacina.nome}')">
-                        <strong>Nome:</strong> ${vacina.nome}<br>
-                        <strong>Fabricante:</strong> ${vacina.fabricante}
-                    </div>
-                `).join('');
+                container.replaceChildren(...resultados.map(vacina => criarBotaoResultado(
+                    `Nome: ${vacina.nome} · Fabricante: ${vacina.fabricante || 'não informado'}`,
+                    () => selecionarVacinaParaExcluir(vacina.id, vacina.nome)
+                )));
             } catch (erro) {
                 mostrarMensagem('mensagemVacinaExcluir', `Erro ao buscar vacina: ${erro.message}`, 'error');
             }
@@ -204,7 +197,7 @@ function normalizarListaVacinas(resposta) {
         
         document.getElementById('excluirVacinaForm').style.display = 'none';
 
-        document.getElementById('resultadoBuscaVacinaExcluir').innerHTML = '';
+        document.getElementById('resultadoBuscaVacinaExcluir').replaceChildren();
 
     } catch (erro) {
         mostrarMensagem('mensagemVacinaExcluir', `Erro ao excluir vacina: ${erro.message}`, 'error');

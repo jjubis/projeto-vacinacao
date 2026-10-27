@@ -26,19 +26,15 @@ async function cadastrarPosto(e) {
                 const lista = document.getElementById('listaPostos');
 
                 if (postos.length === 0) {
-                    lista.innerHTML = '<p>Nenhum posto cadastrado.</p>';
+                    mostrarTexto(lista, 'Nenhum posto cadastrado.');
                     return;
                 }
 
-                lista.innerHTML = postos.map(posto => `
-                    <div class="resultado-lista">
-                        <strong>ID:</strong> ${posto.id}<br>
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
-                    </div>
-                `).join('');
+                lista.replaceChildren(...postos.map(posto => criarCartaoResultado([
+                    ['ID', posto.id], ['Nome', posto.nome], ['Endereço', posto.endereco]
+                ])));
             } catch (erro) {
-                document.getElementById('listaPostos').innerHTML = `<p class="error">Erro ao carregar postos: ${erro.message}</p>`;
+                mostrarTexto(document.getElementById('listaPostos'), `Erro ao carregar postos: ${erro.message}`, 'error');
             }
         }
 
@@ -59,16 +55,14 @@ async function cadastrarPosto(e) {
                 const container = document.getElementById('resultadoBuscaPostoAtualizar');
 
                 if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhum posto encontrado.</p>';
+                    mostrarTexto(container, 'Nenhum posto encontrado.');
                     return;
                 }
 
-                container.innerHTML = resultados.map(posto => `
-                    <div class="resultado-lista" onclick="selecionarPostoParaAtualizar(${posto.id}, '${posto.nome}', '${posto.endereco}')">
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
-                    </div>
-                `).join('');
+                container.replaceChildren(...resultados.map(posto => criarBotaoResultado(
+                    `Nome: ${posto.nome} · Endereço: ${posto.endereco}`,
+                    () => selecionarPostoParaAtualizar(posto.id, posto.nome, posto.endereco)
+                )));
             } catch (erro) {
                 mostrarMensagem('mensagemPostoAtualizar', `Erro ao buscar posto: ${erro.message}`, 'error');
             }
@@ -101,7 +95,7 @@ async function cadastrarPosto(e) {
 
                 mostrarMensagem('mensagemPostoAtualizar', 'Posto atualizado com sucesso!', 'success');
                 document.getElementById('atualizarPostoForm').style.display = 'none';
-                document.getElementById('resultadoBuscaPostoAtualizar').innerHTML = '';
+                document.getElementById('resultadoBuscaPostoAtualizar').replaceChildren();
             } catch (erro) {
                 mostrarMensagem('mensagemPostoAtualizar', `Erro ao atualizar posto: ${erro.message}`, 'error');
             }
@@ -124,16 +118,14 @@ async function cadastrarPosto(e) {
                 const container = document.getElementById('resultadoBuscaPostoExcluir');
 
                 if (resultados.length === 0) {
-                    container.innerHTML = '<p>Nenhum posto encontrado.</p>';
+                    mostrarTexto(container, 'Nenhum posto encontrado.');
                     return;
                 }
 
-                container.innerHTML = resultados.map(posto => `
-                    <div class="resultado-lista" onclick="selecionarPostoParaExcluir(${posto.id}, '${posto.nome}')">
-                        <strong>Nome:</strong> ${posto.nome}<br>
-                        <strong>Endereço:</strong> ${posto.endereco}
-                    </div>
-                `).join('');
+                container.replaceChildren(...resultados.map(posto => criarBotaoResultado(
+                    `Nome: ${posto.nome} · Endereço: ${posto.endereco}`,
+                    () => selecionarPostoParaExcluir(posto.id, posto.nome)
+                )));
             } catch (erro) {
                 mostrarMensagem('mensagemPostoExcluir', `Erro ao buscar posto: ${erro.message}`, 'error');
             }
@@ -166,7 +158,7 @@ async function cadastrarPosto(e) {
         mostrarMensagem('mensagemPostoExcluir', 'Posto excluído com sucesso!', 'success');
         
         document.getElementById('excluirPostoForm').style.display = 'none';
-        document.getElementById('resultadoBuscaPostoExcluir').innerHTML = '';
+        document.getElementById('resultadoBuscaPostoExcluir').replaceChildren();
 
     } catch (erro) {
         mostrarMensagem('mensagemPostoExcluir', `Erro ao excluir posto: ${erro.message}`, 'error');

@@ -15,24 +15,23 @@ function capitalizarNomeVisual(nome) {
 async function carregarMeuHistorico() {
     const container = document.getElementById('meuHistorico');
     if (!container) return;
-    container.innerHTML = '<p>Carregando seu histórico...</p>';
+    mostrarTexto(container, 'Carregando seu histórico...');
     try {
         const resposta = await fazerRequisicao('/historico/meu-historico');
         const registros = resposta.data || [];
         if (!registros.length) {
-            container.innerHTML = '<p>Nenhuma vacina registrada até o momento.</p>';
+            mostrarTexto(container, 'Nenhuma vacina registrada até o momento.');
             return;
         }
-        container.innerHTML = registros.map(registro => `
-            <article class="resultado-lista">
-                <strong>${escapeHtml(registro.vacina_nome || 'Vacina')}</strong><br>
-                <span>Aplicação: ${escapeHtml(formatarData(registro.data_aplicacao))}</span><br>
-                <span>Dose: ${escapeHtml(registro.dose || 'Não informada')}</span><br>
-                <span>Lote: ${escapeHtml(registro.vacina_lote || 'Não informado')}</span><br>
-                <span>Profissional: ${escapeHtml(registro.profissional_responsavel || 'Não informado')}</span>
-            </article>`).join('');
+        container.replaceChildren(...registros.map(registro => criarCartaoResultado([
+            ['Vacina', registro.vacina_nome || 'Vacina'],
+            ['Aplicação', formatarData(registro.data_aplicacao)],
+            ['Dose', registro.dose || 'Não informada'],
+            ['Lote', registro.vacina_lote || 'Não informado'],
+            ['Profissional', registro.profissional_responsavel || 'Não informado']
+        ], 'resultado-lista')));
     } catch (erro) {
-        container.innerHTML = `<p class="error">Não foi possível carregar seu histórico: ${escapeHtml(erro.message)}</p>`;
+        mostrarTexto(container, `Não foi possível carregar seu histórico: ${erro.message}`, 'error');
     }
 }
 
@@ -136,30 +135,24 @@ async function cadastrarCidadao(e) {
 
 async function listarCidadaos() {
     const lista = document.getElementById('listaCidadaos');
-    lista.innerHTML = '<p>Carregando...</p>';
+    mostrarTexto(lista, 'Carregando...');
 
     try {
         const resposta = await fazerRequisicao('/pacientes');
         const cidadaos = resposta.data?.pacientes || [];
 
         if (!Array.isArray(cidadaos) || cidadaos.length === 0) {
-            lista.innerHTML = '<p>Nenhum cidadão cadastrado.</p>';
+            mostrarTexto(lista, 'Nenhum cidadão cadastrado.');
             return;
         }
 
-        lista.innerHTML = cidadaos.map(cidadao => `
-            <div class="resultado-lista">
-                <strong>ID:</strong> ${cidadao.id}<br>
-                <strong>Nome:</strong> ${cidadao.nome}<br>
-                <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}<br>
-                <strong>Telefone:</strong> ${formatarTelefone(cidadao.telefone)}<br>
-                <strong>Email:</strong> ${cidadao.email}<br>
-                <strong>Endereço:</strong> ${cidadao.endereco}
-            </div>
-        `).join('');
+        lista.replaceChildren(...cidadaos.map(cidadao => criarCartaoResultado([
+            ['ID', cidadao.id], ['Nome', cidadao.nome], ['CPF', formatarCPF(cidadao.cpf)],
+            ['Telefone', formatarTelefone(cidadao.telefone)], ['Email', cidadao.email], ['Endereço', cidadao.endereco]
+        ])));
 
     } catch (erro) {
-        lista.innerHTML = `<p class="error">Erro ao carregar cidadãos: ${erro.message}</p>`;
+        mostrarTexto(lista, `Erro ao carregar cidadãos: ${erro.message}`, 'error');
     }
 }
 
@@ -172,7 +165,7 @@ async function buscarCidadaoParaAtualizar() {
     }
 
     const container = document.getElementById('resultadoBuscaAtualizar');
-    container.innerHTML = '<p>Buscando...</p>';
+    mostrarTexto(container, 'Buscando...');
 
     try {
         const resposta = await fazerRequisicao('/pacientes');
@@ -184,20 +177,18 @@ async function buscarCidadaoParaAtualizar() {
         );
 
         if (resultados.length === 0) {
-            container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
+            mostrarTexto(container, 'Nenhum cidadão encontrado.');
             document.getElementById('atualizarForm').style.display = 'none';
             return;
         }
 
-        container.innerHTML = resultados.map(cidadao => `
-            <div class="resultado-lista" onclick="selecionarCidadaoParaAtualizar(${cidadao.id}, '${escapeHtml(cidadao.nome)}', '${cidadao.cpf}', '${cidadao.telefone}', '${escapeHtml(cidadao.email)}', '${escapeHtml(cidadao.endereco)}')">
-                <strong>Nome:</strong> ${cidadao.nome}<br>
-                <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}
-            </div>
-        `).join('');
+        container.replaceChildren(...resultados.map(cidadao => criarBotaoResultado(
+            `Nome: ${cidadao.nome} · CPF: ${formatarCPF(cidadao.cpf)}`,
+            () => selecionarCidadaoParaAtualizar(cidadao.id, cidadao.nome, cidadao.cpf, cidadao.telefone, cidadao.email, cidadao.endereco)
+        )));
 
     } catch (erro) {
-        container.innerHTML = `<p class="error">Erro ao buscar cidadão: ${erro.message}</p>`;
+        mostrarTexto(container, `Erro ao buscar cidadão: ${erro.message}`, 'error');
         mostrarMensagem('mensagemAtualizar', `Erro: ${erro.message}`, 'error');
     }
 }
@@ -261,7 +252,7 @@ async function atualizarCidadao(e) {
 
         mostrarMensagem('mensagemAtualizar', 'Cidadão atualizado com sucesso!', 'success');
         document.getElementById('atualizarForm').style.display = 'none';
-        document.getElementById('resultadoBuscaAtualizar').innerHTML = '';
+        document.getElementById('resultadoBuscaAtualizar').replaceChildren();
         document.getElementById('buscarCpfAtualizar').value = '';
 
         if (document.getElementById('secao2').classList.contains('active')) {
@@ -282,7 +273,7 @@ async function buscarCidadaoParaExcluir() {
     }
 
     const container = document.getElementById('resultadoBuscaExcluir');
-    container.innerHTML = '<p>Buscando...</p>';
+    mostrarTexto(container, 'Buscando...');
 
     try {
         const resposta = await fazerRequisicao('/pacientes');
@@ -295,20 +286,18 @@ async function buscarCidadaoParaExcluir() {
         );
 
         if (resultados.length === 0) {
-            container.innerHTML = '<p>Nenhum cidadão encontrado.</p>';
+            mostrarTexto(container, 'Nenhum cidadão encontrado.');
             document.getElementById('excluirForm').style.display = 'none';
             return;
         }
 
-        container.innerHTML = resultados.map(cidadao => `
-            <div class="resultado-lista" onclick="selecionarCidadaoParaExcluir(${cidadao.id}, '${escapeHtml(cidadao.nome)}')">
-                <strong>Nome:</strong> ${cidadao.nome}<br>
-                <strong>CPF:</strong> ${formatarCPF(cidadao.cpf)}
-            </div>
-        `).join('');
+        container.replaceChildren(...resultados.map(cidadao => criarBotaoResultado(
+            `Nome: ${cidadao.nome} · CPF: ${formatarCPF(cidadao.cpf)}`,
+            () => selecionarCidadaoParaExcluir(cidadao.id, cidadao.nome)
+        )));
 
     } catch (erro) {
-        container.innerHTML = `<p class="error">Erro ao buscar cidadão: ${erro.message}</p>`;
+        mostrarTexto(container, `Erro ao buscar cidadão: ${erro.message}`, 'error');
         mostrarMensagem('mensagemExcluir', `Erro: ${erro.message}`, 'error');
     }
 }
@@ -333,7 +322,7 @@ async function excluirCidadao(e) {
 
         mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
         document.getElementById('excluirForm').style.display = 'none';
-        document.getElementById('resultadoBuscaExcluir').innerHTML = '';
+        document.getElementById('resultadoBuscaExcluir').replaceChildren();
         document.getElementById('buscarCpfExcluir').value = '';
 
         if (document.getElementById('secao2').classList.contains('active')) {
@@ -359,18 +348,6 @@ function formatarTelefone(telefone) {
         return telefone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
     return telefone;
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
 window.selecionarCidadaoParaAtualizar = selecionarCidadaoParaAtualizar;
