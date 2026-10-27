@@ -119,6 +119,9 @@ function configurarNavegacaoMenu() {
                     case '17':
                         carregarNotificacoes();
                         break;
+                    case '18':
+                        carregarMeuHistorico();
+                        break;
                 }
             }
         });

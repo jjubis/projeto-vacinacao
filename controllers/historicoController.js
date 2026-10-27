@@ -28,6 +28,14 @@ const getMeuHistorico = async (req, res, next) => {
   }
 };
 
+const getMinhaCarteirinha = async (req, res, next) => {
+  try {
+    const dadosCarteirinha = await historicoService.buscarCarteirinha(req.usuario.paciente_id);
+    if (!dadosCarteirinha.paciente) return res.status(404).json({ success: false, message: 'Paciente não encontrado.' });
+    return res.json({ success: true, data: dadosCarteirinha });
+  } catch (error) { next(error); }
+};
+
 const create = async (req, res, next) => {
   try {
     const registro = await historicoService.create(req.body);
@@ -63,4 +71,4 @@ const getCarteirinha = async (req, res, next) => {
   }
 }
 
-export default { getAll, getByPaciente, getMeuHistorico, create, getCarteirinha };
+export default { getAll, getByPaciente, getMeuHistorico, getMinhaCarteirinha, create, getCarteirinha };

@@ -20,6 +20,7 @@ router.post(
   historicoController.create
 );
 
-router.get('/carteirinha/:pacienteId', requireAuth, requireRole('cidadao', 'funcionario'), historicoController.getCarteirinha);
+router.get('/minha-carteirinha', requireAuth, requireRole('cidadao'), historicoController.getMinhaCarteirinha);
+router.get('/carteirinha/:pacienteId', requireAuth, requireRole('funcionario'), historicoController.getCarteirinha);
 
 export default router;

@@ -12,6 +12,36 @@ function capitalizarNomeVisual(nome) {
         .join(' ');
 }
 
+async function carregarMeuHistorico() {
+    const container = document.getElementById('meuHistorico');
+    if (!container) return;
+    container.innerHTML = '<p>Carregando seu histórico...</p>';
+    try {
+        const resposta = await fazerRequisicao('/historico/meu-historico');
+        const registros = resposta.data || [];
+        if (!registros.length) {
+            container.innerHTML = '<p>Nenhuma vacina registrada até o momento.</p>';
+            return;
+        }
+        container.innerHTML = registros.map(registro => `
+            <article class="resultado-lista">
+                <strong>${escapeHtml(registro.vacina_nome || 'Vacina')}</strong><br>
+                <span>Aplicação: ${escapeHtml(formatarData(registro.data_aplicacao))}</span><br>
+                <span>Dose: ${escapeHtml(registro.dose || 'Não informada')}</span><br>
+                <span>Lote: ${escapeHtml(registro.vacina_lote || 'Não informado')}</span><br>
+                <span>Profissional: ${escapeHtml(registro.profissional_responsavel || 'Não informado')}</span>
+            </article>`).join('');
+    } catch (erro) {
+        container.innerHTML = `<p class="error">Não foi possível carregar seu histórico: ${escapeHtml(erro.message)}</p>`;
+    }
+}
+
+function formatarData(valor) {
+    if (!valor) return 'Não informada';
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? String(valor) : data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 function aplicarCapitalizacaoNoInput(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -351,3 +381,4 @@ window.buscarCidadaoParaAtualizar = buscarCidadaoParaAtualizar;
 window.atualizarCidadao = atualizarCidadao;
 window.buscarCidadaoParaExcluir = buscarCidadaoParaExcluir;
 window.excluirCidadao = excluirCidadao;
+window.carregarMeuHistorico = carregarMeuHistorico;

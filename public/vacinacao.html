@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
@@ -88,12 +88,19 @@
     <li data-opcao="11" data-permissao="funcionario">11 - Atualizar agendamento</li>
     <li data-opcao="12" data-permissao="funcionario">12 - Excluir agendamento</li>
     <li data-opcao="17">🔔 Notificações <span id="contadorNotificacoes" class="notification-count" aria-live="polite">0</span></li>
+    <li data-opcao="18" data-permissao="cidadao">Meu histórico vacinal</li>
 
     <li data-opcao="S">S - Sair do Sistema</li>
 </ul>
         </nav>
 
         <main>
+            <section id="secao18">
+                <h3>Meu histórico vacinal</h3>
+                <p>Consulte as vacinas e doses registradas no seu cadastro.</p>
+                <button type="button" onclick="carregarMeuHistorico()">Atualizar histórico</button>
+                <div id="meuHistorico" class="lista" aria-live="polite"><p>Selecione para carregar seu histórico.</p></div>
+            </section>
             <section id="secao1">
                 <h3>Cadastrar cidadão</h3>
                 <form id="cadastroForm" novalidate>
