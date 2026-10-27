@@ -6,8 +6,9 @@ A configuração ativa é MySQL via `mysql2/promise` (`config/database.js`). Est
 
 | Tabela | Colunas referenciadas | Uso observado |
 | --- | --- | --- |
-| `usuarios` | `id`, `nome`, `cpf`, `email`, `senha_hash`, `papel`, `paciente_id` | Login, papel e associação do cidadão ao paciente. |
+| `usuarios` | `id`, `nome`, `cpf`, `email`, `senha_hash`, `papel`, `paciente_id`, `ativo`, `inativado_em`, `inativado_por` | Login, papel, associação do cidadão e auditoria de inativação. |
 | `pacientes` | `id`, `nome`, `cpf`, `data_nascimento`, `telefone`, `email`, `endereco` | Cadastro e dados do cidadão/paciente. |
+| `auditoria_status_cidadao` | `id`, `paciente_id`, `funcionario_id`, `acao`, `ocorrido_em` | Histórico append-only de inativação e reativação de acessos. |
 | `vacinas` | `id`, `nome`, `fabricante`, `quantidade_estoque`, `validade`, `lote`, `minimo_alerta` | Catálogo, estoque e informações de lote/validade usadas nos alertas. |
 | `postos_saude` | `id`, `nome`, `endereco` | Unidades ligadas a agendamentos. |
 | `agendamentos` | `id`, `paciente_id`, `vacina_id`, `posto_id`, `status`, `data_agendamento` | Reservas de vacinação e seu estado. |
@@ -42,3 +43,5 @@ As consultas e telas de vacina também referenciam `lote` e `validade`. A rotina
 Na inicialização, `inicializarNotificacoes()` executa `CREATE TABLE IF NOT EXISTS` para `notificacoes` e `notificacoes_alertas_estado`. Não altera nem apaga as tabelas existentes. O usuário MySQL da aplicação precisa ter permissão para criar essas tabelas.
 
 Não há uma migração equivalente no repositório para criar ou converter o restante do esquema. Não importe o modelo SQLite antigo como se fosse o esquema MySQL atual; obtenha o DDL ou dump aprovado do banco de desenvolvimento e compare-o com as consultas da aplicação.
+
+A migração `migrations/001_contas_cidadaos_inativacao.sql` adiciona `usuarios.ativo`, `inativado_em`, `inativado_por` e a tabela de auditoria de estado. Execute-a uma vez antes de publicar a versão com inativação. Contas existentes recebem `ativo = 1`.

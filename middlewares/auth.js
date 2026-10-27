@@ -28,6 +28,9 @@ export async function requireAuth(req, res, next) {
         if (!usuario) {
             return res.status(401).json({ error: 'A conta deste token não está mais ativa.' });
         }
+        if (Number(usuario.ativo) === 0) {
+            return res.status(401).json({ error: 'Esta conta foi inativada.' });
+        }
         if (usuario.papel === 'cidadao' && !usuario.paciente_id) {
             return res.status(403).json({ error: 'Esta conta não está associada a um cidadão.' });
         }

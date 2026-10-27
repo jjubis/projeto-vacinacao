@@ -7,7 +7,7 @@ const findByEmail = async (email) => {
 
 const findById = async (id) => {
     const [rows] = await pool.query(
-        'SELECT id, nome, email, papel, paciente_id FROM usuarios WHERE id = ?', [id]
+        'SELECT id, nome, email, papel, paciente_id, ativo FROM usuarios WHERE id = ?', [id]
     );
     return rows[0];
 };

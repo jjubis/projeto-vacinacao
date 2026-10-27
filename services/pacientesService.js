@@ -21,8 +21,28 @@ function validarDados(data) {
 }
 
 const getAll = async () => {
-  const [rows] = await pool.query('SELECT * FROM pacientes ORDER BY nome');
+  const [rows] = await pool.query(`SELECT p.* FROM pacientes p
+    WHERE NOT EXISTS (
+      SELECT 1 FROM usuarios u
+      WHERE u.paciente_id = p.id AND u.papel = 'cidadao' AND u.ativo = 0
+    ) ORDER BY p.nome`);
   return { total: rows.length, pacientes: rows };
+};
+
+const getInactive = async () => {
+  const [rows] = await pool.query(`SELECT p.*, u.inativado_em
+    FROM pacientes p
+    INNER JOIN usuarios u ON u.paciente_id = p.id AND u.papel = 'cidadao'
+    WHERE u.ativo = 0 ORDER BY u.inativado_em DESC, p.nome`);
+  return { total: rows.length, pacientes: rows };
+};
+
+const getStatusAudit = async id => {
+  const [rows] = await pool.query(
+    'SELECT acao, funcionario_id, ocorrido_em FROM auditoria_status_cidadao WHERE paciente_id = ? ORDER BY ocorrido_em DESC, id DESC',
+    [id]
+  );
+  return rows;
 };
 
 const getById = async id => {
@@ -92,14 +112,28 @@ const update = async (id, data) => {
   }
 };
 
-const remove = async id => {
+const inactivate = async (id, funcionarioId) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    await connection.query("DELETE FROM usuarios WHERE paciente_id = ? AND papel = 'cidadao'", [id]);
-    const [result] = await connection.query('DELETE FROM pacientes WHERE id = ?', [id]);
-    if (!result.affectedRows) throw falha(404, 'Cidadão não encontrado.');
+    const [pacientes] = await connection.query('SELECT id FROM pacientes WHERE id = ? FOR UPDATE', [id]);
+    if (!pacientes.length) throw falha(404, 'Cidadao nao encontrado.');
+    const [usuarios] = await connection.query(
+      "SELECT id, ativo FROM usuarios WHERE paciente_id = ? AND papel = 'cidadao' FOR UPDATE", [id]
+    );
+    if (!usuarios.length) throw falha(404, 'Conta de cidadao nao encontrada.');
+    if (usuarios.some(usuario => Number(usuario.ativo) !== 0)) {
+      await connection.query(
+        "UPDATE usuarios SET ativo = 0, inativado_em = CURRENT_TIMESTAMP, inativado_por = ? WHERE paciente_id = ? AND papel = 'cidadao'",
+        [funcionarioId, id]
+      );
+      await connection.query(
+        "INSERT INTO auditoria_status_cidadao (paciente_id, funcionario_id, acao) VALUES (?, ?, 'inativado')",
+        [id, funcionarioId]
+      );
+    }
     await connection.commit();
+    return { paciente_id: Number(id), inativado: true };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -108,4 +142,29 @@ const remove = async id => {
   }
 };
 
-export default { getAll, getById, create, update, remove };
+const reactivate = async (id, funcionarioId) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [pacientes] = await connection.query('SELECT id FROM pacientes WHERE id = ? FOR UPDATE', [id]);
+    if (!pacientes.length) throw falha(404, 'Cidadao nao encontrado.');
+    const [result] = await connection.query(
+      "UPDATE usuarios SET ativo = 1, inativado_em = NULL, inativado_por = NULL WHERE paciente_id = ? AND papel = 'cidadao' AND ativo = 0",
+      [id]
+    );
+    if (!result.affectedRows) throw falha(409, 'Conta ja ativa ou inexistente.');
+    await connection.query(
+      "INSERT INTO auditoria_status_cidadao (paciente_id, funcionario_id, acao) VALUES (?, ?, 'reativado')",
+      [id, funcionarioId]
+    );
+    await connection.commit();
+    return getById(id);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+export default { getAll, getInactive, getStatusAudit, getById, create, update, inactivate, reactivate };

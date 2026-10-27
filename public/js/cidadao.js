@@ -312,15 +312,15 @@ function selecionarCidadaoParaExcluir(id, nome) {
 async function excluirCidadao(e) {
     e.preventDefault();
 
-    const confirmacao = confirm('⚠️ Tem certeza que deseja excluir este cidadão?\n\nEsta ação não pode ser desfeita!');
+    const confirmacao = confirm('Inativar o acesso deste cidadão? O cadastro, os agendamentos e o histórico vacinal serão preservados.');
     if (!confirmacao) return;
 
     const id = document.getElementById('idExcluir').value;
 
     try {
-        await fazerRequisicao(`/pacientes/${id}`, { method: 'DELETE' });
+        const resposta = await fazerRequisicao(`/pacientes/${id}`, { method: 'DELETE' });
 
-        mostrarMensagem('mensagemExcluir', 'Cidadão excluído com sucesso!', 'success');
+        mostrarMensagem('mensagemExcluir', resposta.message || 'Acesso inativado e registros preservados.', 'success');
         document.getElementById('excluirForm').style.display = 'none';
         document.getElementById('resultadoBuscaExcluir').replaceChildren();
         document.getElementById('buscarCpfExcluir').value = '';
@@ -331,6 +331,45 @@ async function excluirCidadao(e) {
 
     } catch (erro) {
         mostrarMensagem('mensagemExcluir', `Erro ao excluir cidadão: ${erro.message}`, 'error');
+    }
+}
+
+async function listarCidadaosInativos() {
+    const lista = document.getElementById('listaCidadaosInativos');
+    mostrarTexto(lista, 'Carregando acessos inativos...');
+    try {
+        const resposta = await fazerRequisicao('/pacientes/inativos');
+        const cidadaos = resposta.data?.pacientes || [];
+        if (!cidadaos.length) {
+            mostrarTexto(lista, 'Nenhum acesso inativo.');
+            return;
+        }
+        lista.replaceChildren(...cidadaos.map(cidadao => {
+            const item = document.createElement('div');
+            item.appendChild(criarCartaoResultado([
+                ['Nome', cidadao.nome], ['CPF', formatarCPF(cidadao.cpf)], ['Inativado em', formatarData(cidadao.inativado_em)]
+            ]));
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.textContent = 'Reativar acesso';
+            botao.addEventListener('click', () => reativarCidadao(cidadao.id, cidadao.nome));
+            item.appendChild(botao);
+            return item;
+        }));
+    } catch (erro) {
+        mostrarTexto(lista, `Erro ao carregar acessos inativos: ${erro.message}`, 'error');
+    }
+}
+
+async function reativarCidadao(id, nome) {
+    if (!confirm(`Reativar o acesso de ${nome}?`)) return;
+    try {
+        const resposta = await fazerRequisicao(`/pacientes/${id}/reativar`, { method: 'PATCH' });
+        mostrarMensagem('mensagemExcluir', resposta.message || 'Acesso reativado.', 'success');
+        listarCidadaosInativos();
+        if (document.getElementById('secao2').classList.contains('active')) listarCidadaos();
+    } catch (erro) {
+        mostrarMensagem('mensagemExcluir', `Erro ao reativar acesso: ${erro.message}`, 'error');
     }
 }
 
@@ -359,3 +398,4 @@ window.atualizarCidadao = atualizarCidadao;
 window.buscarCidadaoParaExcluir = buscarCidadaoParaExcluir;
 window.excluirCidadao = excluirCidadao;
 window.carregarMeuHistorico = carregarMeuHistorico;
+window.listarCidadaosInativos = listarCidadaosInativos;

@@ -52,7 +52,10 @@ export const buscarAgendamentosPendentesExcetoId = async (postoId, vacinaId, sta
 
 export const buscarCidadaoPorId = async (cidadaoId) => {
     const [rows] = await pool.query(
-        `SELECT id FROM pacientes WHERE id = ?`,
+        `SELECT p.id FROM pacientes p WHERE p.id = ? AND NOT EXISTS (
+            SELECT 1 FROM usuarios u
+            WHERE u.paciente_id = p.id AND u.papel = 'cidadao' AND u.ativo = 0
+        )`,
         [cidadaoId]
     );
     return rows[0];

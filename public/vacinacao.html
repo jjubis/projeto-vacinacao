@@ -78,7 +78,7 @@
     <li data-opcao="1" data-permissao="funcionario">1 - Cadastrar cidadão</li>
     <li data-opcao="2" data-permissao="funcionario">2 - Listar cidadãos</li>
     <li data-opcao="3" data-permissao="funcionario">3 - Atualizar cidadão</li>
-    <li data-opcao="4" data-permissao="funcionario">4 - Excluir cidadão</li>
+    <li data-opcao="4" data-permissao="funcionario">4 - Acessos de cidadãos</li>
     <li data-opcao="5" data-permissao="funcionario">5 - Cadastrar vacina</li>
     <li data-opcao="6">6 - Listar vacinas</li>
     <li data-opcao="7" data-permissao="funcionario">7 - Atualizar vacina</li>
@@ -160,7 +160,7 @@
             </section>
 
             <section id="secao4">
-                <h3>Excluir cidadão</h3>
+                <h3>Inativar acesso do cidadão</h3>
                 <label>Buscar por CPF ou nome:</label>
                 <input type="text" id="buscarCpfExcluir" placeholder="Buscar..." />
                 <button type="button" onclick="buscarCidadaoParaExcluir()">Buscar</button>
@@ -168,9 +168,12 @@
                 <form id="excluirForm" style="display:none;">
                     <input type="hidden" id="idExcluir" />
                     <p>Selecionado: <span id="nomeSelecionadoExcluir" style="font-weight:bold;"></span></p>
-                    <button type="submit">Excluir</button>
+                    <button type="submit">Inativar acesso</button>
                 </form>
                 <div id="mensagemExcluir"></div>
+                <h4>Acessos inativos</h4>
+                <button type="button" onclick="listarCidadaosInativos()">Consultar acessos inativos</button>
+                <div id="listaCidadaosInativos" class="lista" aria-live="polite"></div>
             </section>
 
             <section id="secao5">

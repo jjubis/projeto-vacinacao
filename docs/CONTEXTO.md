@@ -43,6 +43,7 @@ O fluxo de estoque e histórico existe em diferentes partes do código; antes de
 
 - A tabela `notificacoes` é criada de forma aditiva durante a inicialização.
 - `notificacoes_alertas_estado` registra alertas ativos de estoque e validade para evitar repetição a cada varredura.
+- A desativação de cidadão mantém o cadastro e os registros clínicos; `usuarios.ativo`, `inativado_em` e `inativado_por` são adicionados pela migração `migrations/001_contas_cidadaos_inativacao.sql`.
 - Eventos de agendamento e cadastro podem emitir notificações para o cidadão vinculado e para funcionários.
 - Uma varredura ocorre ao iniciar e depois a cada 24 horas; operações de criação/edição de vacina também solicitam uma verificação.
 - Alertas de validade dependem de `vacinas.validade` e, quando disponível, `vacinas.lote`.
@@ -51,10 +52,10 @@ O fluxo de estoque e histórico existe em diferentes partes do código; antes de
 ## Limitações conhecidas
 
 - O schema MySQL de autenticacao, pacientes e agendamentos foi verificado na instancia de desenvolvimento; as demais regras de negocio ainda precisam de testes integrados.
-- Não há script de testes automatizados no `package.json`; testes simulados não substituem testes integrados no banco real.
+- `npm test` executa quatro testes simulados de autorização do histórico; eles não substituem testes integrados no banco real.
 - As rotas exigem autenticacao; operacoes administrativas exigem papel `funcionario`, e recursos do cidadao usam o `paciente_id` vinculado ao token.
 - Há formatos de resposta diferentes entre controllers. Clientes devem seguir o envelope realmente retornado por cada endpoint.
-- O front-end existente ainda tem renderizações com `innerHTML`; novos trechos devem preferir `textContent` e listeners programáticos.
+- As telas que exibem dados da API criam elementos DOM e usam `textContent`; mantenha esse padrão e listeners programáticos para valores dinâmicos.
 - O projeto não possui dados de calendário de doses suficientes para lembretes futuros confiáveis.
 
 ## Checklist de mudanças

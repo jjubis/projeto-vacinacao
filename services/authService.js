@@ -35,6 +35,7 @@ const register = async (userData) => {
 
             const existente = await authModel.findByCpfWith(cpf, connection);
             if (existente) {
+                if (Number(existente.ativo) === 0) throw erro(403, 'Este cadastro estÃ¡ inativado. Procure um funcionÃ¡rio para solicitar a reativaÃ§Ã£o.');
                 if (existente.papel !== 'cidadao' || Number(existente.paciente_id) !== Number(pacienteId) || emailNormalizado(existente.email) !== email) {
                     throw erro(409, 'Este CPF já está associado a outra conta.');
                 }
@@ -64,6 +65,7 @@ const register = async (userData) => {
 
 const login = async (email, senha) => {
     const usuario = await authModel.findByEmail(emailNormalizado(email));
+    if (usuario && Number(usuario.ativo) === 0) throw erro(403, 'Esta conta foi inativada. Procure um funcionÃ¡rio para obter ajuda.');
     if (!usuario || usuario.senha_hash === 'PENDING_ACTIVATION' || !(await bcrypt.compare(senha, usuario.senha_hash))) {
         throw erro(401, 'Credenciais inválidas.');
     }

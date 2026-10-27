@@ -29,7 +29,12 @@ Todas as rotas abaixo exigem JWT e papel `funcionario`.
 | `GET /pacientes/:id` | Busca paciente por ID. |
 | `POST /pacientes` | Exige `nome`, `cpf`, `data_nascimento`, `telefone`, `email` e `endereco`; cria paciente e conta cidadã vinculada, pendente de ativação de senha. |
 | `PUT /pacientes/:id` | Exige `nome`, `cpf`, `telefone`, `email` e `endereco`; sincroniza os dados da conta cidadã vinculada. |
-| `DELETE /pacientes/:id` | Remove o paciente. |
+| `DELETE /pacientes/:id` | Inativa o acesso e registra data e funcionário responsável. Preserva cadastro, agendamentos e histórico vacinal. |
+| `GET /pacientes/inativos` | Lista cidadãos com acesso inativo para revisão pela equipe. |
+| `PATCH /pacientes/:id/reativar` | Reativa acesso de cidadão inativo. |
+| `GET /pacientes/:id/auditoria` | Lista as mudanças de estado, funcionário responsável e horário. |
+
+O endpoint de exclusão não apaga dados: a política deste sistema é reter o cadastro e a trilha de saúde após inativar a conta. Não existe expurgo automático; o controlador dos dados deve definir e documentar o prazo aplicável antes de qualquer eliminação. A conta inativa não pode entrar, usar token antigo ou ser selecionada para novos agendamentos. A equipe pode reativar a conta pelo endpoint dedicado.
 
 ## Vacinas — `/vacinas`
 

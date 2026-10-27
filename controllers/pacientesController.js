@@ -15,6 +15,22 @@ const getAll = async (req, res, next) => {
   }
 };
 
+const getInactive = async (req, res, next) => {
+  try {
+    const pacientes = await pacientesService.getInactive();
+    res.json({ success: true, data: pacientes, totalPacientes: pacientes.total });
+  } catch (error) { next(error); }
+};
+
+const getStatusAudit = async (req, res, next) => {
+  try {
+    const paciente = await pacientesService.getById(req.params.id);
+    if (!paciente) return res.status(404).json({ success: false, message: 'Paciente nÃ£o encontrado.' });
+    const auditoria = await pacientesService.getStatusAudit(req.params.id);
+    res.json({ success: true, data: auditoria });
+  } catch (error) { next(error); }
+};
+
 
 const getById = async (req, res, next) => {
   try {
@@ -68,11 +84,18 @@ const remove = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Paciente não encontrado' });
     }
 
-    await pacientesService.remove(req.params.id);
-    res.json({ success: true, message: 'Paciente removido com sucesso', data: {} });
+    const resultado = await pacientesService.inactivate(req.params.id, req.usuario.id);
+    res.json({ success: true, message: 'Acesso inativado. Cadastro e registros de saúde foram preservados.', data: resultado });
   } catch (error) {
     next(error);
   }
 };
 
-export default { getAll, getById, create, update, remove };
+const reactivate = async (req, res, next) => {
+  try {
+    const paciente = await pacientesService.reactivate(req.params.id, req.usuario.id);
+    res.json({ success: true, message: 'Acesso do cidadão reativado.', data: paciente });
+  } catch (error) { next(error); }
+};
+
+export default { getAll, getInactive, getStatusAudit, getById, create, update, remove, reactivate };
