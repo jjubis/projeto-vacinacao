@@ -373,6 +373,95 @@ async function reativarCidadao(id, nome) {
     }
 }
 
+async function solicitarMinhaEliminacao() {
+    const confirmar = confirm('Enviar uma solicitação para análise? O envio não apaga dados; a equipe verificará o prazo de retenção e eventuais obrigações de guarda.');
+    if (!confirmar) return;
+    try {
+        const resposta = await fazerRequisicao('/pacientes/minha-solicitacao-eliminacao', { method: 'POST' });
+        mostrarMensagem('mensagemSolicitacaoEliminacao', `Solicitação ${resposta.data.id} recebida. A equipe fará a análise.`, 'success');
+    } catch (erro) {
+        mostrarMensagem('mensagemSolicitacaoEliminacao', erro.message, 'error');
+    }
+}
+
+async function consultarMinhasSolicitacoesEliminacao() {
+    const lista = document.getElementById('minhasSolicitacoesEliminacao');
+    mostrarTexto(lista, 'Carregando solicitações...');
+    try {
+        const resposta = await fazerRequisicao('/pacientes/minha-solicitacao-eliminacao');
+        const solicitacoes = resposta.data || [];
+        if (!solicitacoes.length) return mostrarTexto(lista, 'Você ainda não enviou solicitações.');
+        lista.replaceChildren(...solicitacoes.map(solicitacao => criarCartaoResultado([
+            ['Protocolo', solicitacao.id], ['Status', solicitacao.status],
+            ['Prazo mínimo de retenção', formatarData(solicitacao.manter_dados_ate)],
+            ['Decisão', solicitacao.decisoes || 'Aguardando análise']
+        ])));
+    } catch (erro) {
+        mostrarTexto(lista, `Erro ao consultar solicitações: ${erro.message}`, 'error');
+    }
+}
+
+async function listarSolicitacoesEliminacao() {
+    const lista = document.getElementById('listaSolicitacoesEliminacao');
+    mostrarTexto(lista, 'Carregando solicitações...');
+    try {
+        const resposta = await fazerRequisicao('/pacientes/solicitacoes-eliminacao');
+        const solicitacoes = resposta.data || [];
+        if (!solicitacoes.length) return mostrarTexto(lista, 'Nenhuma solicitação registrada.');
+        lista.replaceChildren(...solicitacoes.map(solicitacao => {
+            const item = document.createElement('div');
+            item.appendChild(criarCartaoResultado([
+                ['Protocolo', solicitacao.id], ['Cidadão', solicitacao.paciente_nome || 'Dados eliminados'],
+                ['CPF', solicitacao.cpf ? formatarCPF(solicitacao.cpf) : '—'], ['Status', solicitacao.status],
+                ['Última aplicação', formatarData(solicitacao.ultima_aplicacao)],
+                ['Prazo mínimo até', formatarData(solicitacao.elegivel_em)],
+                ['Decisão', solicitacao.decisoes || 'Aguardando análise']
+            ]));
+            if (['solicitada', 'aguardando_prazo'].includes(solicitacao.status)) {
+                const revisar = document.createElement('button');
+                revisar.type = 'button'; revisar.textContent = 'Analisar';
+                revisar.addEventListener('click', () => decidirSolicitacaoEliminacao(solicitacao.id));
+                item.appendChild(revisar);
+            }
+            if (solicitacao.status === 'aprovada') {
+                const eliminar = document.createElement('button');
+                eliminar.type = 'button'; eliminar.textContent = 'Concluir eliminação';
+                eliminar.addEventListener('click', () => concluirSolicitacaoEliminacao(solicitacao.id));
+                item.appendChild(eliminar);
+            }
+            return item;
+        }));
+    } catch (erro) {
+        mostrarTexto(lista, `Erro ao carregar solicitações: ${erro.message}`, 'error');
+    }
+}
+
+async function decidirSolicitacaoEliminacao(id) {
+    const escolha = prompt('Digite APROVADA ou RECUSADA:');
+    if (!escolha) return;
+    const decisao = escolha.trim().toLowerCase() === 'aprovada' ? 'aprovada'
+        : escolha.trim().toLowerCase() === 'recusada' ? 'recusada' : null;
+    if (!decisao) return mostrarMensagem('mensagemExcluir', 'Escolha APROVADA ou RECUSADA.', 'error');
+    const justificativa = prompt('Registre a justificativa e confirme a verificação de obrigações legais ou retenções aplicáveis:');
+    if (!justificativa?.trim()) return;
+    try {
+        const resposta = await fazerRequisicao(`/pacientes/solicitacoes-eliminacao/${id}`, {
+            method: 'PATCH', body: JSON.stringify({ decisao, justificativa })
+        });
+        mostrarMensagem('mensagemExcluir', `Solicitação ${resposta.data.status}.`, 'success');
+        listarSolicitacoesEliminacao();
+    } catch (erro) { mostrarMensagem('mensagemExcluir', erro.message, 'error'); }
+}
+
+async function concluirSolicitacaoEliminacao(id) {
+    if (!confirm('Esta ação elimina o cadastro, agendamentos e histórico vacinal do cidadão. Confirme que o prazo mínimo terminou e que a eliminação foi aprovada.')) return;
+    try {
+        const resposta = await fazerRequisicao(`/pacientes/solicitacoes-eliminacao/${id}/concluir`, { method: 'POST' });
+        mostrarMensagem('mensagemExcluir', resposta.message, 'success');
+        listarSolicitacoesEliminacao();
+    } catch (erro) { mostrarMensagem('mensagemExcluir', erro.message, 'error'); }
+}
+
 function formatarCPF(cpf) {
     if (!cpf || cpf.length !== 11) return cpf;
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -399,3 +488,6 @@ window.buscarCidadaoParaExcluir = buscarCidadaoParaExcluir;
 window.excluirCidadao = excluirCidadao;
 window.carregarMeuHistorico = carregarMeuHistorico;
 window.listarCidadaosInativos = listarCidadaosInativos;
+window.solicitarMinhaEliminacao = solicitarMinhaEliminacao;
+window.consultarMinhasSolicitacoesEliminacao = consultarMinhasSolicitacoesEliminacao;
+window.listarSolicitacoesEliminacao = listarSolicitacoesEliminacao;

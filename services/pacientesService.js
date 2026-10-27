@@ -39,10 +39,183 @@ const getInactive = async () => {
 
 const getStatusAudit = async id => {
   const [rows] = await pool.query(
-    'SELECT acao, funcionario_id, ocorrido_em FROM auditoria_status_cidadao WHERE paciente_id = ? ORDER BY ocorrido_em DESC, id DESC',
+    'SELECT acao, ator_usuario_id, ocorrido_em FROM auditoria_status_cidadao WHERE paciente_id = ? ORDER BY ocorrido_em DESC, id DESC',
     [id]
   );
   return rows;
+};
+
+const listarSolicitacoesEliminacao = async () => {
+  const [rows] = await pool.query(`
+    SELECT s.id, s.paciente_id, s.solicitante_usuario_id, s.status, s.solicitado_em,
+      s.manter_dados_ate, s.decisoes, s.decisoes_em, s.decisoes_por,
+      p.nome AS paciente_nome, p.cpf,
+      DATE(MAX(h.data_aplicacao)) AS ultima_aplicacao,
+      DATE_ADD(DATE(MAX(h.data_aplicacao)), INTERVAL 20 YEAR) AS elegivel_em
+    FROM solicitacoes_eliminacao_cidadao s
+    LEFT JOIN pacientes p ON p.id = s.paciente_id
+    LEFT JOIN historico_vacinal h ON h.paciente_id = s.paciente_id
+    GROUP BY s.id, p.nome, p.cpf
+    ORDER BY s.solicitado_em DESC
+  `);
+  return rows;
+};
+
+const listarSolicitacoesDoCidadao = async pacienteId => {
+  const [rows] = await pool.query(
+    'SELECT id, status, solicitado_em, manter_dados_ate, decisoes, decisoes_em, concluida_em FROM solicitacoes_eliminacao_cidadao WHERE paciente_id = ? ORDER BY solicitado_em DESC',
+    [pacienteId]
+  );
+  return rows;
+};
+
+const solicitarEliminacao = async (pacienteId, usuarioId) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [pacientes] = await connection.query('SELECT id FROM pacientes WHERE id = ? FOR UPDATE', [pacienteId]);
+    if (!pacientes.length) throw falha(404, 'Cadastro nao encontrado.');
+    const [abertas] = await connection.query(
+      "SELECT id FROM solicitacoes_eliminacao_cidadao WHERE paciente_id = ? AND status IN ('solicitada', 'aguardando_prazo', 'aprovada') FOR UPDATE",
+      [pacienteId]
+    );
+    if (abertas.length) throw falha(409, 'Ja existe uma solicitacao de eliminacao em andamento.');
+    const [[prazo]] = await connection.query(
+      'SELECT DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) AS manter_dados_ate, DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) > CURRENT_DATE AS prazo_vigente FROM historico_vacinal WHERE paciente_id = ?',
+      [pacienteId]
+    );
+    const [result] = await connection.query(
+      "INSERT INTO solicitacoes_eliminacao_cidadao (paciente_id, solicitante_usuario_id, status, manter_dados_ate) VALUES (?, ?, 'solicitada', ?)",
+      [pacienteId, usuarioId, prazo.manter_dados_ate]
+    );
+    await connection.query(
+      "INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (?, ?, 'solicitada_eliminacao')",
+      [pacienteId, usuarioId]
+    );
+    await connection.commit();
+    return { id: result.insertId, manter_dados_ate: prazo.manter_dados_ate };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+const decidirSolicitacaoEliminacao = async (solicitacaoId, funcionarioId, decisao, justificativa) => {
+  if (!['aprovada', 'recusada'].includes(decisao)) throw falha(400, 'Decisao invalida.');
+  if (!String(justificativa || '').trim()) throw falha(400, 'Justificativa obrigatoria.');
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [solicitacoes] = await connection.query(
+      'SELECT * FROM solicitacoes_eliminacao_cidadao WHERE id = ? FOR UPDATE', [solicitacaoId]
+    );
+    const solicitacao = solicitacoes[0];
+    if (!solicitacao || !solicitacao.paciente_id) throw falha(404, 'Solicitacao nao encontrada.');
+    if (['concluida', 'recusada'].includes(solicitacao.status)) throw falha(409, 'Solicitacao ja encerrada.');
+
+    const [pendentes] = await connection.query(
+      "SELECT id FROM agendamentos WHERE paciente_id = ? AND status = 'agendado' LIMIT 1", [solicitacao.paciente_id]
+    );
+    if (pendentes.length && decisao === 'aprovada') throw falha(409, 'Cancele ou conclua os agendamentos pendentes antes de aprovar.');
+
+    const [[prazo]] = await connection.query(
+      'SELECT DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) AS manter_dados_ate, DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) > CURRENT_DATE AS prazo_vigente FROM historico_vacinal WHERE paciente_id = ?',
+      [solicitacao.paciente_id]
+    );
+    if (decisao === 'aprovada' && Number(prazo.prazo_vigente) === 1) {
+      await connection.query(
+        "UPDATE solicitacoes_eliminacao_cidadao SET status = 'aguardando_prazo', manter_dados_ate = ?, decisoes = ?, decisoes_em = CURRENT_TIMESTAMP, decisoes_por = ? WHERE id = ?",
+        [prazo.manter_dados_ate, justificativa.trim(), funcionarioId, solicitacaoId]
+      );
+      await connection.query(
+        "INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (?, ?, 'aguardando_prazo')",
+        [solicitacao.paciente_id, funcionarioId]
+      );
+      await connection.commit();
+      return { status: 'aguardando_prazo', manter_dados_ate: prazo.manter_dados_ate };
+    }
+
+    await connection.query(
+      'UPDATE solicitacoes_eliminacao_cidadao SET status = ?, manter_dados_ate = ?, decisoes = ?, decisoes_em = CURRENT_TIMESTAMP, decisoes_por = ? WHERE id = ?',
+      [decisao, prazo.manter_dados_ate, justificativa.trim(), funcionarioId, solicitacaoId]
+    );
+    await connection.query(
+      'INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (?, ?, ?)',
+      [solicitacao.paciente_id, funcionarioId, decisao === 'aprovada' ? 'aprovada_eliminacao' : 'recusada_eliminacao']
+    );
+    await connection.commit();
+    return { id: Number(solicitacaoId), status: decisao, manter_dados_ate: prazo.manter_dados_ate };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+const concluirEliminacao = async (solicitacaoId, funcionarioId) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [solicitacoes] = await connection.query(
+      'SELECT * FROM solicitacoes_eliminacao_cidadao WHERE id = ? FOR UPDATE', [solicitacaoId]
+    );
+    const solicitacao = solicitacoes[0];
+    if (!solicitacao || !solicitacao.paciente_id) throw falha(404, 'Solicitacao nao encontrada.');
+    if (solicitacao.status !== 'aprovada') throw falha(409, 'A solicitacao precisa estar aprovada.');
+    const pacienteId = solicitacao.paciente_id;
+    const [pacientes] = await connection.query('SELECT id FROM pacientes WHERE id = ? FOR UPDATE', [pacienteId]);
+    if (!pacientes.length) throw falha(404, 'Cadastro nao encontrado.');
+    const [[prazo]] = await connection.query(
+      'SELECT DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) AS manter_dados_ate, DATE_ADD(DATE(MAX(data_aplicacao)), INTERVAL 20 YEAR) > CURRENT_DATE AS prazo_vigente FROM historico_vacinal WHERE paciente_id = ?',
+      [pacienteId]
+    );
+    if (Number(prazo.prazo_vigente) === 1) {
+      throw falha(409, 'O prazo minimo de retencao ainda nao terminou.');
+    }
+    const [pendentes] = await connection.query(
+      "SELECT id FROM agendamentos WHERE paciente_id = ? AND status = 'agendado' LIMIT 1", [pacienteId]
+    );
+    if (pendentes.length) throw falha(409, 'Existem agendamentos pendentes para este cidadao.');
+
+    const [usuarios] = await connection.query(
+      "SELECT id FROM usuarios WHERE paciente_id = ? AND papel = 'cidadao'", [pacienteId]
+    );
+    for (const usuario of usuarios) {
+      await connection.query('DELETE FROM notificacoes WHERE destinatario_id = ?', [usuario.id]);
+    }
+    await connection.query('DELETE FROM historico_vacinal WHERE paciente_id = ?', [pacienteId]);
+    await connection.query('DELETE FROM agendamentos WHERE paciente_id = ?', [pacienteId]);
+    await connection.query(
+      `UPDATE auditoria_status_cidadao
+       SET paciente_id = NULL,
+           ator_usuario_id = CASE WHEN ator_usuario_id IN (
+             SELECT id FROM usuarios WHERE paciente_id = ? AND papel = 'cidadao'
+           ) THEN NULL ELSE ator_usuario_id END
+       WHERE paciente_id = ?`,
+      [pacienteId, pacienteId]
+    );
+    await connection.query('DELETE FROM usuarios WHERE paciente_id = ? AND papel = \'cidadao\'', [pacienteId]);
+    await connection.query('DELETE FROM pacientes WHERE id = ?', [pacienteId]);
+    await connection.query(
+      "UPDATE solicitacoes_eliminacao_cidadao SET paciente_id = NULL, solicitante_usuario_id = NULL, status = 'concluida', decisoes = CONCAT(COALESCE(decisoes, ''), '\\nEliminacao concluida por usuario ', ?), decisoes_em = CURRENT_TIMESTAMP, decisoes_por = ?, concluida_em = CURRENT_TIMESTAMP WHERE id = ?",
+      [funcionarioId, funcionarioId, solicitacaoId]
+    );
+    await connection.query(
+      "INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (NULL, ?, 'eliminado')",
+      [funcionarioId]
+    );
+    await connection.commit();
+    return { id: Number(solicitacaoId), status: 'concluida' };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 const getById = async id => {
@@ -128,7 +301,7 @@ const inactivate = async (id, funcionarioId) => {
         [funcionarioId, id]
       );
       await connection.query(
-        "INSERT INTO auditoria_status_cidadao (paciente_id, funcionario_id, acao) VALUES (?, ?, 'inativado')",
+        "INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (?, ?, 'inativado')",
         [id, funcionarioId]
       );
     }
@@ -154,7 +327,7 @@ const reactivate = async (id, funcionarioId) => {
     );
     if (!result.affectedRows) throw falha(409, 'Conta ja ativa ou inexistente.');
     await connection.query(
-      "INSERT INTO auditoria_status_cidadao (paciente_id, funcionario_id, acao) VALUES (?, ?, 'reativado')",
+      "INSERT INTO auditoria_status_cidadao (paciente_id, ator_usuario_id, acao) VALUES (?, ?, 'reativado')",
       [id, funcionarioId]
     );
     await connection.commit();
@@ -167,4 +340,7 @@ const reactivate = async (id, funcionarioId) => {
   }
 };
 
-export default { getAll, getInactive, getStatusAudit, getById, create, update, inactivate, reactivate };
+export default {
+  getAll, getInactive, getStatusAudit, listarSolicitacoesEliminacao, listarSolicitacoesDoCidadao, solicitarEliminacao,
+  decidirSolicitacaoEliminacao, concluirEliminacao, getById, create, update, inactivate, reactivate
+};

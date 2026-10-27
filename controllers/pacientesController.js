@@ -31,6 +31,47 @@ const getStatusAudit = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+const solicitarEliminacao = async (req, res, next) => {
+  try {
+    const pacienteId = req.usuario.paciente_id;
+    if (!pacienteId) return res.status(403).json({ success: false, message: 'Conta sem cadastro de cidadão associado.' });
+    const solicitacao = await pacientesService.solicitarEliminacao(pacienteId, req.usuario.id);
+    res.status(201).json({ success: true, message: 'Solicitação registrada para análise da equipe.', data: solicitacao });
+  } catch (error) { next(error); }
+};
+
+const listarSolicitacoesDoCidadao = async (req, res, next) => {
+  try {
+    const pacienteId = req.usuario.paciente_id;
+    if (!pacienteId) return res.status(403).json({ success: false, message: 'Conta sem cadastro de cidadão associado.' });
+    const solicitacoes = await pacientesService.listarSolicitacoesDoCidadao(pacienteId);
+    res.json({ success: true, data: solicitacoes });
+  } catch (error) { next(error); }
+};
+
+const listarSolicitacoesEliminacao = async (req, res, next) => {
+  try {
+    const solicitacoes = await pacientesService.listarSolicitacoesEliminacao();
+    res.json({ success: true, data: solicitacoes });
+  } catch (error) { next(error); }
+};
+
+const decidirSolicitacaoEliminacao = async (req, res, next) => {
+  try {
+    const resultado = await pacientesService.decidirSolicitacaoEliminacao(
+      req.params.solicitacaoId, req.usuario.id, req.body.decisao, req.body.justificativa
+    );
+    res.json({ success: true, data: resultado });
+  } catch (error) { next(error); }
+};
+
+const concluirEliminacao = async (req, res, next) => {
+  try {
+    const resultado = await pacientesService.concluirEliminacao(req.params.solicitacaoId, req.usuario.id);
+    res.json({ success: true, message: 'Dados pessoais e de saúde eliminados após revisão e prazo mínimo.', data: resultado });
+  } catch (error) { next(error); }
+};
+
 
 const getById = async (req, res, next) => {
   try {
@@ -98,4 +139,7 @@ const reactivate = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-export default { getAll, getInactive, getStatusAudit, getById, create, update, remove, reactivate };
+export default {
+  getAll, getInactive, getStatusAudit, solicitarEliminacao, listarSolicitacoesDoCidadao, listarSolicitacoesEliminacao,
+  decidirSolicitacaoEliminacao, concluirEliminacao, getById, create, update, remove, reactivate
+};

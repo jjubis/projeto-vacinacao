@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node --experimental-test-isolation=none --test test/historico.test.js"
+    "test": "node --experimental-test-isolation=none --test test/historico.test.js test/pacientes-inativacao.test.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

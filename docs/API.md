@@ -36,6 +36,17 @@ Todas as rotas abaixo exigem JWT e papel `funcionario`.
 
 O endpoint de exclusão não apaga dados: a política deste sistema é reter o cadastro e a trilha de saúde após inativar a conta. Não existe expurgo automático; o controlador dos dados deve definir e documentar o prazo aplicável antes de qualquer eliminação. A conta inativa não pode entrar, usar token antigo ou ser selecionada para novos agendamentos. A equipe pode reativar a conta pelo endpoint dedicado.
 
+### Solicitações de eliminação
+
+| Método e rota | Proteção e comportamento |
+| --- | --- |
+| `POST /pacientes/minha-solicitacao-eliminacao` | JWT + `cidadao`; registra pedido do titular autenticado. |
+| `GET /pacientes/solicitacoes-eliminacao` | JWT + `funcionario`; consulta fila, prazos e decisões. |
+| `PATCH /pacientes/solicitacoes-eliminacao/:solicitacaoId` | JWT + `funcionario`; aprova ou recusa com justificativa. Pedidos antes do prazo ficam aguardando. |
+| `POST /pacientes/solicitacoes-eliminacao/:solicitacaoId/concluir` | JWT + `funcionario`; elimina após revalidar prazo mínimo e agendamentos pendentes. |
+
+`DELETE /pacientes/:id` continua apenas inativando o acesso. A regra técnica conserva o histórico vacinal por no mínimo 20 anos desde a última aplicação. A eliminação exige pedido registrado, análise, justificativa e aprovação; não há expurgo automático. Consulte `docs/POLITICA-DE-RETENCAO.md` e confirme a aplicação do prazo com o controlador dos dados.
+
 ## Vacinas — `/vacinas`
 
 Leituras exigem JWT; criacao, atualizacao e exclusao exigem papel `funcionario`.
@@ -77,16 +88,16 @@ O horário é interpretado no fuso `America/Sao_Paulo`; a unidade atende em dias
 
 ## Histórico vacinal — `/historico`
 
-Consultas administrativas e gravacao exigem JWT + `funcionario`. `/historico/meu-historico` usa o paciente associado ao token; a carteirinha aceita funcionario ou o proprio cidadao.
+Todas as rotas de histórico exigem JWT. As consultas administrativas e o registro de vacinação são exclusivos de `funcionario`. O cidadão consulta o próprio histórico e a própria carteirinha por rotas sem parâmetro de paciente, usando o `paciente_id` associado à conta autenticada. A consulta por ID de paciente é exclusiva de funcionários.
 
-| Metodo e rota | Protecao | Entrada/resultado |
+| Método e rota | Proteção | Entrada/resultado |
 | --- | --- | --- |
-| --- | --- |
-| `GET /historico` | JWT + `funcionario` | Lista o historico para uso administrativo. |
-| `GET /historico/meu-historico` | JWT + `cidadao` | Lista somente o historico vinculado a conta autenticada. |
-| `GET /historico/paciente/:pacienteId` | JWT + `funcionario` | Consulta o historico de um paciente. |
-| `POST /historico` | JWT + `funcionario` | Registra vacinacao. |
-| `GET /historico/carteirinha/:pacienteId` | JWT | Funcionario ou o proprio cidadao. |
+| `GET /historico` | JWT + `funcionario` | Lista o histórico para uso administrativo. |
+| `GET /historico/meu-historico` | JWT + `cidadao` | Lista somente o histórico vinculado à conta autenticada. |
+| `GET /historico/paciente/:pacienteId` | JWT + `funcionario` | Consulta o histórico de um paciente específico. |
+| `POST /historico` | JWT + `funcionario` | Registra vacinação; exige `paciente_id`, `vacina_id`, `data_aplicacao`, `dose` e `profissional_responsavel`. |
+| `GET /historico/minha-carteirinha` | JWT + `cidadao` | Retorna dados básicos do cidadão autenticado e seu histórico vacinal. |
+| `GET /historico/carteirinha/:pacienteId` | JWT + `funcionario` | Retorna a carteirinha do paciente indicado. Cidadãos não podem usar esta rota. |
 
 ## Notificações — `/notificacoes`
 

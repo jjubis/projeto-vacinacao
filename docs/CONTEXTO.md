@@ -33,6 +33,8 @@ O código ativo usa **MySQL**, não SQLite. `docs/MODELO-DE-DADOS.md` descreve a
 
 O pool exige conexão TLS com validação de certificado (`ssl.rejectUnauthorized: true`). A aplicação não cria automaticamente as tabelas centrais de pacientes, usuários, vacinas, postos, agendamentos e histórico.
 
+O encerramento e a eliminação seguem `docs/POLITICA-DE-RETENCAO.md`: prazo mínimo técnico de 20 anos desde a última aplicação, revisão manual e sem expurgo automático.
+
 ## Agendamentos e dados clínicos
 
 Os status usados pelo serviço são `agendado`, `realizado` e `cancelado`. O modelo atual não contém regras suficientes para inferir intervalos entre doses ou um calendário por vacina. Portanto, notificações de próximas doses não são calculadas sem esses dados.

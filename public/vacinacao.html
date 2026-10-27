@@ -100,6 +100,12 @@
                 <p>Consulte as vacinas e doses registradas no seu cadastro.</p>
                 <button type="button" onclick="carregarMeuHistorico()">Atualizar histórico</button>
                 <div id="meuHistorico" class="lista" aria-live="polite"><p>Selecione para carregar seu histórico.</p></div>
+                <h4>Encerramento e eliminação dos dados</h4>
+                <p>Você pode solicitar uma análise. Registros vacinais podem precisar ser mantidos por pelo menos 20 anos desde a última aplicação.</p>
+                <button type="button" onclick="solicitarMinhaEliminacao()">Solicitar análise de eliminação</button>
+                <div id="mensagemSolicitacaoEliminacao" aria-live="polite"></div>
+                <button type="button" onclick="consultarMinhasSolicitacoesEliminacao()">Consultar minhas solicitações</button>
+                <div id="minhasSolicitacoesEliminacao" class="lista" aria-live="polite"></div>
             </section>
             <section id="secao1">
                 <h3>Cadastrar cidadão</h3>
@@ -174,6 +180,9 @@
                 <h4>Acessos inativos</h4>
                 <button type="button" onclick="listarCidadaosInativos()">Consultar acessos inativos</button>
                 <div id="listaCidadaosInativos" class="lista" aria-live="polite"></div>
+                <h4>Solicitações de eliminação</h4>
+                <button type="button" onclick="listarSolicitacoesEliminacao()">Consultar solicitações</button>
+                <div id="listaSolicitacoesEliminacao" class="lista" aria-live="polite"></div>
             </section>
 
             <section id="secao5">
