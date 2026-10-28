@@ -36,14 +36,29 @@ const getByPaciente = async (pacienteId) => {
 
 const create = async (data) => {
   const { paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel } = data;
-
-  const [result] = await pool.query(
-    'INSERT INTO historico_vacinal (paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel) VALUES (?, ?, ?, ?, ?, ?)',
-    [paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel]
-  );
-
-  const [rows] = await pool.query(`${SELECT_BASE} WHERE h.id = ?`, [result.insertId]);
-  return rows[0];
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      'INSERT INTO historico_vacinal (paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel) VALUES (?, ?, ?, ?, ?, ?)',
+      [paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel]
+    );
+    const [agendamentos] = await connection.query(
+      "SELECT id FROM agendamentos WHERE paciente_id = ? AND vacina_id = ? AND status = 'agendado' AND data_agendamento <= ? ORDER BY data_agendamento ASC LIMIT 1 FOR UPDATE",
+      [paciente_id, vacina_id, data_aplicacao]
+    );
+    if (agendamentos.length) {
+      await connection.query("UPDATE agendamentos SET status = 'realizado' WHERE id = ?", [agendamentos[0].id]);
+    }
+    await connection.commit();
+    const [rows] = await pool.query(`${SELECT_BASE} WHERE h.id = ?`, [result.insertId]);
+    return rows[0];
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
 
 const buscarCarteirinha = async (pacienteId) => {

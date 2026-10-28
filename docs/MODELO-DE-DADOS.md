@@ -7,7 +7,7 @@ A configuração ativa é MySQL via `mysql2/promise` (`config/database.js`). Est
 | Tabela | Colunas referenciadas | Uso observado |
 | --- | --- | --- |
 | `usuarios` | `id`, `nome`, `cpf`, `email`, `senha_hash`, `papel`, `paciente_id`, `ativo`, `inativado_em`, `inativado_por` | Login, papel, associação do cidadão e auditoria de inativação. |
-| `pacientes` | `id`, `nome`, `cpf`, `data_nascimento`, `telefone`, `email`, `endereco` | Cadastro e dados do cidadão/paciente. |
+| `pacientes` | `id`, `nome`, `cpf`, `data_nascimento`, `telefone`, `email`, `endereco` | Cadastro e dados do cidadão/paciente. O serviço combina partes de endereço enviadas pela API neste campo único. |
 | `auditoria_status_cidadao` | `id`, `paciente_id`, `ator_usuario_id`, `acao`, `ocorrido_em` | Trilha append-only de estados e pedidos; o paciente é desvinculado após eliminação. |
 | `solicitacoes_eliminacao_cidadao` | `id`, `paciente_id`, `solicitante_usuario_id`, `status`, `solicitado_em`, `manter_dados_ate`, `decisoes`, `decisoes_em`, `decisoes_por`, `concluida_em` | Protocolo, prazo e análise de eliminação. |
 | `vacinas` | `id`, `nome`, `fabricante`, `quantidade_estoque`, `validade`, `lote`, `minimo_alerta` | Catálogo, estoque e informações de lote/validade usadas nos alertas. |

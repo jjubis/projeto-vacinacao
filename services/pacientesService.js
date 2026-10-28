@@ -11,13 +11,21 @@ function validarDados(data) {
   const email = normalizarEmail(data.email);
   const telefone = normalizarCpf(data.telefone);
 
-  if (!nome || !cpf || !email || !telefone || !data.endereco) {
-    throw falha(400, 'Nome, CPF, email, telefone e endereço são obrigatórios.');
+  const endereco = montarEndereco(data);
+  if (!nome || !cpf || !email || !telefone) {
+    throw falha(400, 'Nome, CPF, email e telefone são obrigatórios.');
   }
   if (!cpfEhValido(cpf)) throw falha(400, 'CPF inválido.');
   if (!emailEhValido(email)) throw falha(400, 'Email inválido.');
   if (!telefoneEhValido(telefone)) throw falha(400, 'Telefone inválido.');
-  return { ...data, nome, cpf, email, telefone, endereco: String(data.endereco).trim() };
+  return { ...data, nome, cpf, email, telefone, endereco };
+}
+
+const PARTES_ENDERECO = ['logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'cep'];
+function montarEndereco(data) {
+  const partes = PARTES_ENDERECO.map(campo => String(data[campo] || '').trim()).filter(Boolean);
+  if (partes.length) return partes.join(', ');
+  return String(data.endereco || '').trim() || null;
 }
 
 const getAll = async () => {
@@ -262,7 +270,8 @@ const update = async (id, data) => {
     await connection.beginTransaction();
     const [atual] = await connection.query('SELECT * FROM pacientes WHERE id = ? FOR UPDATE', [id]);
     if (!atual.length) throw falha(404, 'Cidadão não encontrado.');
-    const paciente = validarDados({ ...atual[0], ...data });
+    const enderecoRecebido = Object.hasOwn(data, 'endereco') || PARTES_ENDERECO.some(campo => Object.hasOwn(data, campo));
+    const paciente = validarDados({ ...atual[0], ...data, ...(enderecoRecebido ? {} : { endereco: atual[0].endereco }) });
     const [cpfEmUso] = await connection.query('SELECT id FROM pacientes WHERE cpf = ? AND id <> ?', [paciente.cpf, id]);
     if (cpfEmUso.length) throw falha(409, 'Já existe um cidadão cadastrado com este CPF.');
 

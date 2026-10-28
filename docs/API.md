@@ -27,8 +27,8 @@ Todas as rotas abaixo exigem JWT e papel `funcionario`.
 | --- | --- |
 | `GET /pacientes` | Lista pacientes. |
 | `GET /pacientes/:id` | Busca paciente por ID. |
-| `POST /pacientes` | Exige `nome`, `cpf`, `data_nascimento`, `telefone`, `email` e `endereco`; cria paciente e conta cidadã vinculada, pendente de ativação de senha. |
-| `PUT /pacientes/:id` | Exige `nome`, `cpf`, `telefone`, `email` e `endereco`; sincroniza os dados da conta cidadã vinculada. |
+| `POST /pacientes` | Exige `nome`, `cpf`, `data_nascimento`, `telefone` e `email`; aceita partes do endereço (`logradouro`, `numero`, `complemento`, `bairro`, `cidade`, `estado`, `cep`) e salva as preenchidas juntas em `endereco`. Também aceita `endereco` legado. |
+| `PUT /pacientes/:id` | Atualiza os campos enviados e sincroniza a conta cidadã; aceita partes do endereço e as combina em `endereco`. |
 | `DELETE /pacientes/:id` | Inativa o acesso e registra data e funcionário responsável. Preserva cadastro, agendamentos e histórico vacinal. |
 | `GET /pacientes/inativos` | Lista cidadãos com acesso inativo para revisão pela equipe. |
 | `PATCH /pacientes/:id/reativar` | Reativa acesso de cidadão inativo. |
@@ -84,7 +84,7 @@ Leituras exigem JWT; criacao, atualizacao e exclusao exigem papel `funcionario`.
 | `PUT /agendamentos/:id` | JWT + `funcionario` | Recebe `status` (`agendado`, `realizado` ou `cancelado`). Para `realizado`, exige `dose`; estoque e histórico vacinal são atualizados na mesma transação. |
 | `DELETE /agendamentos/:id` | JWT + `funcionario` | Exclui somente agendamentos não realizados; aplicações concluídas são preservadas no histórico. |
 
-O horário é interpretado no fuso `America/Sao_Paulo`; a unidade atende em dias úteis, das 08h às 17h. A confirmação de uma aplicação verifica estoque e validade do lote e grava, atomicamente, o status, a baixa de uma dose e o histórico com dose, lote, data brasileira e profissional autenticado.
+O horário é interpretado no fuso `America/Sao_Paulo`; a unidade atende em dias úteis, das 08h às 17h. Na inicialização e a cada hora, agendamentos ainda `agendado` cuja data ficou para um dia anterior são marcados como `cancelado`. A confirmação de uma aplicação verifica estoque e validade do lote e grava, atomicamente, o status `realizado`, a baixa de uma dose e o histórico com dose, lote, data brasileira e profissional autenticado.
 
 ## Histórico vacinal — `/historico`
 

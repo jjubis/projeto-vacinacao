@@ -4,12 +4,18 @@ dotenv.config();
 import app from './app.js';
 import { testConnection } from './config/database.js';
 import { inicializarNotificacoes, verificarAlertasDeVacinas } from './services/notificacoesService.js';
+import { cancelarAgendamentosVencidos } from './services/agendamentoService.js';
 
 const PORT = Number(process.env.PORT || 4000);
 
 const startServer = async () => {
     await testConnection();
     await inicializarNotificacoes();
+    try { await cancelarAgendamentosVencidos(); }
+    catch (error) { console.error('Não foi possível cancelar agendamentos vencidos:', error.message); }
+    setInterval(() => {
+        cancelarAgendamentosVencidos().catch(error => console.error('Falha ao cancelar agendamentos vencidos:', error.message));
+    }, 60 * 60 * 1000).unref();
     try { await verificarAlertasDeVacinas(); }
     catch (error) { console.error('Não foi possível verificar alertas de vacinas:', error.message); }
     setInterval(() => {

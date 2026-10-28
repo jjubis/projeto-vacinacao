@@ -73,11 +73,10 @@ async function cadastrarCidadao(e) {
     const data_nascimento = document.getElementById('dataNascimento').value;
     const telefone = document.getElementById('telefone').value.trim();
     const email = document.getElementById('email').value.trim();
-    const endereco = document.getElementById('endereco').value.trim();
     const cpfLimpo = cpf.replace(/\D/g, '');
     const telefoneLimpo = telefone.replace(/\D/g, '');
 
-    if (!nome || !cpfLimpo || !data_nascimento || !telefoneLimpo || !email || !endereco) {
+    if (!nome || !cpfLimpo || !data_nascimento || !telefoneLimpo || !email) {
         mostrarMensagem('mensagem', 'Por favor, preencha todos os campos obrigatórios.', 'error');
         return;
     }
@@ -103,7 +102,13 @@ async function cadastrarCidadao(e) {
         data_nascimento,
         telefone: telefoneLimpo,
         email: email,
-        endereco: endereco
+        logradouro: document.getElementById('logradouro').value.trim(),
+        numero: document.getElementById('numero').value.trim(),
+        complemento: document.getElementById('complemento').value.trim(),
+        bairro: document.getElementById('bairro').value.trim(),
+        cidade: document.getElementById('cidade').value.trim(),
+        estado: document.getElementById('estado').value.trim(),
+        cep: document.getElementById('cep').value.trim()
     };
 
     isSubmittingCidadao = true;
@@ -199,7 +204,11 @@ function selecionarCidadaoParaAtualizar(id, nome, cpf, telefone, email, endereco
     document.getElementById('novoCpf').value = formatarCPF(cpf);
     document.getElementById('novoTelefone').value = formatarTelefone(telefone);
     document.getElementById('novoEmail').value = email;
-    document.getElementById('novoEndereco').value = endereco;
+    const partes = String(endereco || '').split(',').map(parte => parte.trim());
+    ['Logradouro', 'Numero', 'Complemento', 'Bairro', 'Cidade', 'Estado', 'Cep'].forEach((campo, i) => {
+        const input = document.getElementById(`novo${campo}`);
+        if (input) input.value = partes[i] || '';
+    });
     document.getElementById('atualizarForm').style.display = 'block';
     document.getElementById('atualizarForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -212,7 +221,6 @@ async function atualizarCidadao(e) {
     const novoCpf = document.getElementById('novoCpf').value.trim();
     const novoTelefone = document.getElementById('novoTelefone').value.trim();
     const novoEmail = document.getElementById('novoEmail').value.trim();
-    const novoEndereco = document.getElementById('novoEndereco').value.trim();
 
     const dados = {};
     const cpfLimpo = novoCpf ? novoCpf.replace(/\D/g, '') : '';
@@ -237,7 +245,11 @@ async function atualizarCidadao(e) {
     if (cpfLimpo) dados.cpf = cpfLimpo;
     if (telefoneLimpo) dados.telefone = telefoneLimpo;
     if (novoEmail) dados.email = novoEmail;
-    if (novoEndereco) dados.endereco = novoEndereco;
+    const camposEndereco = { logradouro: 'novoLogradouro', numero: 'novoNumero', complemento: 'novoComplemento', bairro: 'novoBairro', cidade: 'novoCidade', estado: 'novoEstado', cep: 'novoCep' };
+    for (const [campo, idCampo] of Object.entries(camposEndereco)) {
+        const valor = document.getElementById(idCampo).value.trim();
+        if (valor) dados[campo] = valor;
+    }
 
     if (Object.keys(dados).length === 0) {
         mostrarMensagem('mensagemAtualizar', 'Nenhum campo foi alterado.', 'error');

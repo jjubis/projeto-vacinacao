@@ -59,12 +59,18 @@ const partesDataHoraLocal = (valor) => {
     };
 };
 
+export const cancelarAgendamentosVencidos = async () => {
+    await pool.query("UPDATE agendamentos SET status = 'cancelado' WHERE status = 'agendado' AND DATE(data_agendamento) < CURRENT_DATE");
+};
+
 const getAll = async () => {
+    await cancelarAgendamentosVencidos();
     const [rows] = await pool.query(`${SELECT_BASE} ORDER BY a.data_agendamento DESC`);
     return rows;
 };
 
 const getById = async (id) => {
+    await cancelarAgendamentosVencidos();
     const [rows] = await pool.query(`${SELECT_BASE} WHERE a.id = ?`, [id]);
     return rows[0];
 };
