@@ -4,12 +4,33 @@ import { cpfEhValido, emailEhValido, telefoneEhValido } from '../utils/validarDa
 const falha = (statusCode, message) => Object.assign(new Error(message), { statusCode });
 const normalizarEmail = email => String(email || '').trim().toLowerCase();
 const normalizarCpf = cpf => String(cpf || '').replace(/\D/g, '');
+const CEPS_ATERRADO = new Set([
+  '13801338', '13801340', '13801339', '13801344', '13801345', '13801343', '13801370',
+  '13801357', '13801362', '13801335', '13801337', '13801336', '13801358'
+]);
+const normalizarCep = cep => String(cep || '').replace(/[\s.-]/g, '');
+const validarCepAterrado = cep => {
+  if (!CEPS_ATERRADO.has(normalizarCep(cep))) {
+    throw falha(400, 'Cadastro permitido apenas para residentes do Bairro Aterrado. Por favor, procure a UBS de referência do seu bairro.');
+  }
+};
+const normalizarNome = nome => {
+  const particulas = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+  return String(nome || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR').split(' ')
+    .map((palavra, indice) => indice > 0 && particulas.has(palavra) ? palavra
+      : palavra.split(/([-'])/).map(parte => parte === '-' || parte === "'" || !parte
+        ? parte : parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1)).join(''))
+    .join(' ');
+};
 
-function validarDados(data) {
-  const nome = String(data.nome || '').trim();
+function validarDados(data, validarCep = false) {
+  const nome = normalizarNome(data.nome);
   const cpf = normalizarCpf(data.cpf);
   const email = normalizarEmail(data.email);
   const telefone = normalizarCpf(data.telefone);
+  const cep = normalizarCep(data.cep);
+
+  if (validarCep || Object.hasOwn(data, 'cep')) validarCepAterrado(cep);
 
   const endereco = montarEndereco(data);
   if (!nome || !cpf || !email || !telefone) {
@@ -18,7 +39,7 @@ function validarDados(data) {
   if (!cpfEhValido(cpf)) throw falha(400, 'CPF inválido.');
   if (!emailEhValido(email)) throw falha(400, 'Email inválido.');
   if (!telefoneEhValido(telefone)) throw falha(400, 'Telefone inválido.');
-  return { ...data, nome, cpf, email, telefone, endereco };
+  return { ...data, nome, cpf, email, telefone, cep, endereco };
 }
 
 const PARTES_ENDERECO = ['logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'cep'];
@@ -232,7 +253,7 @@ const getById = async id => {
 };
 
 const create = async data => {
-  const paciente = validarDados(data);
+  const paciente = validarDados(data, true);
   if (!paciente.data_nascimento) throw falha(400, 'Data de nascimento é obrigatória.');
 
   const connection = await pool.getConnection();

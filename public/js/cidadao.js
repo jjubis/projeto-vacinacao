@@ -1,14 +1,20 @@
 
 function capitalizarNomeVisual(nome) {
     if (!nome) return nome;
+    const particulas = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
     return nome
-        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLocaleLowerCase('pt-BR')
         .split(' ')
-        .map(palavra =>
-            palavra.length > 2
-                ? palavra.charAt(0).toUpperCase() + palavra.slice(1)
-                : palavra
-        )
+        .map((palavra, indice) => {
+            if (indice > 0 && particulas.has(palavra)) return palavra;
+            return palavra.split(/([-'])/).map(parte =>
+                parte === '-' || parte === "'" || !parte
+                    ? parte
+                    : parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1)
+            ).join('');
+        })
         .join(' ');
 }
 
@@ -72,6 +78,7 @@ async function cadastrarCidadao(e) {
     const cpf = document.getElementById('cpf').value.trim();
     const data_nascimento = document.getElementById('dataNascimento').value;
     const telefone = document.getElementById('telefone').value.trim();
+    const cepInformado = document.getElementById('cep').value.trim();
     const email = document.getElementById('email').value.trim();
     const cpfLimpo = cpf.replace(/\D/g, '');
     const telefoneLimpo = telefone.replace(/\D/g, '');
@@ -86,13 +93,19 @@ async function cadastrarCidadao(e) {
         return;
     }
 
-    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
-        mostrarMensagem('mensagem', 'Telefone deve conter entre 10 e 11 números, incluindo o DDD.', 'error');
+    if (telefoneLimpo.length !== 11) {
+        mostrarMensagem('mensagem', 'Telefone deve conter exatamente 11 números, incluindo o DDD.', 'error');
         return;
     }
 
     if (!email.includes('@') || !email.includes('.')) {
         mostrarMensagem('mensagem', 'Email inválido. Verifique o formato.', 'error');
+        return;
+    }
+
+    const cepsAterrado = new Set(['13801338', '13801340', '13801339', '13801344', '13801345', '13801343', '13801370', '13801357', '13801362', '13801335', '13801337', '13801336', '13801358']);
+    if (!cepsAterrado.has(cepInformado.replace(/[\s.-]/g, ''))) {
+        mostrarMensagem('mensagem', 'Cadastro permitido apenas para residentes do Bairro Aterrado. Por favor, procure a UBS de referência do seu bairro.', 'error');
         return;
     }
 
@@ -231,8 +244,8 @@ async function atualizarCidadao(e) {
         return;
     }
 
-    if (novoTelefone && (telefoneLimpo.length < 10 || telefoneLimpo.length > 11)) {
-        mostrarMensagem('mensagemAtualizar', 'Telefone deve conter entre 10 e 11 números, incluindo o DDD.', 'error');
+    if (novoTelefone && telefoneLimpo.length !== 11) {
+        mostrarMensagem('mensagemAtualizar', 'Telefone deve conter exatamente 11 números, incluindo o DDD.', 'error');
         return;
     }
 

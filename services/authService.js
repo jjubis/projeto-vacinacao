@@ -6,12 +6,22 @@ import { pool } from '../config/database.js';
 const erro = (statusCode, message) => Object.assign(new Error(message), { statusCode });
 const limparCpf = cpf => String(cpf || '').replace(/\D/g, '');
 const emailNormalizado = email => String(email || '').trim().toLowerCase();
-const nomeNormalizado = nome => String(nome || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+const nomeNormalizado = nome => String(nome || '').trim().replace(/\s+/g, ' ').normalize('NFC').toLocaleLowerCase('pt-BR');
+const capitalizarNome = nome => {
+    const particulas = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+    return String(nome || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR').split(' ')
+        .map((palavra, indice) => indice > 0 && particulas.has(palavra) ? palavra
+            : palavra.split(/([-'])/).map(parte => parte === '-' || parte === "'" || !parte
+                ? parte : parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1)).join(''))
+        .join(' ');
+};
 
 const register = async (userData) => {
-    const { nome, senha } = userData;
+    const { senha } = userData;
+    const nome = capitalizarNome(userData.nome);
     const cpf = limparCpf(userData.cpf);
     const email = emailNormalizado(userData.email);
+    if (!/^\d{11}$/.test(cpf)) throw erro(400, 'CPF deve conter exatamente 11 números.');
     const papel = userData.papel || 'cidadao';
 
     if (!nome?.trim() || !cpf || !email || !senha) throw erro(400, 'Nome, CPF, email e senha são obrigatórios.');

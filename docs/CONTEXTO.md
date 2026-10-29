@@ -1,5 +1,9 @@
 # Contexto do projeto: Imuniza+
 
+## Restricao de CEP no cadastro de pacientes
+
+O cadastro aceita apenas CEPs do bairro Aterrado: `13801-338`, `13801-340`, `13801-339`, `13801-344`, `13801-345`, `13801-343`, `13801-370`, `13801-357`, `13801-362`, `13801-335`, `13801-337`, `13801-336` e `13801-358`. A validacao remove hifens, pontos e espacos antes da comparacao. A regra e aplicada na interface e no backend; CEP ausente ou fora da lista bloqueia o cadastro e retorna: “Cadastro permitido apenas para residentes do Bairro Aterrado. Por favor, procure a UBS de referência do seu bairro.”
+
 ## Fonte de verdade
 
 A branch `arquitetura` é a linha de trabalho do projeto integrado. Esta documentação descreve o estado combinado do sistema nessa branch; não separa funcionalidades por autoria ou pela antiga divisão entre branches.

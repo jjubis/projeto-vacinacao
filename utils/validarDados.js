@@ -6,7 +6,7 @@ export function cpfEhValido(cpf) {
 
 export function telefoneEhValido(telefone) {
     const telefoneLimpo = telefone.replace(/\D/g, '');
-    return /^\d{10,11}$/.test(telefoneLimpo);
+    return /^\d{11}$/.test(telefoneLimpo);
 }
 
 export function emailEhValido(email) {
