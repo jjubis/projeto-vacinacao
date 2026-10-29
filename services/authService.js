@@ -94,4 +94,29 @@ const login = async (email, senha) => {
     };
 };
 
-export default { register, login };
+const resetarSenha = async (emailData, novaSenha) => {
+    const email = emailNormalizado(emailData);
+
+    if (!email || !novaSenha) throw erro(400, 'Email e nova senha são obrigatórios.');
+    if (novaSenha.length < 8) throw erro(400, 'A senha deve ter no mínimo 8 caracteres.');
+
+    const usuario = await authModel.findByEmail(email);
+    if (!usuario) {
+        throw erro(404, 'E-mail não encontrado no sistema.');
+    }
+
+    if (Number(usuario.ativo) === 0) {
+        throw erro(403, 'Esta conta está inativada');
+    }
+
+    const senha_hash = await bcrypt.hash(novaSenha, 10);
+
+    await pool.query(
+        'UPDATE usuarios SET senha_hash = ? WHERE email = ?',
+        [senha_hash, email]
+    );
+
+    return { message: 'Senha redefinida com sucesso.' };
+}
+
+export default { register, login, resetarSenha };

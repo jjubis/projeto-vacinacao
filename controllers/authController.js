@@ -64,10 +64,25 @@ const listarFuncionarios = async (req, res) => {
     }
 }
 
+const resetarSenha = async (req, res, next) => {
+    try {
+        const { email, novaSenha } = req.body;
+        const resultado = await authService.resetarSenha(email, novaSenha);
+
+        res.json({
+            success: true,
+            message: resultado.message
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export default {
     registerCidadao,
     registerFuncionario,
     login,
     listarFuncionarios,
-    me
+    me,
+    resetarSenha
 };

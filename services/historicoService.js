@@ -39,18 +39,31 @@ const create = async (data) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+
+    // 1. Insere no histórico de vacinação
     const [result] = await connection.query(
       'INSERT INTO historico_vacinal (paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel) VALUES (?, ?, ?, ?, ?, ?)',
       [paciente_id, vacina_id, lote, data_aplicacao, dose, profissional_responsavel]
     );
+
+    // 2. Busca o agendamento pendente do paciente para essa vacina (removendo a trava estrita de horário)
     const [agendamentos] = await connection.query(
-      "SELECT id FROM agendamentos WHERE paciente_id = ? AND vacina_id = ? AND status = 'agendado' AND data_agendamento <= ? ORDER BY data_agendamento ASC LIMIT 1 FOR UPDATE",
-      [paciente_id, vacina_id, data_aplicacao]
+      "SELECT id FROM agendamentos WHERE paciente_id = ? AND vacina_id = ? AND status = 'agendado' ORDER BY data_agendamento ASC LIMIT 1 FOR UPDATE",
+      [paciente_id, vacina_id]
     );
+
     if (agendamentos.length) {
       await connection.query("UPDATE agendamentos SET status = 'realizado' WHERE id = ?", [agendamentos[0].id]);
     }
+
+    // 3. Dar baixa no estoque da vacina
+    await connection.query(
+      "UPDATE vacinas SET quantidade_estoque = quantidade_estoque - 1 WHERE id = ? AND quantidade_estoque > 0",
+      [vacina_id]
+    );
+
     await connection.commit();
+
     const [rows] = await pool.query(`${SELECT_BASE} WHERE h.id = ?`, [result.insertId]);
     return rows[0];
   } catch (error) {
